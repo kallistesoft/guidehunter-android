@@ -1,0 +1,23 @@
+# Gradle and Kotlin
+.gradle/
+.kotlin/
+build/
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Release signing: never commit
+keystore.properties
+*.jks
+*.keystore
+
+.DS_Store
+
+# Firebase config: kept out of this public repo, CI writes it from the GOOGLE_SERVICES_JSON secret
+app/google-services.json
+app/src/*/google-services.json

@@ -1,0 +1,35 @@
+[
+  {
+    "skills": ["testing-on-emulator"],
+    "query": "Test the app on the emulator",
+    "files": [],
+    "expected_behavior": [
+      "Fetches from origin and confirms the branch is up to date before building",
+      "Runs scripts/emulator.sh, then scripts/install.sh debug --fresh, without reading the scripts first",
+      "Goes through at least the map, filters, guide offer, unlock and Become a guide flows from reference/test-plan.md, reading a screenshot of each screen",
+      "Runs scripts/check_crash.sh after each flow",
+      "Ends with the report table, including a 'Not tested' line and whether the build had Firebase and a Maps key"
+    ]
+  },
+  {
+    "skills": ["testing-on-emulator"],
+    "query": "I'm about to upload to Play. Check the release build works on the simulator.",
+    "files": [],
+    "expected_behavior": [
+      "Installs with scripts/install.sh release --fresh (R8 build signed with the debug key), not the debug build",
+      "Runs the smoke test, covering the map, the rewarded ad and a relaunch after process death",
+      "Runs scripts/check_crash.sh release after each flow and reports any SerializationException or ClassNotFoundException as an R8 problem"
+    ]
+  },
+  {
+    "skills": ["testing-on-emulator"],
+    "query": "Check the Become a guide form looks right in French and in dark mode",
+    "files": [],
+    "expected_behavior": [
+      "Opens the form with `android input tap text=Become a guide` (Devenir guide in French)",
+      "Switches language with cmd locale set-app-locales and dark theme with cmd uimode night yes",
+      "Reads the screenshots, scrolling the whole form, and flags clipped or untranslated text",
+      "Resets language and night mode afterwards"
+    ]
+  }
+]

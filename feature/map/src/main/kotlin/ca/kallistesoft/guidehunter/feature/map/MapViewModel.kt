@@ -1,0 +1,202 @@
+package ca.kallistesoft.guidehunter.feature.map
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
+import ca.kallistesoft.guidehunter.core.ads.RewardedAds
+import ca.kallistesoft.guidehunter.core.data.GuideRepository
+import ca.kallistesoft.guidehunter.core.data.LocationRepository
+import ca.kallistesoft.guidehunter.core.model.Discipline
+import ca.kallistesoft.guidehunter.core.model.GeoPoint
+import ca.kallistesoft.guidehunter.core.model.Guide
+import ca.kallistesoft.guidehunter.core.model.GuideContact
+import ca.kallistesoft.guidehunter.core.model.GuideFilter
+import ca.kallistesoft.guidehunter.core.model.Species
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+import kotlin.math.roundToInt
+
+/** A guide on the map, and how far it is from the user (null while the user's location is unknown). */
+data class GuideItem(val guide: Guide, val distanceKm: Int? = null)
+
+/** Where the guide's name and contact details stand for the user. */
+sealed interface ContactState {
+    /** Hidden until the user watches a rewarded ad. */
+    data object Locked : ContactState
+
+    /** The ad is showing, or the details are loading. */
+    data object Unlocking : ContactState
+
+    data class Unlocked(val contact: GuideContact) : ContactState
+
+    /** Earned, but the guide has no contact details yet. */
+    data object Missing : ContactState
+
+    data class Failed(val reason: UnlockError) : ContactState
+}
+
+enum class UnlockError {
+    /** The ad was closed before the end. */
+    NOT_EARNED,
+
+    /** No network: no ad, no contact. */
+    OFFLINE,
+
+    /** The ad was watched but the details couldn't be read: trying again won't show another ad. */
+    LOAD_FAILED,
+}
+
+data class SelectedGuide(val item: GuideItem, val contact: ContactState)
+
+data class MapUiState(
+    val loading: Boolean = true,
+    /** The guides that match [filter], nearest first once the user's location is known. */
+    val guides: List<GuideItem> = emptyList(),
+    val filter: GuideFilter = GuideFilter(),
+    val userLocation: GeoPoint? = null,
+    /** The guide whose offer is open, or null. */
+    val selected: SelectedGuide? = null,
+)
+
+/**
+ * The map of guides: filtered by discipline and species, with the distance from the user. Opening a guide shows its
+ * public offer; its name and contact details are shown once the user has watched a rewarded ad (Pattern A of
+ * .claude/skills/viewmodel-state).
+ */
+@HiltViewModel
+class MapViewModel @Inject constructor(
+    private val guideRepository: GuideRepository,
+    private val locationRepository: LocationRepository,
+    private val rewardedAds: RewardedAds,
+    private val savedState: SavedStateHandle,
+) : ViewModel() {
+    private val filter = MutableStateFlow(
+        GuideFilter(
+            discipline = savedState.get<String>(KEY_DISCIPLINE)?.let(Discipline::valueOf),
+            species = savedState.get<String>(KEY_SPECIES)?.let(Species::valueOf),
+        ),
+    )
+    private val selectedId = MutableStateFlow(savedState.get<String>(KEY_SELECTED))
+    private val userLocation = MutableStateFlow<GeoPoint?>(null)
+
+    /** The guides whose ad the user has watched (this session): they never pay twice. */
+    private val unlocked = MutableStateFlow(savedState.get<Array<String>>(KEY_UNLOCKED).orEmpty().toSet())
+    private val contacts = MutableStateFlow<Map<String, ContactState>>(emptyMap())
+
+    val uiState: StateFlow<MapUiState> = combine(
+        guideRepository.guides,
+        filter,
+        userLocation,
+        selectedId,
+        contacts,
+    ) { guides, filter, location, selectedId, contacts ->
+        val items = guides.map { guide ->
+            GuideItem(guide, location?.let { guide.location.distanceKm(it).roundToInt() })
+        }
+        val shown = items.filter { filter.matches(it.guide) }.sortedBy { it.distanceKm ?: 0 }
+        MapUiState(
+            loading = false,
+            guides = shown,
+            filter = filter,
+            userLocation = location,
+            selected = items.find { it.guide.id == selectedId }?.let { item ->
+                SelectedGuide(item, contacts[item.guide.id] ?: ContactState.Locked)
+            },
+        )
+    }.onStart { reloadRestoredContact() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
+
+    /** Shows the guides of [discipline] (null: both). A species of the other discipline is cleared. */
+    fun chooseDiscipline(discipline: Discipline?) = setFilter { current ->
+        GuideFilter(discipline, current.species?.takeIf { discipline == null || it.discipline == discipline })
+    }
+
+    fun chooseSpecies(species: Species?) = setFilter { it.copy(species = species) }
+
+    /** Opens a guide's offer, and gets a rewarded ad ready for its contact details. */
+    fun select(guideId: String) {
+        selectedId.value = guideId
+        savedState[KEY_SELECTED] = guideId
+        if (guideId in unlocked.value) {
+            if (contacts.value[guideId] !is ContactState.Unlocked) viewModelScope.launch { load(guideId) }
+        } else {
+            rewardedAds.preload()
+        }
+    }
+
+    fun dismiss() {
+        selectedId.value = null
+        savedState[KEY_SELECTED] = null
+    }
+
+    /** "Watch an ad to see the contact": shows the rewarded ad, then the details if it was watched to the end. */
+    fun unlock() {
+        val id = selectedId.value ?: return
+        if (contacts.value[id] == ContactState.Unlocking) return
+        setContact(id, ContactState.Unlocking)
+        viewModelScope.launch {
+            if (id in unlocked.value) return@launch load(id)
+            when (rewardedAds.showForReward()) {
+                RewardOutcome.EARNED, RewardOutcome.NO_ADS -> {
+                    unlocked.update { it + id }
+                    savedState[KEY_UNLOCKED] = unlocked.value.toTypedArray()
+                    load(id)
+                }
+                RewardOutcome.NOT_EARNED -> setContact(id, ContactState.Failed(UnlockError.NOT_EARNED))
+                RewardOutcome.OFFLINE -> setContact(id, ContactState.Failed(UnlockError.OFFLINE))
+            }
+        }
+    }
+
+    /** Reads the user's location again (the permission was just granted, or the screen opened with it). */
+    fun refreshLocation() {
+        viewModelScope.launch { locationRepository.current()?.let { userLocation.value = it } }
+    }
+
+    /** After process death: the open guide was unlocked, but its contact (not saved) has to be read again. */
+    private fun reloadRestoredContact() {
+        val id = selectedId.value ?: return
+        if (id in unlocked.value && id !in contacts.value) {
+            setContact(id, ContactState.Unlocking)
+            viewModelScope.launch { load(id) }
+        }
+    }
+
+    private suspend fun load(id: String) {
+        setContact(id, ContactState.Unlocking)
+        val state = try {
+            guideRepository.contact(id)?.let(ContactState::Unlocked) ?: ContactState.Missing
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            ContactState.Failed(UnlockError.LOAD_FAILED)
+        }
+        setContact(id, state)
+    }
+
+    private fun setContact(id: String, state: ContactState) = contacts.update { it + (id to state) }
+
+    private fun setFilter(change: (GuideFilter) -> GuideFilter) {
+        val next = filter.updateAndGet(change)
+        savedState[KEY_DISCIPLINE] = next.discipline?.name
+        savedState[KEY_SPECIES] = next.species?.name
+    }
+
+    private companion object {
+        const val KEY_DISCIPLINE = "discipline"
+        const val KEY_SPECIES = "species"
+        const val KEY_SELECTED = "selected"
+        const val KEY_UNLOCKED = "unlocked"
+    }
+}

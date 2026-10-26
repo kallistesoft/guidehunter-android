@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="become_guide_title">Devenir guide</string>
+    <string name="become_guide_intro">Présentez vos séjours de chasse ou de pêche. Nous vérifions chaque guide avant de mettre son offre sur la carte et nous vous répondons par courriel.</string>
+    <string name="field_business_name">Votre nom ou celui de votre entreprise</string>
+    <string name="field_activity">Vous offrez</string>
+    <string name="field_species">Espèces</string>
+    <string name="field_species_help">Choisissez d\'abord ce que vous offrez.</string>
+    <string name="field_description">Décrivez vos séjours</string>
+    <string name="field_description_help">Au moins %1$d caractères : ce qui est inclus, saisons, hébergement, langues.</string>
+    <string name="field_region">Ville ou région</string>
+    <string name="field_location">Où les chasseurs et pêcheurs vous rejoignent</string>
+    <string name="field_location_help">Touchez la carte pour placer votre repère.</string>
+    <string name="field_location_set">Repère placé. Touchez ailleurs pour le déplacer.</string>
+    <string name="field_price">Prix par personne, à partir de (facultatif)</string>
+    <string name="field_price_suffix">$ CA</string>
+    <string name="field_email">Courriel</string>
+    <string name="field_phone">Téléphone (facultatif)</string>
+    <string name="field_website">Site Web (facultatif)</string>
+    <string name="contact_private">Votre nom et vos coordonnées ne sont montrés qu\'après une courte publicité.</string>
+
+    <string name="error_business_name">Entrez votre nom ou celui de votre entreprise.</string>
+    <string name="error_description">Écrivez au moins %1$d caractères.</string>
+    <string name="error_activity">Choisissez chasse, pêche ou les deux.</string>
+    <string name="error_species">Choisissez au moins une espèce.</string>
+    <string name="error_region">Entrez votre ville ou votre région.</string>
+    <string name="error_location">Placez votre repère sur la carte.</string>
+    <string name="error_price">Entrez un prix en dollars, ou laissez vide.</string>
+    <string name="error_email">Entrez une adresse courriel valide.</string>
+    <string name="error_phone">Entrez un numéro de téléphone valide, ou laissez vide.</string>
+    <string name="form_has_errors">Certains champs sont à corriger.</string>
+
+    <string name="send">Envoyer ma demande</string>
+    <string name="sending">Envoi…</string>
+    <string name="send_failed">Votre demande n\'a pas pu être envoyée. Vérifiez votre connexion et réessayez.</string>
+    <string name="send_not_configured">Cette version de l\'application ne peut pas encore envoyer de demandes.</string>
+    <string name="sent_title">Demande envoyée</string>
+    <string name="sent_body">Merci! Nous vérifierons votre offre et vous répondrons par courriel avant de la mettre sur la carte.</string>
+    <string name="back_to_map">Retour à la carte</string>
+</resources>

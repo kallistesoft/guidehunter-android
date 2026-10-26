@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="become_guide_title">Become a guide</string>
+    <string name="become_guide_intro">Tell us about your hunting or fishing trips. We review every guide before their offer goes on the map, and we\'ll reply by email.</string>
+    <string name="field_business_name">Your name or business name</string>
+    <string name="field_activity">You offer</string>
+    <string name="field_species">Species</string>
+    <string name="field_species_help">Pick what you offer first.</string>
+    <string name="field_description">Describe your trips</string>
+    <string name="field_description_help">At least %1$d characters: what\'s included, seasons, lodging, languages.</string>
+    <string name="field_region">Town or region</string>
+    <string name="field_location">Where hunters and anglers meet you</string>
+    <string name="field_location_help">Tap the map to place your pin.</string>
+    <string name="field_location_set">Pin placed. Tap elsewhere to move it.</string>
+    <string name="field_price">Price per person, from (optional)</string>
+    <string name="field_price_suffix">CAD</string>
+    <string name="field_email">Email</string>
+    <string name="field_phone">Phone (optional)</string>
+    <string name="field_website">Website (optional)</string>
+    <string name="contact_private">Your name and contact details are shown to users only after they watch a short ad.</string>
+
+    <string name="error_business_name">Enter your name or your business name.</string>
+    <string name="error_description">Write at least %1$d characters.</string>
+    <string name="error_activity">Choose hunting, fishing or both.</string>
+    <string name="error_species">Choose at least one species.</string>
+    <string name="error_region">Enter your town or region.</string>
+    <string name="error_location">Place your pin on the map.</string>
+    <string name="error_price">Enter a price in dollars, or leave it empty.</string>
+    <string name="error_email">Enter a valid email address.</string>
+    <string name="error_phone">Enter a valid phone number, or leave it empty.</string>
+    <string name="form_has_errors">Some fields need your attention.</string>
+
+    <string name="send">Send my application</string>
+    <string name="sending">Sending…</string>
+    <string name="send_failed">Your application couldn\'t be sent. Check your connection and try again.</string>
+    <string name="send_not_configured">Applications can\'t be sent from this version of the app yet.</string>
+    <string name="sent_title">Application sent</string>
+    <string name="sent_body">Thank you! We\'ll review your offer and reply by email before it goes on the map.</string>
+    <string name="back_to_map">Back to the map</string>
+</resources>

@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// GuideHunter's Firestore rules (README, "Firebase"). Deploy with `firebase deploy --only firestore:rules`, or paste
+// them in the Firebase console (Firestore Database → Rules).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Published offers: anyone reads them, only the Firebase console (you) writes them.
+    match /guides/{guideId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // A guide's name and contact, read one at a time after a rewarded ad. No listing, so the whole collection can't
+    // be downloaded in one query. The ad itself is only checked in the app for now (FOLLOW-UP.md).
+    match /guideContacts/{guideId} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    // "Become a guide" forms: the app can only add a well-formed one, never read or change any.
+    match /guideApplications/{applicationId} {
+      allow create: if validApplication(request.resource.data);
+      allow read, update, delete: if false;
+    }
+
+    // Emails sent by the "Trigger Email from Firestore" extension. The app can only send the application email,
+    // and only to you: anything else would let anyone use your mail account to send spam.
+    match /mail/{mailId} {
+      allow create: if request.resource.data.keys().hasOnly(['to', 'replyTo', 'message'])
+        && request.resource.data.to == 'contact@kallistesoft.ca' // keep in sync with APPLICATIONS_EMAIL
+        && request.resource.data.replyTo is string && request.resource.data.replyTo.size() <= 200
+        && request.resource.data.message.keys().hasOnly(['subject', 'text'])
+        && request.resource.data.message.subject is string && request.resource.data.message.subject.size() <= 300
+        && request.resource.data.message.text is string && request.resource.data.message.text.size() <= 5000;
+      allow read, update, delete: if false;
+    }
+
+    function shortText(value, min, max) {
+      return value is string && value.size() >= min && value.size() <= max;
+    }
+
+    function validApplication(data) {
+      return data.keys().hasOnly([
+          'businessName', 'description', 'activity', 'species', 'region', 'lat', 'lng', 'priceFrom', 'email',
+          'phone', 'website'])
+        && shortText(data.businessName, 1, 200)
+        && shortText(data.description, 30, 2000)
+        && data.activity in ['HUNT', 'FISH', 'BOTH']
+        && data.species is list && data.species.size() >= 1 && data.species.size() <= 20
+        && shortText(data.region, 1, 200)
+        && data.lat is number && data.lat >= -90 && data.lat <= 90
+        && data.lng is number && data.lng >= -180 && data.lng <= 180
+        && (data.priceFrom == null || data.priceFrom is int)
+        && shortText(data.email, 3, 200)
+        && shortText(data.phone, 0, 50)
+        && shortText(data.website, 0, 300);
+    }
+  }
+}

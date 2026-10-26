@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="species_black_bear">Ours noir</string>
+    <string name="species_moose">Orignal</string>
+    <string name="species_white_tailed_deer">Cerf de Virginie</string>
+    <string name="species_caribou">Caribou</string>
+    <string name="species_wild_turkey">Dindon sauvage</string>
+    <string name="species_waterfowl">Canards et oies</string>
+    <string name="species_upland_birds">Gélinottes et petit gibier à plumes</string>
+    <string name="species_predators">Loup et coyote</string>
+    <string name="species_walleye">Doré</string>
+    <string name="species_northern_pike">Grand brochet</string>
+    <string name="species_brook_trout">Omble de fontaine</string>
+    <string name="species_lake_trout">Touladi</string>
+    <string name="species_atlantic_salmon">Saumon atlantique</string>
+    <string name="species_smallmouth_bass">Achigan à petite bouche</string>
+    <string name="species_muskellunge">Maskinongé</string>
+    <string name="species_ice_fishing">Pêche blanche</string>
+
+    <string name="discipline_hunting">Chasse</string>
+    <string name="discipline_fishing">Pêche</string>
+
+    <string name="activity_hunt">Chasse</string>
+    <string name="activity_fish">Pêche</string>
+    <string name="activity_both">Chasse et pêche</string>
+
+    <string name="back">Retour</string>
+</resources>

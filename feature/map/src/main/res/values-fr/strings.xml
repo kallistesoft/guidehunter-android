@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="map_title">GuideHunter</string>
+    <string name="become_guide">Devenir guide</string>
+    <string name="my_location">Afficher les distances depuis ma position</string>
+    <string name="filter_all">Tout</string>
+    <string name="filter_species_any">Toutes les espèces</string>
+    <string name="filter_species">Espèce</string>
+    <plurals name="guide_count">
+        <item quantity="one">%d guide</item>
+        <item quantity="other">%d guides</item>
+    </plurals>
+    <string name="no_guides">Aucun guide ne correspond pour l\'instant. Essayez une autre espèce.</string>
+    <string name="guide_list">Guides</string>
+
+    <string name="distance_km">À environ %1$s km de vous</string>
+    <string name="price_from">À partir de %1$s par personne</string>
+    <string name="price_on_request">Prix sur demande</string>
+    <string name="section_species">Espèces</string>
+    <string name="section_about">Le séjour</string>
+    <string name="section_contact">Guide et coordonnées</string>
+    <string name="contact_hidden">Le nom du guide, son téléphone, son courriel et son site s\'affichent après une courte publicité.</string>
+    <string name="contact_unlock">Voir une pub pour les coordonnées</string>
+    <string name="contact_unlocking">Chargement des coordonnées…</string>
+    <string name="contact_missing">Ce guide n\'a pas encore donné ses coordonnées.</string>
+    <string name="contact_not_earned">La publicité a été fermée avant la fin. Regardez-la au complet pour voir les coordonnées.</string>
+    <string name="contact_offline">Vous êtes hors ligne. Connectez-vous à Internet pour voir les coordonnées.</string>
+    <string name="contact_load_failed">Les coordonnées n\'ont pas pu être chargées. Réessayer ne montrera pas d\'autre publicité.</string>
+    <string name="try_again">Réessayer</string>
+    <string name="contact_call">Appeler %1$s</string>
+    <string name="contact_email">Écrire à %1$s</string>
+    <string name="contact_website">Site Web %1$s</string>
+    <string name="contact_email_subject">Séjour trouvé sur GuideHunter</string>
+    <string name="close">Fermer</string>
+</resources>

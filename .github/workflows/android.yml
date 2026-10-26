@@ -1,0 +1,87 @@
+name: Android CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Firebase is optional: without this secret the app builds with the sample guides (README, "Firebase").
+      - name: Firebase config
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then echo "$GOOGLE_SERVICES_JSON" > app/google-services.json; fi
+
+      - name: Conventions
+        run: scripts/check-conventions.sh
+
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest :core:model:test --stacktrace
+
+      # Every class needs 90% of its lines covered by the unit tests (KoverConventionPlugin). On failure, the report
+      # (build/reports/kover/htmlUnit) is in the reports artifact.
+      - name: Coverage
+        run: ./gradlew :koverVerifyUnit :koverHtmlReportUnit
+
+      - name: Lint
+        run: ./gradlew :app:lintDebug
+
+      # Release signing is optional: without the secrets the release build is unsigned.
+      - name: Release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.GH_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+            echo "GH_KEYSTORE_FILE=$RUNNER_TEMP/release.jks" >> "$GITHUB_ENV"
+          fi
+
+      # The Maps key, AdMob IDs and application email are optional too (README, "Setup"); empty ones are ignored.
+      - name: Build debug and release
+        env:
+          GH_KEYSTORE_PASSWORD: ${{ secrets.GH_KEYSTORE_PASSWORD }}
+          GH_KEY_ALIAS: ${{ secrets.GH_KEY_ALIAS }}
+          GH_KEY_PASSWORD: ${{ secrets.GH_KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+          ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
+          ADMOB_REWARDED_ID: ${{ vars.ADMOB_REWARDED_ID }}
+          APPLICATIONS_EMAIL: ${{ vars.APPLICATIONS_EMAIL }}
+        run: ./gradlew :app:assembleDebug :app:assembleRelease :app:bundleRelease -PversionCode=${{ github.run_number }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: guidehunter-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+            app/build/outputs/mapping/release/mapping.txt
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: reports-${{ github.run_number }}
+          path: |
+            **/build/reports/

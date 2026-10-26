@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="map_title">GuideHunter</string>
+    <string name="become_guide">Become a guide</string>
+    <string name="my_location">Show distances from my location</string>
+    <string name="filter_all">All</string>
+    <string name="filter_species_any">Any species</string>
+    <string name="filter_species">Species</string>
+    <plurals name="guide_count">
+        <item quantity="one">%d guide</item>
+        <item quantity="other">%d guides</item>
+    </plurals>
+    <string name="no_guides">No guide matches yet. Try another species.</string>
+    <string name="guide_list">Guides</string>
+
+    <string name="distance_km">About %1$s km from you</string>
+    <string name="price_from">From %1$s per person</string>
+    <string name="price_on_request">Price on request</string>
+    <string name="section_species">Species</string>
+    <string name="section_about">About this trip</string>
+    <string name="section_contact">Guide and contact</string>
+    <string name="contact_hidden">The guide\'s name, phone, email and website show after a short ad.</string>
+    <string name="contact_unlock">Watch an ad to see the contact</string>
+    <string name="contact_unlocking">Loading the contact…</string>
+    <string name="contact_missing">This guide hasn\'t shared contact details yet.</string>
+    <string name="contact_not_earned">The ad was closed before the end. Watch it all to see the contact.</string>
+    <string name="contact_offline">You\'re offline. Connect to the internet to see the contact.</string>
+    <string name="contact_load_failed">The contact couldn\'t be loaded. You won\'t see another ad to try again.</string>
+    <string name="try_again">Try again</string>
+    <string name="contact_call">Call %1$s</string>
+    <string name="contact_email">Email %1$s</string>
+    <string name="contact_website">Website %1$s</string>
+    <string name="contact_email_subject">Trip found on GuideHunter</string>
+    <string name="close">Close</string>
+</resources>
