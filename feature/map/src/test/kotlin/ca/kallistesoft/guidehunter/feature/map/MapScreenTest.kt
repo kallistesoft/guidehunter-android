@@ -10,7 +10,7 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
@@ -25,6 +25,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
+import ca.kallistesoft.guidehunter.core.model.GeoBounds
+import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
@@ -82,13 +84,16 @@ class MapScreenTest {
                 GuideHunterTheme {
                     MapScreen(onBecomeGuide = { becomeGuide++ }, viewModel = viewModel, map = { content, modifier ->
                         // A pin per guide, tapped like on the map.
-                        Box(modifier) {
+                        Column(modifier) {
                             LazyRow {
                                 items(content.guides.size) { index ->
                                     val id = content.guides[index].guide.id
                                     Text("pin $id", Modifier.testTag("pin-$id").clickable { content.onSelect(id) })
                                 }
                             }
+                            // The camera stopping over an area, like a pan or a zoom.
+                            Text("pan west", Modifier.testTag("pan-west").clickable { content.onVisibleArea(WEST_OF_GASPE) })
+                            Text("pan north", Modifier.testTag("pan-north").clickable { content.onVisibleArea(FAR_NORTH) })
                         }
                     })
                 }
@@ -117,6 +122,17 @@ class MapScreenTest {
         compose.onNodeWithTag("species-any").performClick()
         compose.onNodeWithTag("discipline-all").performClick()
         compose.onNodeWithText(count(3)).assertIsDisplayed()
+    }
+
+    @Test
+    fun `the cards follow the part of the map on screen`() {
+        launch()
+        compose.onNodeWithTag("pan-west").performClick()
+        compose.onNodeWithText(count(2)).assertIsDisplayed()
+        compose.onNodeWithTag("guide-salmon").assertDoesNotExist()
+        compose.onNodeWithTag("pin-salmon").assertExists()
+        compose.onNodeWithTag("pan-north").performClick()
+        compose.onNodeWithText(str(R.string.no_guides_here)).assertIsDisplayed()
     }
 
     @Test
@@ -250,3 +266,9 @@ class MapScreenTest {
         assertEquals(1, location.reads)
     }
 }
+
+/** Southern Quebec, west of Gaspé: the bear and the moose. */
+private val WEST_OF_GASPE = GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -70.0))
+
+/** Nunavik: no test guide. */
+private val FAR_NORTH = GeoBounds(GeoPoint(55.0, -80.0), GeoPoint(62.0, -60.0))

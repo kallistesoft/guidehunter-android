@@ -16,6 +16,7 @@
         <item quantity="other">%d guides</item>
     </plurals>
     <string name="no_guides">Aucun guide ne correspond pour l\'instant. Essayez une autre espèce.</string>
+    <string name="no_guides_here">Aucun guide dans cette partie de la carte. Dézoomez pour en voir plus.</string>
     <string name="guide_list">Guides</string>
 
     <string name="distance_km">À environ %1$s km de vous</string>
