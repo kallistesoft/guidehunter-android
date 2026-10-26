@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dev build icon (themed, monochrome): the release hook pin, smaller and higher (82 of 108 dp, so the hook clears the
+     tag), over the "DEV" tag. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:bottom="22dp"
+        android:drawable="@drawable/ic_launcher_monochrome"
+        android:left="13dp"
+        android:right="13dp"
+        android:top="4dp" />
+    <item android:drawable="@drawable/ic_launcher_dev_tag_monochrome" />
+</layer-list>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The orange "DEV" tag under the hook pin of the dev build's icon, inside the 66 dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFF27B2B"
+        android:pathData="M44,71H64A6,6 0,0 1,64 83H44A6,6 0,0 1,44 71Z" />
+    <path
+        android:pathData="@string/ic_launcher_dev_letters"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FF1A0E05"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

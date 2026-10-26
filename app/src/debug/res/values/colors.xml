@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dev build icon: slate instead of the release green, so the two builds are told apart at a glance (as in
+         BetterHunter). -->
+    <color name="ic_launcher_background">#FF37474F</color>
+</resources>
