@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter fishing species picker</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Barlow, system-ui, sans-serif">
+  <dc-import name="Main" theme="{{theme}}" mode="fish" hint-size="390px,844px"></dc-import>
+  <div role="menu" aria-label="Species" style="position: absolute; left: 168px; top: 98px; width: 200px; background: {{c.menu}}; border-radius: 14px; padding: 6px 0; box-shadow: {{c.shadow}}; display: flex; flex-direction: column">
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="9">
+      <a role="menuitem" href="{{mapHref}}" style="height: 44px; padding: 0 16px; display: flex; align-items: center; font-size: 15px; text-decoration: none; color: {{it.color}}; font-weight: {{it.weight}}">{{it.label}}</a>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const light = theme === 'light';
+    const c = light
+      ? {menu:'#FFFFFF', text:'#17201A', muted:'#5B6659', shadow:'0 10px 30px rgba(23,32,26,0.22)'}
+      : {menu:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', shadow:'0 10px 30px rgba(0,0,0,0.55)'};
+    const names = ['Any species', 'Walleye', 'Northern pike', 'Brook trout', 'Lake trout', 'Atlantic salmon', 'Smallmouth bass', 'Muskellunge', 'Ice fishing'];
+    const items = names.map((label, i) => ({label, color: i === 0 ? c.muted : c.text, weight: i === 0 ? 600 : 400}));
+    return {theme, c, items, mapHref: light ? 'MapLight.dc.html' : 'Main.dc.html'};
+  }
+}
+</script>
+</body>
+</html>

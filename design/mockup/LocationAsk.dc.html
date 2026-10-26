@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter location permission</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Barlow, system-ui, sans-serif">
+  <dc-import name="Main" theme="{{theme}}" mode="all" hint-size="390px,844px"></dc-import>
+  <div style="position: absolute; inset: 0; background: rgba(5,9,7,0.6); display: flex; align-items: center; justify-content: center; padding: 24px">
+    <div role="dialog" aria-labelledby="loc-title" style="width: 100%; box-sizing: border-box; background: {{c.dialog}}; color: {{c.text}}; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; align-items: center; gap: 16px">
+      <span style="color: {{c.accent}}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>
+      <h2 id="loc-title" style="margin: 0; font-size: 20px; font-weight: 500; line-height: 1.3; text-align: center">Allow GuideHunter to access this device’s location?</h2>
+      <div style="display: flex; gap: 24px">
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 14px; color: {{c.muted}}"><span style="width: 96px; height: 96px; border-radius: 999px; background: {{c.mapTile}}; display: flex; align-items: center; justify-content: center"><span style="width: 12px; height: 12px; border-radius: 999px; background: {{c.accent}}"></span></span>Precise</span>
+        <span style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 14px; color: {{c.text}}; font-weight: 600"><span style="width: 96px; height: 96px; border-radius: 999px; background: {{c.mapTile}}; border: 3px solid {{c.accent}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><span style="width: 52px; height: 52px; border-radius: 999px; background: {{c.halo}}"></span></span>Approximate</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; align-self: stretch">
+        <a href="{{nearHref}}" style="height: 48px; border-radius: 999px; background: {{c.button}}; color: {{c.buttonText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-decoration: none">While using the app</a>
+        <a href="{{nearHref}}" style="height: 48px; border-radius: 999px; background: {{c.button}}; color: {{c.buttonText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-decoration: none">Only this time</a>
+        <a href="{{mapHref}}" style="height: 48px; border-radius: 999px; background: {{c.button}}; color: {{c.buttonText}}; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; text-decoration: none">Don’t allow</a>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const light = theme === 'light';
+    const c = light
+      ? {dialog:'#FFFFFF', text:'#17201A', muted:'#5B6659', accent:'#2F6B3E', mapTile:'#E3EFE4', halo:'rgba(47,107,62,0.3)', button:'#E3EFE4', buttonText:'#17201A'}
+      : {dialog:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', accent:'#8FD19E', mapTile:'#22382A', halo:'rgba(143,209,158,0.35)', button:'#22382A', buttonText:'#EEF1EA'};
+    return {
+      theme, c,
+      nearHref: light ? 'MapNearLight.dc.html' : 'MapNear.dc.html',
+      mapHref: light ? 'MapLight.dc.html' : 'Main.dc.html'
+    };
+  }
+}
+</script>
+</body>
+</html>

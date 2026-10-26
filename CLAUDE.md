@@ -4,10 +4,15 @@ GuideHunter: a map of hunting and fishing guides, whose contact is unlocked by a
 form emailed for review. Same stack and conventions as BetterHunter (kallistesoft/betterHunter-android). See
 README.md for the architecture and the setup, FOLLOW-UP.md for what's next.
 
-## Design
+## Design mockup
 
-There is no GuideHunter mockup yet: the theme is BetterHunter's palette and fonts. When one is made, give every
-screen a dark and a light version, and keep it in `design/`.
+The GuideHunter design mockup (dark and light screens, BetterHunter's theme) is a claude.ai Design canvas:
+https://claude.ai/artifact/PCFgbxtcGyHHrSPPPRqKbL
+
+To add or change screens, read the canvas with the Artifact tool (`action: "read"`, then its `project/canvas.json` and
+the screens' `project/*.dc.html` files) and publish to that same URL; don't create a new canvas. Follow the palette,
+fonts and patterns in `design/README.md`, and give every new screen a dark and a light version. After publishing,
+copy the changed files into `design/mockup/` and update `design/README.md`.
 
 ## Skills
 

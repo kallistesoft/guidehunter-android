@@ -45,3 +45,5 @@ BetterHunter.
 ## Tooling
 
 - Screenshot tests (Roborazzi) and instrumented flow tests, as in BetterHunter, once the screens settle.
+- Match the app to the mockup (`design/`): the pin colours (teal for fishing, gold for both), the grey bars in the
+  hidden contact card, and a GuideHunter icon for the splash.
