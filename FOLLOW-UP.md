@@ -6,7 +6,9 @@ What the MVP leaves for later, most urgent first.
 
 1. **Name, package and icon.** "GuideHunter" and `ca.kallistesoft.guidehunter` are working names; the launcher icon
    and the theme are BetterHunter's. Choose them before the first upload (the package can't change after).
-2. **Firebase, Maps and AdMob** set up (README, "Setup"), and the CI secrets and variables added.
+2. **Firebase, Maps and AdMob** set up (README, "Setup", step by step), and the CI secrets and variables added. A
+   **release keystore** too: the debug key lives on whichever machine builds, so the Maps key and Firebase need the
+   release key's SHA-1 for anything installed from Play.
 3. **Privacy policy**, linked from the Play listing and from the app (an About entry, and a line above the form's
    Send button). It covers: the approximate location (read on the device only, never sent), ads (AdMob, with
    consent; the advertising ID and the `AD_ID` permission come with the ads SDK), and what guides type in the form

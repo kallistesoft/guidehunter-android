@@ -52,23 +52,43 @@ None of this is needed to build and run the app: without it, the app shows three
 and the form can't be sent. Settings that aren't committed go in `local.properties` (or environment variables in
 CI).
 
+### Signing certificates (SHA-1)
+
+Firebase and the Maps key both ask for the SHA-1 of the key that signs the app. `./gradlew :app:signingReport`
+prints it for each build type (debug: the machine's `~/.android/debug.keystore`; release: your keystore). The debug
+key differs from one machine to another: a build from another machine (or a reset cloud container) has a new SHA-1,
+which must be added to the Maps key and the Firebase app, and can't update the installed app (uninstall first).
+
 ### Firebase
 
-1. Create a Firebase project and add the Android apps `ca.kallistesoft.guidehunter` and
-   `ca.kallistesoft.guidehunter.debug`. Download `google-services.json` into `app/` (git-ignored; CI writes it from
-   the `GOOGLE_SERVICES_JSON` secret).
-2. Create the Firestore database, then deploy `firestore.rules` (`firebase deploy --only firestore:rules`, or paste
-   them in the console).
-3. Install the **Trigger Email from Firestore** extension (needs the Blaze plan), with collection `mail` and your
-   SMTP account (a Gmail app password or SendGrid).
-4. The emails go to `contact@kallistesoft.ca`. To change it, set `APPLICATIONS_EMAIL` in `local.properties` (CI:
+1. At console.firebase.google.com, create a project (`GuideHunter`; Google Analytics isn't needed). Add two Android
+   apps: `ca.kallistesoft.guidehunter.debug` (with the debug SHA-1) and `ca.kallistesoft.guidehunter` (the release
+   one, when you have it). Download `google-services.json` after adding both, into `app/` (git-ignored; CI writes it
+   from the `GOOGLE_SERVICES_JSON` secret).
+2. **Firestore Database → Create database**, in production mode, in a region near the users (Montréal is
+   `northamerica-northeast1`). Then deploy `firestore.rules`: `firebase deploy --only firestore:rules`, or paste the
+   file in the console's **Rules** tab and **Publish**.
+3. Check it with one guide, added by hand: a document in `guides` with `title` (string), `activity` (string: `HUNT`,
+   `FISH` or `BOTH`), `species` (array of names from `core/model` `Species`, e.g. `BLACK_BEAR`), `region` (string),
+   `lat` and `lng` (numbers), `description` (string) and optionally `priceFrom` (number). Its contact goes in
+   `guideContacts`, in a document with **the same id**: `name`, `phone`, `email`, `website` (strings). A guide missing
+   a required field doesn't show (`core/data` `FirestoreDocuments.kt`).
+4. Upgrade to the **Blaze** plan (extensions need it; at this volume it costs about nothing), then install the
+   **Trigger Email from Firestore** extension: collection `mail`, and the SMTP connection URI of a dedicated mailbox
+   or SendGrid rather than a personal one (anyone can fill it, see FOLLOW-UP.md). For Gmail with an app password:
+   `smtps://you%40gmail.com:APP-PASSWORD@smtp.gmail.com:465`.
+5. The emails go to `contact@kallistesoft.ca`. To change it, set `APPLICATIONS_EMAIL` in `local.properties` (CI:
    the `APPLICATIONS_EMAIL` variable) **and** change the address in `firestore.rules`.
 
 ### Google Maps
 
-Create a key for the Maps SDK for Android in Google Cloud (the Firebase project's), restricted to the two package
-names and your signing certificates. Put it in `local.properties` as `MAPS_API_KEY=…` (CI: the `MAPS_API_KEY`
-secret).
+In console.cloud.google.com, in the Firebase project: **APIs & Services → Library → Maps SDK for Android → Enable**,
+then **Credentials → Create credentials → API key**. Restrict it:
+- Application restrictions: **Android apps**, one entry per package name and SHA-1 (debug, and release later);
+- API restrictions: **Maps SDK for Android** only.
+
+Put it in `local.properties` as `MAPS_API_KEY=AIza…` (CI: the `MAPS_API_KEY` secret). Without it the maps stay
+grey; with a key whose restriction doesn't match the build's SHA-1, they stay grey too (logcat says so).
 
 ### AdMob
 
