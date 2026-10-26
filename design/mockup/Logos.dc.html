@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter logo concepts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; height: 960px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; padding: 48px 56px; display: flex; flex-direction: column; gap: 28px; position: relative">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute">
+    <defs>
+      <g id="gh-rifle">
+        <path d="M12 51 L30 49.5 L37 52 L37 57 L30 58 L12 61 Z"/>
+        <rect x="36" y="50.5" width="20" height="5.5" rx="1.5"/>
+        <path d="M44 56 q0 5 4 5 q4 0 4 -5" fill="none" stroke-width="1.6"/>
+        <rect x="40" y="45.5" width="14" height="3.2" rx="1.6"/>
+        <rect x="43" y="48.4" width="2" height="2.4"/>
+        <rect x="50" y="48.4" width="2" height="2.4"/>
+        <rect x="55" y="51.6" width="40" height="2.8" rx="1.2"/>
+        <rect x="92" y="49.8" width="1.8" height="2.2"/>
+      </g>
+      <g id="gh-rod">
+        <rect x="72" y="51" width="24" height="6" rx="3"/>
+        <rect x="65.5" y="56" width="3" height="2.5"/>
+        <circle cx="67" cy="61" r="4.5"/>
+        <path d="M72 52.2 L12 53.6 L12 54.6 L72 56 Z"/>
+        <path d="M12 54 C10 62 13 68 17 70" fill="none" stroke-width="1.2"/>
+        <path d="M17 70 c2.5 1.5 3 4.5 0.5 6 c-2 1.2 -4 0 -4.2 -2" fill="none" stroke-width="1.6" stroke-linecap="round"/>
+      </g>
+    </defs>
+  </svg>
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.label}}">App icon</span>
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 40px; line-height: 1.05">Crossed rod and rifle: three ways</h1>
+    <p style="margin: 0; font-size: 16px; color: {{c.muted}}; max-width: 880px">Each icon as the launcher shows it (the 72 dp circle of the adaptive icon), at 192, 96 and 48 px, and as Android 13’s themed icon.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; flex: 1">
+    <sc-for list="{{concepts}}" as="k" hint-placeholder-count="3">
+      <section style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; flex-direction: column; gap: 4px">
+          <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; line-height: 1.1">{{k.name}}</span>
+          <span style="font-size: 15px; line-height: 1.4; color: {{c.muted}}">{{k.blurb}}</span>
+        </div>
+        <div style="display: flex; align-items: flex-end; gap: 20px">
+          <sc-for list="{{k.tiles}}" as="t" hint-placeholder-count="3">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+              <sc-if value="{{k.isA}}" hint-placeholder-val="{{ false }}"><svg width="{{t.size}}" height="{{t.size}}" viewBox="18 18 72 72" role="img" aria-label="{{k.name}}, {{t.caption}}"><circle cx="54" cy="54" r="36" fill="{{t.bg}}"/><g transform="translate(54 54) scale(0.8) translate(-54 -54)"><use href="#gh-rifle" transform="rotate(-45 54 54)" fill="{{t.rifle}}" stroke="{{t.rifle}}"/><use href="#gh-rod" transform="rotate(45 54 54)" fill="{{t.rod}}" stroke="{{t.rod}}"/></g></svg></sc-if>
+              <sc-if value="{{k.isB}}" hint-placeholder-val="{{ false }}"><svg width="{{t.size}}" height="{{t.size}}" viewBox="18 18 72 72" role="img" aria-label="{{k.name}}, {{t.caption}}"><circle cx="54" cy="54" r="36" fill="{{t.bg}}"/><path d="M54 24 C42.4 24 33 33.4 33 45 C33 60 54 84 54 84 C54 84 75 60 75 45 C75 33.4 65.6 24 54 24Z" fill="{{t.pin}}"/><g transform="translate(54 45) scale(0.36) translate(-54 -54)"><use href="#gh-rifle" transform="rotate(-45 54 54)" fill="{{t.inner}}" stroke="{{t.inner}}"/><use href="#gh-rod" transform="rotate(45 54 54)" fill="{{t.inner}}" stroke="{{t.inner}}"/></g></svg></sc-if>
+              <sc-if value="{{k.isC}}" hint-placeholder-val="{{ false }}"><svg width="{{t.size}}" height="{{t.size}}" viewBox="18 18 72 72" role="img" aria-label="{{k.name}}, {{t.caption}}"><circle cx="54" cy="54" r="36" fill="{{t.bg}}"/><circle cx="54" cy="54" r="29" fill="{{t.disc}}" stroke="{{t.ring}}" stroke-width="3.5"/><g transform="translate(54 54) scale(0.58) translate(-54 -54)"><use href="#gh-rifle" transform="rotate(-45 54 54)" fill="{{t.cRifle}}" stroke="{{t.cRifle}}"/><use href="#gh-rod" transform="rotate(45 54 54)" fill="{{t.cRod}}" stroke="{{t.cRod}}"/></g></svg></sc-if>
+              <span style="font-size: 12px; color: {{c.muted}}">{{t.caption}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="height: 1px; background: {{c.border}}"></span>
+        <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Themed icon (Android 13+)</span>
+        <div style="display: flex; gap: 20px">
+          <sc-for list="{{k.themed}}" as="t" hint-placeholder-count="2">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+              <sc-if value="{{k.isA}}" hint-placeholder-val="{{ false }}"><svg width="64" height="64" viewBox="18 18 72 72" role="img" aria-label="{{k.name}}, {{t.caption}}"><circle cx="54" cy="54" r="36" fill="{{t.bg}}"/><g transform="translate(54 54) scale(0.8) translate(-54 -54)"><use href="#gh-rifle" transform="rotate(-45 54 54)" fill="{{t.rifle}}" stroke="{{t.rifle}}"/><use href="#gh-rod" transform="rotate(45 54 54)" fill="{{t.rod}}" stroke="{{t.rod}}"/></g></svg></sc-if>
+              <sc-if value="{{k.isB}}" hint-placeholder-val="{{ false }}"><svg width="64" height="64" viewBox="18 18 72 72" role="img" aria-label="{{k.name}}, {{t.caption}}"><circle cx="54" cy="54" r="36" fill="{{t.bg}}"/><path d="M54 24 C42.4 24 33 33.4 33 45 C33 60 54 84 54 84 C54 84 75 60 75 45 C75 33.4 65.6 24 54 24Z" fill="{{t.pin}}"/><g transform="translate(54 45) scale(0.36) translate(-54 -54)"><use href="#gh-rifle" transform="rotate(-45 54 54)" fill="{{t.inner}}" stroke="{{t.inner}}"/><use href="#gh-rod" transform="rotate(45 54 54)" fill="{{t.inner}}" stroke="{{t.inner}}"/></g></svg></sc-if>
+              <sc-if value="{{k.isC}}" hint-placeholder-val="{{ false }}"><svg width="64" height="64" viewBox="18 18 72 72" role="img" aria-label="{{k.name}}, {{t.caption}}"><circle cx="54" cy="54" r="36" fill="{{t.bg}}"/><circle cx="54" cy="54" r="29" fill="{{t.disc}}" stroke="{{t.ring}}" stroke-width="3.5"/><g transform="translate(54 54) scale(0.58) translate(-54 -54)"><use href="#gh-rifle" transform="rotate(-45 54 54)" fill="{{t.cRifle}}" stroke="{{t.cRifle}}"/><use href="#gh-rod" transform="rotate(45 54 54)" fill="{{t.cRod}}" stroke="{{t.cRod}}"/></g></svg></sc-if>
+              <span style="font-size: 12px; color: {{c.muted}}">{{t.caption}}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1400,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', label:'#B4500F', border:'#E6E1D5'}
+      : {bg:'#0E1611', card:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', border:'#24352A'};
+    const cream = '#F7F2EA', orange = '#F27B2B', green = '#1F4229', deep = '#17331F';
+    // The full-colour icon, on the app's green.
+    const normal = {bg: green, rifle: cream, rod: orange, pin: orange, inner: deep, disc: cream, ring: orange, cRifle: green, cRod: '#E8691E'};
+    // Android 13's themed icon: one colour from the wallpaper, on its tint (here the app's greens).
+    const mono = (bg, fg) => ({bg, rifle: fg, rod: fg, pin: fg, inner: bg, disc: bg, ring: fg, cRifle: fg, cRod: fg});
+    const tiles = [192, 96, 48].map(size => Object.assign({size, caption: size === 48 ? '48 px · home screen' : size + ' px'}, normal));
+    const themed = [
+      Object.assign({caption: 'Light'}, mono('#E3EFE4', '#2F6B3E')),
+      Object.assign({caption: 'Dark'}, mono('#22382A', '#8FD19E'))
+    ];
+    const concepts = [
+      {name: 'A · Crossed', blurb: 'Rod and rifle crossed, nothing else. Says hunting and fishing at once; says nothing about finding a guide.', isA: true},
+      {name: 'B · Pin', blurb: 'The map pin, with a small crossed rod and rifle in its head. The pin says where; the crossing says what.', isA: false, isB: true},
+      {name: 'C · Badge', blurb: 'An outfitter’s round badge: cream disc, orange ring, rod and rifle crossed inside.', isA: false, isC: true}
+    ].map(k => Object.assign({isA: false, isB: false, isC: false}, k, {tiles, themed}));
+    return {c, concepts};
+  }
+}
+</script>
+</body>
+</html>

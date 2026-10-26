@@ -17,6 +17,10 @@
     {
       "id": "become",
       "name": "2 · Become a guide"
+    },
+    {
+      "id": "logo",
+      "name": "3 · Logo"
     }
   ],
   "boards": {
@@ -307,6 +311,22 @@
       "h": 800,
       "title": "9 Tablet: the offer beside the map · light",
       "page": "find"
+    },
+    "Logos.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 1400,
+      "h": 960,
+      "title": "Logo concepts",
+      "page": "logo"
+    },
+    "LogosLight.dc.html": {
+      "x": 0,
+      "y": 1380,
+      "w": 1400,
+      "h": 960,
+      "title": "Logo concepts · light",
+      "page": "logo"
     }
   },
   "order": [
@@ -345,7 +365,9 @@
     "FormCoordinatesLight.dc.html",
     "FormContactLight.dc.html",
     "FormFailedLight.dc.html",
-    "SentLight.dc.html"
+    "SentLight.dc.html",
+    "Logos.dc.html",
+    "LogosLight.dc.html"
   ],
   "notes": {
     "findDark": {
@@ -379,6 +401,22 @@
       "kind": "title1",
       "maxW": 3210,
       "page": "become"
+    },
+    "logoDark": {
+      "x": 0,
+      "y": -300,
+      "text": "Logo · dark",
+      "kind": "title1",
+      "maxW": 1400,
+      "page": "logo"
+    },
+    "logoLight": {
+      "x": 0,
+      "y": 1080,
+      "text": "Logo · light",
+      "kind": "title1",
+      "maxW": 1400,
+      "page": "logo"
     }
   },
   "designSystems": []

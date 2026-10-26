@@ -26,6 +26,7 @@ other artboards are small wrappers that `<dc-import>` them with another theme or
 | `Form.dc.html`: Become a guide | `view`: `empty`, `errors`, `filled`, `coordinates`, `contact`, `failed` | `FormLight`, `FormErrors…`, `FormFilled…`, `FormCoordinates…`, `FormContact…`, `FormFailed…` |
 | `Tablet.dc.html`: a tablet (1280×800), the offer beside the map | | `TabletLight` |
 | `Sent.dc.html`: application sent | | `SentLight` |
+| `Logos.dc.html`: app icon concepts (A crossed rod and rifle, B pin, C badge) at launcher sizes and themed | | `LogosLight` |
 
 ## Pages
 
@@ -33,6 +34,7 @@ other artboards are small wrappers that `<dc-import>` them with another theme or
 |---|---|
 | 1 · Find a guide | 1 Splash → 2 Map → 3 Fishing, species picker → 4 Location permission → 5 Map, nearest first → 6 Guide offer, contact hidden → 7 Rewarded ad → 8 Contact unlocked (8b ad closed early, 8c offline) → 9 Tablet: the offer beside the map |
 | 2 · Become a guide | 1 Form → 2 Sent empty: errors → 3 Species, description, pin (scrolled) → 3b No map: coordinates → 4 Location buttons, price, contact, send (4b couldn't send) → 5 Application sent |
+| 3 · Logo | App icon concepts: crossed rod and rifle, three ways (not chosen yet; the app uses the orange pin) |
 
 ## Decisions shown in the mockup
 
