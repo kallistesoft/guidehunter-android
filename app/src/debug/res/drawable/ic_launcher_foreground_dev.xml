@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dev build icon foreground: the release hook pin, smaller and higher (82 of 108 dp, so the hook clears the
+<!-- Dev build icon foreground: the release pin, smaller and higher (82 of 108 dp, so its tip clears the
      tag), over the "DEV" tag. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item

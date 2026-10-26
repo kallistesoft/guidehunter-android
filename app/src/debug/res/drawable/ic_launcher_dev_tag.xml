@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The orange "DEV" tag under the hook pin of the dev build's icon, inside the 66 dp safe zone. -->
+<!-- The orange "DEV" tag under the pin of the dev build's icon, inside the 66 dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
