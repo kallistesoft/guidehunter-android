@@ -61,28 +61,39 @@ which must be added to the Maps key and the Firebase app, and can't update the i
 
 ### Firebase
 
-1. At console.firebase.google.com, create a project (`GuideHunter`; Google Analytics isn't needed). Add two Android
-   apps: `ca.kallistesoft.guidehunter.debug` (with the debug SHA-1) and `ca.kallistesoft.guidehunter` (the release
-   one, when you have it). Download `google-services.json` after adding both, into `app/` (git-ignored; CI writes it
-   from the `GOOGLE_SERVICES_JSON` secret).
-2. **Firestore Database → Create database**, in production mode, in a region near the users (Montréal is
-   `northamerica-northeast1`). Then deploy `firestore.rules`: `firebase deploy --only firestore:rules`, or paste the
-   file in the console's **Rules** tab and **Publish**.
-3. Check it with one guide, added by hand: a document in `guides` with `title` (string), `activity` (string: `HUNT`,
-   `FISH` or `BOTH`), `species` (array of names from `core/model` `Species`, e.g. `BLACK_BEAR`), `region` (string),
-   `lat` and `lng` (numbers), `description` (string) and optionally `priceFrom` (number). Its contact goes in
-   `guideContacts`, in a document with **the same id**: `name`, `phone`, `email`, `website` (strings). A guide missing
-   a required field doesn't show (`core/data` `FirestoreDocuments.kt`).
+Two Firebase projects, so testing never touches real guides:
+
+| Build | Firebase project | Config file (git-ignored) | CI secret |
+|---|---|---|---|
+| debug (`ca.kallistesoft.guidehunter.debug`) | `guidehunter-dev`, mock guides | `app/src/debug/google-services.json` | `GOOGLE_SERVICES_JSON_DEBUG` |
+| release (`ca.kallistesoft.guidehunter`) | `guidehunter-55e70`, production | `app/src/release/google-services.json` | `GOOGLE_SERVICES_JSON_RELEASE` |
+
+Both are in contact@kallistesoft.ca's console. With the Firebase CLI logged in (`firebase login`), a fresh clone gets
+its config with `firebase apps:sdkconfig ANDROID <app id> --project <project> -o <config file>`
+(`firebase apps:list --project <project>` gives the app id). The debug app needs each machine's debug SHA-1
+(`firebase apps:android:sha:create <app id> <sha1> --project guidehunter-dev`), the release app the release key's.
+
+1. Each project has a Firestore database in production mode in Montréal (`northamerica-northeast1`). Deploy
+   `firestore.rules` to both after a change: `firebase deploy --only firestore:rules` (production, the default in
+   `.firebaserc`) and `firebase deploy --only firestore:rules --project guidehunter-dev`.
+2. **Mock guides** for the dev project are in `scripts/dev-guides.json`: `scripts/seed-dev-guides.py` writes them
+   (again, after editing the file), `--delete` removes them. The script only ever writes to `guidehunter-dev`.
+3. A guide is a document in `guides` with `title` (string), `activity` (string: `HUNT`, `FISH` or `BOTH`), `species`
+   (array of names from `core/model` `Species`, e.g. `BLACK_BEAR`), `region` (string), `lat` and `lng` (numbers),
+   `description` (string) and optionally `priceFrom` (number). Its contact goes in `guideContacts`, in a document with
+   **the same id**: `name`, `phone`, `email`, `website` (strings). A guide missing a required field doesn't show
+   (`core/data` `FirestoreDocuments.kt`).
 4. Upgrade to the **Blaze** plan (extensions need it; at this volume it costs about nothing), then install the
-   **Trigger Email from Firestore** extension: collection `mail`, and the SMTP connection URI of a dedicated mailbox
-   or SendGrid rather than a personal one (anyone can fill it, see FOLLOW-UP.md). For Gmail with an app password:
+   **Trigger Email from Firestore** extension, in each project: collection `mail`, and the SMTP connection URI of a
+   dedicated mailbox or SendGrid rather than a personal one (anyone can fill it, see FOLLOW-UP.md). For Gmail with an app password:
    `smtps://you%40gmail.com:APP-PASSWORD@smtp.gmail.com:465`.
 5. The emails go to `contact@kallistesoft.ca`. To change it, set `APPLICATIONS_EMAIL` in `local.properties` (CI:
    the `APPLICATIONS_EMAIL` variable) **and** change the address in `firestore.rules`.
 
 ### Google Maps
 
-In console.cloud.google.com, in the Firebase project: **APIs & Services → Library → Maps SDK for Android → Enable**,
+One key, "GuideHunter Maps (Android)" in the production project (`guidehunter-55e70`), serves both builds. To make
+one: in console.cloud.google.com, in the Firebase project, **APIs & Services → Library → Maps SDK for Android → Enable**,
 then **Credentials → Create credentials → API key**. Restrict it:
 - Application restrictions: **Android apps**, one entry per package name and SHA-1 (debug, and release later);
 - API restrictions: **Maps SDK for Android** only.
