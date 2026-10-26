@@ -18,7 +18,10 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PlayCircle
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,6 +40,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.res.stringResource
 import ca.kallistesoft.guidehunter.core.designsystem.component.LinkButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
@@ -144,6 +149,7 @@ private fun ContactCard(contact: ContactState, onUnlock: () -> Unit, links: Link
                         Icon(Icons.Default.Lock, contentDescription = null, Modifier.size(Sizes.iconL))
                         Text(stringResource(R.string.contact_hidden), style = MaterialTheme.typography.bodyMedium)
                     }
+                    ContactPlaceholder()
                     UnlockButton(onUnlock)
                 }
                 ContactState.Unlocking -> Row(
@@ -176,6 +182,23 @@ private fun ContactCard(contact: ContactState, onUnlock: () -> Unit, links: Link
         }
     }
 }
+
+/** Grey bars where the name and contact will be: something is there, hidden. Decoration only (not read aloud). */
+@Composable
+private fun ContactPlaceholder() {
+    val bar = MaterialTheme.colorScheme.surfaceVariant
+    Column(
+        verticalArrangement = Arrangement.spacedBy(Spacing.s),
+        modifier = Modifier.fillMaxWidth().clearAndSetSemantics { testTag = "contact-placeholder" },
+    ) {
+        Box(Modifier.fillMaxWidth(NAME_BAR).height(Sizes.placeholderLine).background(bar, MaterialTheme.shapes.extraSmall))
+        Box(Modifier.fillMaxWidth(CONTACT_BAR).height(Sizes.placeholderLineSmall).background(bar, MaterialTheme.shapes.extraSmall))
+    }
+}
+
+/** The bars' widths, as in the mockup: a name, then a shorter line. */
+private const val NAME_BAR = 0.62f
+private const val CONTACT_BAR = 0.44f
 
 @Composable
 private fun UnlockButton(onUnlock: () -> Unit) {

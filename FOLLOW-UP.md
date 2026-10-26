@@ -70,5 +70,4 @@ BetterHunter.
   with an emulator, and commit `app/src/main/generated/baselineProfiles/`; the module and the generator are in place.
 - Compose compiler reports, to check the map's stability (the guide lists come from the Kotlin module, so Compose
   compares them by instance).
-- Match the app to the mockup (`design/`): the pin colours (teal for fishing, gold for both), the grey bars in the
-  hidden contact card, and a GuideHunter icon for the splash.
+- The tablet mockup outlines the open guide's card and enlarges its pin; the app doesn't yet.

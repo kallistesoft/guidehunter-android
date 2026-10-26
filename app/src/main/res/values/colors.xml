@@ -3,6 +3,6 @@
     <!-- Match the Compose theme so there is no flash before the first frame. -->
     <color name="window_background">#FFF5F2EA</color>
     <color name="splash_background">#FF2D5B38</color>
-    <!-- App icon background: BetterHunter's green until GuideHunter has its own icon. -->
+    <!-- App icon background: the green of the mockup's splash. -->
     <color name="ic_launcher_background">#FF1F4229</color>
 </resources>

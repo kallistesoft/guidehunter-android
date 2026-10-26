@@ -11,10 +11,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import ca.kallistesoft.guidehunter.core.designsystem.theme.DarkPinColors
+import ca.kallistesoft.guidehunter.core.designsystem.theme.LightPinColors
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
-import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -27,12 +29,14 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
 
 /**
- * Google Maps with a pin per guide: orange for hunting, green for fishing, yellow for both. It opens on southern
+ * Google Maps with a pin per guide, the mockup's: orange for hunting, teal for fishing, gold for both. It opens on southern
  * Quebec and moves to the user once their location is known (once: not again after a rotation, nor over a pan). The
  * API key comes from the build (README, "Google Maps").
  */
 @Composable
 internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
+    val dark = isSystemInDarkTheme()
+    val density = LocalDensity.current.density
     val camera = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(GeoPoint.DEFAULT_CENTER.toLatLng(), DEFAULT_ZOOM)
     }
@@ -49,12 +53,17 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
         cameraPositionState = camera,
         properties = MapProperties(isMyLocationEnabled = content.userLocation != null),
         uiSettings = MapUiSettings(zoomControlsEnabled = false, mapToolbarEnabled = false, myLocationButtonEnabled = false),
-        mapColorScheme = if (isSystemInDarkTheme()) ComposeMapColorScheme.DARK else ComposeMapColorScheme.LIGHT,
+        mapColorScheme = if (dark) ComposeMapColorScheme.DARK else ComposeMapColorScheme.LIGHT,
         // The guide cards cover the map's bottom: Google's logo and the camera's centre move up above them.
         contentPadding = PaddingValues(bottom = Sizes.guideCardsInset),
     ) {
-        // One icon per activity, made once: a new descriptor per pass would redraw every marker.
-        val icons = remember { GuideActivity.entries.associateWith { BitmapDescriptorFactory.defaultMarker(it.hue()) } }
+        // One icon per activity, made once per theme: a new descriptor per pass would redraw every marker.
+        val icons = remember(dark, density) {
+            val colors = if (dark) DarkPinColors else LightPinColors
+            GuideActivity.entries.associateWith {
+                BitmapDescriptorFactory.fromBitmap(pinBitmap(colors.of(it), colors.outline, density))
+            }
+        }
         content.guides.forEach { item ->
             key(item.guide.id) {
                 Marker(
@@ -72,12 +81,6 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
 }
 
 private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
-
-private fun GuideActivity.hue(): Float = when (this) {
-    GuideActivity.HUNT -> BitmapDescriptorFactory.HUE_ORANGE
-    GuideActivity.FISH -> BitmapDescriptorFactory.HUE_GREEN
-    GuideActivity.BOTH -> BitmapDescriptorFactory.HUE_YELLOW
-}
 
 private const val DEFAULT_ZOOM = 5f
 private const val USER_ZOOM = 6f

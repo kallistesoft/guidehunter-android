@@ -3,6 +3,8 @@ package ca.kallistesoft.guidehunter.feature.map
 import androidx.compose.ui.test.junit4.createComposeRule
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
+import androidx.compose.ui.graphics.toArgb
+import ca.kallistesoft.guidehunter.core.designsystem.theme.LightPinColors
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -24,6 +26,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 import org.robolectric.annotation.Implementation
 import org.robolectric.annotation.Implements
 import org.robolectric.shadows.ShadowViewGroup
@@ -33,6 +36,7 @@ import org.robolectric.shadows.ShadowViewGroup
  * as soon as it asks, and the test sees the markers added and taps one.
  */
 @RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE) // the pins are drawn: their pixels are read
 @Config(sdk = [35], shadows = [GuideMapTest.ShadowMapView::class], instrumentedPackages = ["com.google.android.gms.maps"])
 class GuideMapTest {
     /** A map view whose map is ready at once: [ready]. */
@@ -62,8 +66,12 @@ class GuideMapTest {
         ShadowMapView.ready = map
         mockkStatic(CameraUpdateFactory::class, BitmapDescriptorFactory::class)
         every { CameraUpdateFactory.newCameraPosition(any()) } returns mockk()
-        val hues = mutableMapOf<BitmapDescriptor, Float>()
-        every { BitmapDescriptorFactory.defaultMarker(any()) } answers { mockk<BitmapDescriptor>().also { hues[it] = firstArg() } }
+        // The icon's fill, read at the pin's body (below its hole).
+        val fills = mutableMapOf<BitmapDescriptor, Int>()
+        every { BitmapDescriptorFactory.fromBitmap(any()) } answers {
+            val bitmap = firstArg<android.graphics.Bitmap>()
+            mockk<BitmapDescriptor>().also { fills[it] = bitmap.getPixel(bitmap.width / 2, bitmap.height * 26 / 38) }
+        }
         every { map.addMarker(any()) } answers {
             val options = firstArg<MarkerOptions>()
             added += options
@@ -81,8 +89,8 @@ class GuideMapTest {
 
         assertEquals(TestGuides.all.map { it.title }, added.map { it.title })
         assertEquals(
-            listOf(BitmapDescriptorFactory.HUE_ORANGE, BitmapDescriptorFactory.HUE_GREEN, BitmapDescriptorFactory.HUE_YELLOW),
-            added.map { hues.getValue(it.icon!!) },
+            listOf(LightPinColors.hunt, LightPinColors.fish, LightPinColors.both).map { it.toArgb() },
+            added.map { fills.getValue(it.icon!!) },
         )
         assertTrue("the sheet shows the offer, not an info window", clicks.captured.onMarkerClick(markers.getValue(TestGuides.salmon.title)))
         assertEquals(listOf("salmon"), selected)

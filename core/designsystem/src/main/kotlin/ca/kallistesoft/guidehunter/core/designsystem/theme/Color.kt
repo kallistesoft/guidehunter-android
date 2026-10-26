@@ -12,6 +12,15 @@ import androidx.compose.ui.graphics.Color
 // tertiaryContainer = orange tint; surfaceContainerLow = card; outlineVariant = card border; outline = field border;
 // surfaceContainerHighest = empty track.
 
+/**
+ * The map's pins (design/README.md): orange for hunting, teal for fishing, gold for both. They differ in lightness
+ * too, not only in hue, and are outlined in the background colour so they stand out on the map.
+ */
+data class PinColors(val hunt: Color, val fish: Color, val both: Color, val outline: Color)
+
+val LightPinColors = PinColors(hunt = Color(0xFFE8691E), fish = Color(0xFF1F7A6A), both = Color(0xFFC99A12), outline = Color(0xFFFFFFFF))
+val DarkPinColors = PinColors(hunt = Color(0xFFF27B2B), fish = Color(0xFF4FB3A0), both = Color(0xFFE9C25A), outline = Color(0xFF0E1611))
+
 internal val LightColors = lightColorScheme(
     primary = Color(0xFFE8691E),
     onPrimary = Color(0xFF1A0E05),

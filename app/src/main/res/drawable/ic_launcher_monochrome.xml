@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Themed (monochrome) app icon, Android 13+. The "blaze buck" mark (design/mockup/Logos.dc.html, concept A) on the 64-unit grid, centred in the 66 dp safe zone. -->
+<!-- Themed icon (Android 13+): the same pin and ground line as ic_launcher_foreground, in one colour. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <group
-        android:translateX="22"
-        android:translateY="22">
-        <path
-            android:pathData="M27,29C23,23 19.5,17 19.5,8M21.2,18.5L13.5,14M20,12.5L25.5,7.5M37,29C41,23 44.5,17 44.5,8M42.8,18.5L50.5,14M44,12.5L38.5,7.5"
-            android:strokeWidth="3.6"
-            android:strokeColor="#FFFFFFFF"
-            android:strokeLineCap="round"
-            android:strokeLineJoin="round" />
-        <path
-            android:fillColor="#FFFFFFFF"
-            android:pathData="M22.5,31.5L11,27.5L20,36.5ZM41.5,31.5L53,27.5L44,36.5Z" />
+        android:pivotX="84"
+        android:pivotY="84"
+        android:scaleX="0.62"
+        android:scaleY="0.62"
+        android:translateX="-30"
+        android:translateY="-30">
         <path
             android:fillColor="#FFFFFFFF"
             android:fillType="evenOdd"
-            android:pathData="M21,30H43L38.5,49C36.5,56.5 27.5,56.5 25.5,49Z M25.6,38.5a1.9,1.9 0,1 0,3.8 0a1.9,1.9 0,1 0,-3.8 0Z M34.6,38.5a1.9,1.9 0,1 0,3.8 0a1.9,1.9 0,1 0,-3.8 0Z M29.2,51.5a2.8,2.2 0,1 0,5.6 0a2.8,2.2 0,1 0,-5.6 0Z" />
+            android:pathData="M84,34C66,34 52,48 52,66c0,24 32,62 32,62s32,-38 32,-62c0,-18 -14,-32 -32,-32ZM71,66a13,13 0,1 0,26 0a13,13 0,1 0,-26 0Z" />
+        <path
+            android:pathData="M62,138h44"
+            android:strokeWidth="5"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeLineCap="round" />
     </group>
 </vector>

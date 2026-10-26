@@ -43,6 +43,12 @@ class GuideDetailTest {
     }
 
     @Test
+    fun `the hidden contact shows placeholder bars, gone once unlocked`() {
+        show(ContactState.Locked)
+        compose.onNodeWithTag("contact-placeholder", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
     fun `loading shows progress`() {
         show(ContactState.Unlocking)
         compose.onNodeWithText(app.getString(R.string.contact_unlocking)).performScrollTo()
@@ -84,6 +90,7 @@ class GuideDetailTest {
     fun `only the contact details given are shown`() {
         show(ContactState.Unlocked(GuideContact("Camp")), GuideItem(TestGuides.salmon))
         compose.onNodeWithTag("contact-name").performScrollTo()
+        compose.onNodeWithTag("contact-placeholder", useUnmergedTree = true).assertDoesNotExist()
         compose.onNodeWithTag("contact-phone").assertDoesNotExist()
         compose.onNodeWithTag("contact-email").assertDoesNotExist()
         compose.onNodeWithTag("contact-website").assertDoesNotExist()

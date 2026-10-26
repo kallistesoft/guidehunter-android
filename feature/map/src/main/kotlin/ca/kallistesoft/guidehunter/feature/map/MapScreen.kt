@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
@@ -41,6 +43,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -276,11 +279,19 @@ private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
 private fun GuideCards(guides: List<GuideItem>, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(bottom = Spacing.l)) {
         val count = pluralStringResource(R.plurals.guide_count, guides.size, guides.size)
-        Text(
-            if (guides.isEmpty()) stringResource(R.string.no_guides) else count,
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(horizontal = Spacing.screen, vertical = Spacing.xs).testTag("guide-count"),
-        )
+        // A pill, so the count reads over any part of the map.
+        Surface(
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            border = BorderStroke(Sizes.border, MaterialTheme.colorScheme.outlineVariant),
+            modifier = Modifier.padding(start = Spacing.screen, end = Spacing.screen, bottom = Spacing.s),
+        ) {
+            Text(
+                if (guides.isEmpty()) stringResource(R.string.no_guides) else count,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.padding(horizontal = Spacing.m, vertical = Spacing.xs).testTag("guide-count"),
+            )
+        }
         LazyRow(
             contentPadding = PaddingValues(horizontal = Spacing.screen),
             horizontalArrangement = Arrangement.spacedBy(Spacing.m),

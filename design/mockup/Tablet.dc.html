@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter tablet, offer beside the map</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="height: 56px; padding: 6px 8px 0; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0">
+    <a href="#" aria-label="Show distances from my location" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></a>
+    <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; letter-spacing: 0.2px">GuideHunter</span>
+    <a href="{{formHref}}" style="height: 44px; padding: 0 12px; display: flex; align-items: center; color: {{c.green}}; font-weight: 600; font-size: 15px; text-decoration: none">Become a guide</a>
+  </header>
+  <div style="flex: 1; display: flex; min-height: 0">
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+      <nav aria-label="Filters" style="height: 48px; padding: 0 20px; display: flex; align-items: center; gap: 8px; flex-shrink: 0">
+        <span style="height: 32px; padding: 0 12px; border-radius: 10px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: {{c.green}}; background: {{c.greenTint}}; border: 1px solid {{c.greenTint}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>All</span>
+        <span style="height: 32px; padding: 0 12px; border-radius: 10px; box-sizing: border-box; display: flex; align-items: center; font-size: 14px; font-weight: 600; border: 1px solid {{c.outline}}">Hunting</span>
+        <span style="height: 32px; padding: 0 12px; border-radius: 10px; box-sizing: border-box; display: flex; align-items: center; font-size: 14px; font-weight: 600; border: 1px solid {{c.outline}}">Fishing</span>
+        <span style="height: 32px; padding: 0 12px; border-radius: 10px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; border: 1px solid {{c.outline}}">Species<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg></span>
+      </nav>
+      <div style="flex: 1; position: relative; overflow: hidden; background: {{c.land}}">
+        <svg width="880" height="696" viewBox="0 170 390 309" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+          <ellipse cx="212" cy="410" rx="46" ry="34" fill="{{c.park}}"/>
+          <ellipse cx="108" cy="372" rx="40" ry="28" fill="{{c.park}}"/>
+          <ellipse cx="60" cy="150" rx="34" ry="22" fill="{{c.park}}"/>
+          <path d="M0 650 C60 630 130 590 190 545 C230 515 260 480 300 445 L330 470 C290 500 255 535 215 565 C150 615 80 655 0 690 Z" fill="{{c.water}}"/>
+          <path d="M300 445 C315 400 300 330 285 280 C275 240 300 170 340 130 L390 110 L390 345 C365 350 345 365 330 395 C325 420 330 450 330 470 Z" fill="{{c.water}}"/>
+          <ellipse cx="345" cy="212" rx="36" ry="9" transform="rotate(-14 345 212)" fill="{{c.land}}"/>
+          <ellipse cx="182" cy="290" rx="24" ry="15" fill="{{c.water}}"/>
+          <path d="M78 340 C92 326 112 330 120 342 C126 352 112 360 100 356 C90 364 74 356 78 340 Z" fill="{{c.water}}"/>
+          <ellipse cx="140" cy="220" rx="10" ry="6" fill="{{c.water}}"/>
+          <ellipse cx="250" cy="330" rx="8" ry="12" fill="{{c.water}}"/>
+          <ellipse cx="70" cy="420" rx="12" ry="7" fill="{{c.water}}"/>
+          <ellipse cx="160" cy="470" rx="9" ry="5" fill="{{c.water}}"/>
+          <path d="M70 610 C72 500 62 330 46 200" stroke="{{c.road}}" stroke-width="1.2" fill="none"/>
+          <path d="M200 514 C202 440 194 360 196 296" stroke="{{c.road}}" stroke-width="1.2" fill="none"/>
+          <path d="M205 512 C255 470 282 425 292 372" stroke="{{c.road}}" stroke-width="1.2" fill="none"/>
+          <text x="210" y="262" font-family="Barlow, sans-serif" font-size="5.5" font-weight="600" fill="{{c.mapLabel}}">Saguenay</text>
+          <text x="16" y="236" font-family="Barlow, sans-serif" font-size="5.5" font-weight="600" fill="{{c.mapLabel}}">Abitibi</text>
+          <text x="300" y="250" font-family="Barlow, sans-serif" font-size="5" font-style="italic" fill="{{c.mapLabel}}">Gulf of St. Lawrence</text>
+        </svg>
+        <sc-for list="{{pins}}" as="p" hint-placeholder-count="6">
+          <span role="img" aria-label="{{p.title}}" style="position: absolute; left: {{p.left}}px; top: {{p.top}}px; width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center"><svg width="{{p.w}}" height="{{p.h}}" viewBox="0 0 28 38" aria-hidden="true"><path d="M14 1.5C7.1 1.5 1.5 7 1.5 13.9 1.5 23 14 36.5 14 36.5S26.5 23 26.5 13.9C26.5 7 20.9 1.5 14 1.5Z" fill="{{p.color}}" stroke="{{c.pinStroke}}" stroke-width="1.5"/><circle cx="14" cy="14" r="4.5" fill="{{c.pinStroke}}"/></svg></span>
+        </sc-for>
+        <div style="position: absolute; left: 0; right: 0; bottom: 20px; display: flex; flex-direction: column; gap: 8px">
+          <span style="align-self: flex-start; margin-left: 20px; padding: 4px 12px; border-radius: 999px; background: {{c.card}}; border: 1px solid {{c.border}}; font-size: 14px; font-weight: 600">7 guides</span>
+          <div style="display: flex; gap: 12px; padding-left: 20px">
+            <sc-for list="{{cards}}" as="g" hint-placeholder-count="3">
+              <span style="flex: 0 0 240px; box-sizing: border-box; background: {{c.card}}; border: 1.5px solid {{g.border}}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; box-shadow: {{c.shadow}}">
+                <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{g.kindColor}}">{{g.kind}}</span>
+                <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{g.title}}</span>
+                <span style="font-size: 13px; color: {{c.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{g.region}}</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside aria-labelledby="pane-title" style="width: 400px; flex-shrink: 0; background: {{c.pane}}; border-left: 1px solid {{c.border}}; box-sizing: border-box; padding: 8px 20px 24px; display: flex; flex-direction: column; gap: 12px; overflow: hidden">
+      <a href="#" aria-label="Close" style="width: 44px; height: 44px; margin-left: -10px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}; flex-shrink: 0"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></a>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.label}}">Hunting</span>
+      <h1 id="pane-title" style="margin: -6px 0 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 28px; line-height: 1.1">Black bear over bait</h1>
+      <span style="font-size: 15px; color: {{c.muted}}; margin-top: -4px">Abitibi-Témiscamingue</span>
+      <span style="font-size: 15px; font-weight: 600">From CA$2,400 per person</span>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Species</span>
+      <div style="display: flex; gap: 8px">
+        <span style="padding: 4px 12px; border-radius: 10px; border: 1px solid {{c.outline}}; font-size: 15px; font-weight: 600">Black bear</span>
+      </div>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">About this trip</span>
+      <p style="margin: 0; font-size: 16px; line-height: 1.4">Spring hunt from heated blinds over bait sites tended since April. Log cabins, meals and transport from the lodge included. English and French spoken.</p>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Guide and contact</span>
+      <div style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
+        <div style="display: flex; gap: 10px; align-items: flex-start">
+          <span style="color: {{c.muted}}; flex-shrink: 0; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+          <span style="font-size: 15px; line-height: 1.4">The guide’s name, phone, email and website show after a short ad.</span>
+        </div>
+        <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 8px">
+          <span style="width: 62%; height: 14px; border-radius: 6px; background: {{c.skeleton}}"></span>
+          <span style="width: 44%; height: 10px; border-radius: 6px; background: {{c.skeleton}}"></span>
+        </div>
+        <a href="{{adHref}}" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Watch an ad to see the contact</a>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1280,"height":800}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', pane:'#FFFFFF', text:'#17201A', muted:'#5B6659', label:'#B4500F', green:'#2F6B3E', greenTint:'#E3EFE4', primary:'#E8691E', border:'#E6E1D5', outline:'#DDD7C8', skeleton:'#EDE8DC', land:'#EDEAE1', water:'#B7D5E3', park:'#D5E6CC', road:'#FFFFFF', mapLabel:'#5F665C', hunt:'#E8691E', fish:'#1F7A6A', both:'#C99A12', pinStroke:'#FFFFFF', shadow:'0 6px 18px rgba(23,32,26,0.16)'}
+      : {bg:'#0E1611', card:'#17221A', pane:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', green:'#8FD19E', greenTint:'#22382A', primary:'#F27B2B', border:'#24352A', outline:'#2C3B30', skeleton:'#2A3A2F', land:'#18231C', water:'#0F2A33', park:'#1C3022', road:'#2B3B31', mapLabel:'#8C998E', hunt:'#F27B2B', fish:'#4FB3A0', both:'#E9C25A', pinStroke:'#0E1611', shadow:'0 6px 18px rgba(0,0,0,0.45)'};
+    // The phone map's guides, on the wider map: its 390-wide drawing scaled to 880 px, from y = 170.
+    const scale = 880 / 390;
+    const guides = [
+      {id:'bear', act:'HUNT', title:'Black bear over bait', region:'Abitibi-Témiscamingue', x:46, y:206},
+      {id:'walleye', act:'FISH', title:'Walleye on Lac Saint-Jean', region:'Saguenay–Lac-Saint-Jean', x:192, y:268},
+      {id:'moose', act:'BOTH', title:'Moose by canoe, walleye in summer', region:'Haute-Mauricie', x:118, y:362},
+      {id:'trout', act:'FISH', title:'Brook trout, fly-in lakes', region:'Laurentides', x:214, y:420},
+      {id:'deer', act:'HUNT', title:'White-tailed deer on Anticosti', region:'Anticosti Island', x:340, y:206},
+      {id:'salmon', act:'FISH', title:'Atlantic salmon, Gaspé rivers', region:'Gaspé', x:362, y:412}
+    ];
+    const colors = {HUNT: c.hunt, FISH: c.fish, BOTH: c.both};
+    const kinds = {HUNT: 'Hunting', FISH: 'Fishing', BOTH: 'Hunting and fishing'};
+    const pins = guides.map(g => {
+      const selected = g.id === 'bear';
+      return {
+        title: g.title, color: colors[g.act],
+        w: selected ? 36 : 28, h: selected ? 49 : 38,
+        left: Math.round(g.x * scale) - 22, top: Math.round((g.y - 170) * scale) - (selected ? 49 : 42)
+      };
+    });
+    const cards = guides.slice(0, 3).map(g => ({
+      title: g.title, region: g.region,
+      kind: kinds[g.act], kindColor: g.act === 'FISH' ? c.green : c.label,
+      border: g.id === 'bear' ? c.primary : c.border
+    }));
+    const sfx = light ? 'Light' : '';
+    return {c, pins, cards, formHref: 'Form' + sfx + '.dc.html', adHref: 'RewardedAd' + sfx + '.dc.html'};
+  }
+}
+</script>
+</body>
+</html>

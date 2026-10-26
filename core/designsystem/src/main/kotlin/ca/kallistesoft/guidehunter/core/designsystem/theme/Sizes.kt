@@ -26,6 +26,10 @@ object Sizes {
     val guideCardWidth = 240.dp
     val guideCardsInset = 120.dp
 
+    /** The grey bars where a guide's hidden name and contact will be. */
+    val placeholderLine = 14.dp
+    val placeholderLineSmall = 10.dp
+
     /** The "pick on map" map of the "Become a guide" form. */
     val pickerMapHeight = 220.dp
 

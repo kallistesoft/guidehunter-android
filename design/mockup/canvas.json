@@ -1,59 +1,385 @@
 {
   "v": 3,
-  "createdOnFiles": {"v": 1, "at": "2026-10-26T15:00:00Z"},
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-26T15:00:00Z"
+  },
   "title": "GuideHunter mockup",
-  "launch": {"view": "canvas", "page": "find"},
+  "launch": {
+    "view": "canvas",
+    "page": "find"
+  },
   "pages": [
-    {"id": "find", "name": "1 · Find a guide"},
-    {"id": "become", "name": "2 · Become a guide"}
+    {
+      "id": "find",
+      "name": "1 · Find a guide"
+    },
+    {
+      "id": "become",
+      "name": "2 · Become a guide"
+    }
   ],
   "boards": {
-    "Splash.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "1 Splash", "page": "find"},
-    "Main.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "2 Map", "page": "find"},
-    "SpeciesPicker.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "3 Fishing, species picker", "page": "find"},
-    "LocationAsk.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 Location permission", "page": "find"},
-    "MapNear.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "5 Map, nearest first", "page": "find"},
-    "GuideSheet.dc.html": {"x": 2350, "y": 0, "w": 390, "h": 844, "title": "6 Guide offer, contact hidden", "page": "find"},
-    "RewardedAd.dc.html": {"x": 2820, "y": 0, "w": 390, "h": 844, "title": "7 Rewarded ad", "page": "find"},
-    "SheetUnlocked.dc.html": {"x": 3290, "y": 0, "w": 390, "h": 844, "title": "8 Contact unlocked", "page": "find"},
-    "SheetNotEarned.dc.html": {"x": 3760, "y": 0, "w": 390, "h": 844, "title": "8b Ad closed early", "page": "find"},
-    "SheetOffline.dc.html": {"x": 4230, "y": 0, "w": 390, "h": 844, "title": "8c Offline", "page": "find"},
-    "SplashLight.dc.html": {"x": 0, "y": 1264, "w": 390, "h": 844, "title": "1 Splash · light", "page": "find"},
-    "MapLight.dc.html": {"x": 470, "y": 1264, "w": 390, "h": 844, "title": "2 Map · light", "page": "find"},
-    "SpeciesPickerLight.dc.html": {"x": 940, "y": 1264, "w": 390, "h": 844, "title": "3 Fishing, species picker · light", "page": "find"},
-    "LocationAskLight.dc.html": {"x": 1410, "y": 1264, "w": 390, "h": 844, "title": "4 Location permission · light", "page": "find"},
-    "MapNearLight.dc.html": {"x": 1880, "y": 1264, "w": 390, "h": 844, "title": "5 Map, nearest first · light", "page": "find"},
-    "GuideSheetLight.dc.html": {"x": 2350, "y": 1264, "w": 390, "h": 844, "title": "6 Guide offer, contact hidden · light", "page": "find"},
-    "RewardedAdLight.dc.html": {"x": 2820, "y": 1264, "w": 390, "h": 844, "title": "7 Rewarded ad · light", "page": "find"},
-    "SheetUnlockedLight.dc.html": {"x": 3290, "y": 1264, "w": 390, "h": 844, "title": "8 Contact unlocked · light", "page": "find"},
-    "SheetNotEarnedLight.dc.html": {"x": 3760, "y": 1264, "w": 390, "h": 844, "title": "8b Ad closed early · light", "page": "find"},
-    "SheetOfflineLight.dc.html": {"x": 4230, "y": 1264, "w": 390, "h": 844, "title": "8c Offline · light", "page": "find"},
-    "Form.dc.html": {"x": 0, "y": 0, "w": 390, "h": 844, "title": "1 Become a guide", "page": "become"},
-    "FormErrors.dc.html": {"x": 470, "y": 0, "w": 390, "h": 844, "title": "2 Sent empty: errors", "page": "become"},
-    "FormFilled.dc.html": {"x": 940, "y": 0, "w": 390, "h": 844, "title": "3 Species, description, pin (scrolled)", "page": "become"},
-    "FormContact.dc.html": {"x": 1410, "y": 0, "w": 390, "h": 844, "title": "4 Price, contact, send", "page": "become"},
-    "FormFailed.dc.html": {"x": 1880, "y": 0, "w": 390, "h": 844, "title": "4b Couldn't send", "page": "become"},
-    "Sent.dc.html": {"x": 2350, "y": 0, "w": 390, "h": 844, "title": "5 Application sent", "page": "become"},
-    "FormLight.dc.html": {"x": 0, "y": 1264, "w": 390, "h": 844, "title": "1 Become a guide · light", "page": "become"},
-    "FormErrorsLight.dc.html": {"x": 470, "y": 1264, "w": 390, "h": 844, "title": "2 Sent empty: errors · light", "page": "become"},
-    "FormFilledLight.dc.html": {"x": 940, "y": 1264, "w": 390, "h": 844, "title": "3 Species, description, pin (scrolled) · light", "page": "become"},
-    "FormContactLight.dc.html": {"x": 1410, "y": 1264, "w": 390, "h": 844, "title": "4 Price, contact, send · light", "page": "become"},
-    "FormFailedLight.dc.html": {"x": 1880, "y": 1264, "w": 390, "h": 844, "title": "4b Couldn't send · light", "page": "become"},
-    "SentLight.dc.html": {"x": 2350, "y": 1264, "w": 390, "h": 844, "title": "5 Application sent · light", "page": "become"}
+    "Splash.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 Splash",
+      "page": "find"
+    },
+    "Main.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 Map",
+      "page": "find"
+    },
+    "SpeciesPicker.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 Fishing, species picker",
+      "page": "find"
+    },
+    "LocationAsk.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 Location permission",
+      "page": "find"
+    },
+    "MapNear.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5 Map, nearest first",
+      "page": "find"
+    },
+    "GuideSheet.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "6 Guide offer, contact hidden",
+      "page": "find"
+    },
+    "RewardedAd.dc.html": {
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "7 Rewarded ad",
+      "page": "find"
+    },
+    "SheetUnlocked.dc.html": {
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "8 Contact unlocked",
+      "page": "find"
+    },
+    "SheetNotEarned.dc.html": {
+      "x": 3760,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "8b Ad closed early",
+      "page": "find"
+    },
+    "SheetOffline.dc.html": {
+      "x": 4230,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "8c Offline",
+      "page": "find"
+    },
+    "SplashLight.dc.html": {
+      "x": 0,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "1 Splash · light",
+      "page": "find"
+    },
+    "MapLight.dc.html": {
+      "x": 470,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "2 Map · light",
+      "page": "find"
+    },
+    "SpeciesPickerLight.dc.html": {
+      "x": 940,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "3 Fishing, species picker · light",
+      "page": "find"
+    },
+    "LocationAskLight.dc.html": {
+      "x": 1410,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "4 Location permission · light",
+      "page": "find"
+    },
+    "MapNearLight.dc.html": {
+      "x": 1880,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "5 Map, nearest first · light",
+      "page": "find"
+    },
+    "GuideSheetLight.dc.html": {
+      "x": 2350,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "6 Guide offer, contact hidden · light",
+      "page": "find"
+    },
+    "RewardedAdLight.dc.html": {
+      "x": 2820,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "7 Rewarded ad · light",
+      "page": "find"
+    },
+    "SheetUnlockedLight.dc.html": {
+      "x": 3290,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "8 Contact unlocked · light",
+      "page": "find"
+    },
+    "SheetNotEarnedLight.dc.html": {
+      "x": 3760,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "8b Ad closed early · light",
+      "page": "find"
+    },
+    "SheetOfflineLight.dc.html": {
+      "x": 4230,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "8c Offline · light",
+      "page": "find"
+    },
+    "Form.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 Become a guide",
+      "page": "become"
+    },
+    "FormErrors.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 Sent empty: errors",
+      "page": "become"
+    },
+    "FormFilled.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 Species, description, pin (scrolled)",
+      "page": "become"
+    },
+    "FormContact.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 Location buttons, price, contact, send",
+      "page": "become"
+    },
+    "FormFailed.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4b Couldn't send",
+      "page": "become"
+    },
+    "Sent.dc.html": {
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5 Application sent",
+      "page": "become"
+    },
+    "FormLight.dc.html": {
+      "x": 0,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "1 Become a guide · light",
+      "page": "become"
+    },
+    "FormErrorsLight.dc.html": {
+      "x": 470,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "2 Sent empty: errors · light",
+      "page": "become"
+    },
+    "FormFilledLight.dc.html": {
+      "x": 940,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "3 Species, description, pin (scrolled) · light",
+      "page": "become"
+    },
+    "FormContactLight.dc.html": {
+      "x": 1880,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "4 Location buttons, price, contact, send · light",
+      "page": "become"
+    },
+    "FormFailedLight.dc.html": {
+      "x": 2350,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "4b Couldn't send · light",
+      "page": "become"
+    },
+    "SentLight.dc.html": {
+      "x": 2820,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "5 Application sent · light",
+      "page": "become"
+    },
+    "FormCoordinates.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3b No map: coordinates",
+      "page": "become"
+    },
+    "FormCoordinatesLight.dc.html": {
+      "x": 1410,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "3b No map: coordinates · light",
+      "page": "become"
+    },
+    "Tablet.dc.html": {
+      "x": 4700,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "title": "9 Tablet: the offer beside the map",
+      "page": "find"
+    },
+    "TabletLight.dc.html": {
+      "x": 4700,
+      "y": 1264,
+      "w": 1280,
+      "h": 800,
+      "title": "9 Tablet: the offer beside the map · light",
+      "page": "find"
+    }
   },
   "order": [
-    "Main.dc.html", "Splash.dc.html", "SpeciesPicker.dc.html", "LocationAsk.dc.html", "MapNear.dc.html",
-    "GuideSheet.dc.html", "RewardedAd.dc.html", "SheetUnlocked.dc.html", "SheetNotEarned.dc.html", "SheetOffline.dc.html",
-    "SplashLight.dc.html", "MapLight.dc.html", "SpeciesPickerLight.dc.html", "LocationAskLight.dc.html", "MapNearLight.dc.html",
-    "GuideSheetLight.dc.html", "RewardedAdLight.dc.html", "SheetUnlockedLight.dc.html", "SheetNotEarnedLight.dc.html", "SheetOfflineLight.dc.html",
-    "Form.dc.html", "FormErrors.dc.html", "FormFilled.dc.html", "FormContact.dc.html", "FormFailed.dc.html", "Sent.dc.html",
-    "FormLight.dc.html", "FormErrorsLight.dc.html", "FormFilledLight.dc.html", "FormContactLight.dc.html", "FormFailedLight.dc.html", "SentLight.dc.html"
+    "Main.dc.html",
+    "Splash.dc.html",
+    "SpeciesPicker.dc.html",
+    "LocationAsk.dc.html",
+    "MapNear.dc.html",
+    "GuideSheet.dc.html",
+    "RewardedAd.dc.html",
+    "SheetUnlocked.dc.html",
+    "SheetNotEarned.dc.html",
+    "SheetOffline.dc.html",
+    "Tablet.dc.html",
+    "SplashLight.dc.html",
+    "MapLight.dc.html",
+    "SpeciesPickerLight.dc.html",
+    "LocationAskLight.dc.html",
+    "MapNearLight.dc.html",
+    "GuideSheetLight.dc.html",
+    "RewardedAdLight.dc.html",
+    "SheetUnlockedLight.dc.html",
+    "SheetNotEarnedLight.dc.html",
+    "SheetOfflineLight.dc.html",
+    "TabletLight.dc.html",
+    "Form.dc.html",
+    "FormErrors.dc.html",
+    "FormFilled.dc.html",
+    "FormCoordinates.dc.html",
+    "FormContact.dc.html",
+    "FormFailed.dc.html",
+    "Sent.dc.html",
+    "FormLight.dc.html",
+    "FormErrorsLight.dc.html",
+    "FormFilledLight.dc.html",
+    "FormCoordinatesLight.dc.html",
+    "FormContactLight.dc.html",
+    "FormFailedLight.dc.html",
+    "SentLight.dc.html"
   ],
   "notes": {
-    "findDark": {"x": 0, "y": -300, "text": "Find a guide · dark", "kind": "title1", "maxW": 4620, "page": "find"},
-    "findLight": {"x": 0, "y": 964, "text": "Find a guide · light", "kind": "title1", "maxW": 4620, "page": "find"},
-    "becomeDark": {"x": 0, "y": -300, "text": "Become a guide · dark", "kind": "title1", "maxW": 2740, "page": "become"},
-    "becomeLight": {"x": 0, "y": 964, "text": "Become a guide · light", "kind": "title1", "maxW": 2740, "page": "become"}
+    "findDark": {
+      "x": 0,
+      "y": -300,
+      "text": "Find a guide · dark",
+      "kind": "title1",
+      "maxW": 5980,
+      "page": "find"
+    },
+    "findLight": {
+      "x": 0,
+      "y": 964,
+      "text": "Find a guide · light",
+      "kind": "title1",
+      "maxW": 5980,
+      "page": "find"
+    },
+    "becomeDark": {
+      "x": 0,
+      "y": -300,
+      "text": "Become a guide · dark",
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "become"
+    },
+    "becomeLight": {
+      "x": 0,
+      "y": 964,
+      "text": "Become a guide · light",
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "become"
+    }
   },
   "designSystems": []
 }
