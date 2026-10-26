@@ -76,6 +76,15 @@ Debug builds always use Google's test ads. For release, create the AdMob app and
 `ADMOB_APP_ID` and `ADMOB_REWARDED_ID` (`local.properties`, or CI variables). Until then, release builds show test
 ads too.
 
+### Baseline profile
+
+The release build ships a baseline profile (startup, the map, a guide's offer precompiled). To record it again
+after the screens change: `./gradlew :app:generateBaselineProfile` runs `:baselineprofile` on a Gradle-managed
+emulator (Pixel 6, API 34, downloaded on first run) and writes `app/src/main/generated/baselineProfiles/`, which is
+committed. The test tags it drives are `guide-count`, `guide-sample-bear`, `guide-detail`, `become-guide` and
+`field-business-name`: they must stay testTags **and** resource ids (`Modifier.testTag` with
+`testTagsAsResourceId` on the root; see `MainActivity`).
+
 ## Commands
 
 ```sh

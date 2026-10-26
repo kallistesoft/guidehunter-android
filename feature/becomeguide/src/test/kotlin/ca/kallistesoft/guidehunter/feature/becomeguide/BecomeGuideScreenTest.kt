@@ -1,6 +1,15 @@
 package ca.kallistesoft.guidehunter.feature.becomeguide
 
+import android.Manifest
 import android.app.Application
+import androidx.activity.compose.LocalActivityResultRegistryOwner
+import androidx.activity.result.ActivityResultRegistry
+import androidx.activity.result.ActivityResultRegistryOwner
+import androidx.activity.result.contract.ActivityResultContract
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.performTextClearance
+import org.robolectric.Shadows.shadowOf
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -17,6 +26,7 @@ import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.GuideApplication
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
@@ -36,17 +46,33 @@ class BecomeGuideScreenTest {
 
     private val app: Application = RuntimeEnvironment.getApplication()
     private val repository = FakeGuideApplicationRepository()
+    private val location = FakeLocationRepository()
     private var backs = 0
+
+    /** What the system answers to the location permission request. */
+    private var permissionAnswer = false
 
     private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
 
+    private val registry = object : ActivityResultRegistry() {
+        override fun <I, O> onLaunch(requestCode: Int, contract: ActivityResultContract<I, O>, input: I, options: androidx.core.app.ActivityOptionsCompat?) {
+            if (permissionAnswer) shadowOf(app).grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
+            dispatchResult(requestCode, permissionAnswer as O)
+        }
+    }
+
     private fun launch() {
-        val viewModel = BecomeGuideViewModel(repository, SavedStateHandle())
+        val viewModel = BecomeGuideViewModel(repository, location, SavedStateHandle())
         compose.setContent {
-            GuideHunterTheme {
-                BecomeGuideScreen(onBack = { backs++ }, viewModel = viewModel, picker = { _, onPick, modifier ->
-                    Box(modifier.clickable { onPick(PICKED) })
-                })
+            val owner = object : ActivityResultRegistryOwner {
+                override val activityResultRegistry = registry
+            }
+            CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
+                GuideHunterTheme {
+                    BecomeGuideScreen(onBack = { backs++ }, viewModel = viewModel, picker = { _, onPick, modifier ->
+                        Box(modifier.clickable { onPick(PICKED) })
+                    })
+                }
             }
         }
     }
@@ -133,6 +159,49 @@ class BecomeGuideScreenTest {
         fillIn()
         compose.onNodeWithTag("send").performScrollTo().performClick()
         compose.onNodeWithText(str(R.string.sending)).performScrollTo()
+    }
+
+    @Test
+    fun `use my location asks for the permission, then places the pin, or says why not`() {
+        launch()
+        compose.onNodeWithTag("use-my-location").performScrollTo().performClick()
+        compose.onNodeWithText(str(R.string.location_denied)).performScrollTo()
+        assertEquals(0, location.reads)
+
+        permissionAnswer = true
+        compose.onNodeWithTag("use-my-location").performScrollTo().performClick()
+        compose.onNodeWithText(str(R.string.location_failed)).performScrollTo() // the fake has no fix yet
+        assertEquals(1, location.reads)
+
+        location.location = PICKED
+        compose.onNodeWithTag("use-my-location").performScrollTo().performClick() // allowed now: no dialog
+        compose.onNodeWithText(str(R.string.field_location_set)).performScrollTo()
+        compose.onNodeWithText(str(R.string.location_failed)).assertDoesNotExist()
+        assertEquals(2, location.reads)
+    }
+
+    @Test
+    fun `typed coordinates place the pin, once they're within the world`() {
+        launch()
+        fillIn() // the map tap places PICKED; the coordinates below replace it
+        compose.onNodeWithTag("type-coordinates").performScrollTo().performClick()
+        // The fields start with the pin's coordinates (48.0, -79.0): valid, so "Place the pin" is enabled.
+        compose.onNodeWithTag("latitude").performScrollTo().performTextClearance()
+        compose.onNodeWithTag("latitude").performTextInput("48,24")
+        compose.onNodeWithTag("longitude").performScrollTo().performTextClearance()
+        compose.onNodeWithTag("longitude").performTextInput("-200")
+        compose.onNodeWithTag("coordinates-ok").performScrollTo().assertIsNotEnabled()
+        compose.onNodeWithTag("longitude").performScrollTo().performTextClearance()
+        compose.onNodeWithTag("longitude").performTextInput("-79.02")
+        compose.onNodeWithTag("coordinates-ok").performScrollTo().performClick()
+        compose.onNodeWithTag("coordinates").assertDoesNotExist()
+        compose.onNodeWithText(str(R.string.field_location_set)).performScrollTo()
+
+        compose.onNodeWithTag("type-coordinates").performScrollTo().performClick()
+        compose.onNodeWithTag("coordinates-cancel").performScrollTo().performClick()
+        compose.onNodeWithTag("latitude").assertDoesNotExist()
+        compose.onNodeWithTag("send").performScrollTo().performClick()
+        assertEquals(GeoPoint(48.24, -79.02), repository.submitted.single().location)
     }
 
     @Test

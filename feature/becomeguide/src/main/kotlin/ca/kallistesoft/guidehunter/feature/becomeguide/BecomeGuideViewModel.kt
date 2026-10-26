@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
 import ca.kallistesoft.guidehunter.core.data.GuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.data.LocationRepository
 import ca.kallistesoft.guidehunter.core.model.ApplicationField
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
@@ -28,6 +29,8 @@ data class BecomeGuideUiState(
     /** The fields to flag: shown only after a first try to send, not while the guide is still typing. */
     val errors: Set<ApplicationField> = emptySet(),
     val send: SendState = SendState.EDITING,
+    /** "Use my location" found none (location off, no fix): the pin has to be placed another way. */
+    val locationFailed: Boolean = false,
 )
 
 /**
@@ -37,6 +40,7 @@ data class BecomeGuideUiState(
 @HiltViewModel
 class BecomeGuideViewModel @Inject constructor(
     private val repository: GuideApplicationRepository,
+    private val locationRepository: LocationRepository,
     private val savedState: SavedStateHandle,
 ) : ViewModel() {
     private val form = MutableStateFlow(restore())
@@ -44,8 +48,10 @@ class BecomeGuideViewModel @Inject constructor(
     /** Sent stays sent across process death, so the form can't go twice; a send in progress starts over. */
     private val send = MutableStateFlow(if (savedState.get<Boolean>(KEY_SENT) == true) SendState.SENT else SendState.EDITING)
 
-    val uiState: StateFlow<BecomeGuideUiState> = combine(form, showErrors, send) { form, showErrors, send ->
-        BecomeGuideUiState(form, if (showErrors) form.errors() else emptySet(), send)
+    private val locationFailed = MutableStateFlow(false)
+
+    val uiState: StateFlow<BecomeGuideUiState> = combine(form, showErrors, send, locationFailed) { form, showErrors, send, failed ->
+        BecomeGuideUiState(form, if (showErrors) form.errors() else emptySet(), send, failed)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
 
     private fun initialState() =
@@ -66,7 +72,18 @@ class BecomeGuideViewModel @Inject constructor(
 
     fun setRegion(value: String) = edit { it.copy(region = value) }
 
-    fun setLocation(location: GeoPoint) = edit { it.copy(location = location) }
+    fun setLocation(location: GeoPoint) {
+        locationFailed.value = false
+        edit { it.copy(location = location) }
+    }
+
+    /** "Use my location": places the pin where the phone is (the guide is often at the lodge), if Android knows. */
+    fun useMyLocation() {
+        viewModelScope.launch {
+            val location = locationRepository.current()
+            if (location != null) setLocation(location) else locationFailed.value = true
+        }
+    }
 
     fun setPrice(value: String) = edit { it.copy(priceFrom = value.filter(Char::isDigit).take(MAX_PRICE_DIGITS)) }
 

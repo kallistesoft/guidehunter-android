@@ -8,6 +8,7 @@ import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.GuideApplication
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
@@ -15,6 +16,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -24,8 +26,9 @@ class BecomeGuideViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val repository = FakeGuideApplicationRepository()
+    private val location = FakeLocationRepository()
 
-    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = BecomeGuideViewModel(repository, saved)
+    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = BecomeGuideViewModel(repository, location, saved)
 
     /** Types [application] into the form, field by field, as the guide would. */
     private fun BecomeGuideViewModel.fill(application: GuideApplication = TestGuides.application) {
@@ -80,6 +83,27 @@ class BecomeGuideViewModelTest {
         assertEquals(setOf(Species.WALLEYE), vm.state.form.species)
         vm.toggleSpecies(Species.WALLEYE)
         assertTrue(vm.state.form.species.isEmpty())
+    }
+
+    @Test
+    fun `use my location places the pin where the phone is, or says it couldn't`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.useMyLocation()
+        assertTrue("no fix: said so", vm.state.locationFailed)
+        assertEquals(null, vm.state.form.location)
+
+        location.location = TestGuides.quebecCity
+        vm.useMyLocation()
+        assertEquals(TestGuides.quebecCity, vm.state.form.location)
+        assertFalse(vm.state.locationFailed)
+        assertEquals(2, location.reads)
+
+        location.location = null
+        vm.useMyLocation()
+        assertTrue(vm.state.locationFailed)
+        vm.setLocation(GeoPoint(48.0, -79.0)) // the map or the coordinates: the message goes
+        assertFalse(vm.state.locationFailed)
     }
 
     @Test

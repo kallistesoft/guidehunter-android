@@ -57,17 +57,17 @@ BetterHunter.
 
 ## Large screens and accessibility
 
-- Tablets and unfolded foldables: show the guide's offer beside the map (Navigation 3 scenes, a `SupportingPane`
-  strategy) instead of a bottom sheet, and collapse the card row when the window height is compact (a phone in
-  landscape leaves little map).
-- The form's "pick on map" needs a way that doesn't need a tap on the map (a "Use my location" button, or
-  latitude/longitude fields) for TalkBack and switch users; a map inside a scrolling form also fights the scroll.
+- On a wide window a guide's offer opens beside the map (done, as a layout switch in the map screen). The Navigation 3
+  scene version (a `SupportingPane` strategy, the offer as its own `NavKey`) would also give it its own back-stack
+  entry; worth it once there are more destinations.
+- Collapse the card row when the window height is compact (a phone in landscape leaves little map).
 - A `scrollBehavior` on the form's top bar.
 
 ## Tooling
 
 - Screenshot tests (Roborazzi) and instrumented flow tests, as in BetterHunter, once the screens settle.
-- A baseline profile module (cold start → map → open a guide), which `profileinstaller` is waiting for.
+- Record the baseline profile (`./gradlew :app:generateBaselineProfile`, README "Baseline profile") on a machine
+  with an emulator, and commit `app/src/main/generated/baselineProfiles/`; the module and the generator are in place.
 - Compose compiler reports, to check the map's stability (the guide lists come from the Kotlin module, so Compose
   compares them by instance).
 - Match the app to the mockup (`design/`): the pin colours (teal for fishing, gold for both), the grey bars in the

@@ -165,6 +165,28 @@ class MapScreenTest {
     }
 
     @Test
+    @Config(qualifiers = "en-w1000dp-h800dp")
+    fun `on a wide window the offer opens beside the map, and closes`() {
+        launch()
+        compose.onNodeWithTag("guide-bear").performClick()
+        compose.onNodeWithTag("guide-pane").assertIsDisplayed()
+        compose.onNodeWithTag("guide-detail").assertIsDisplayed()
+        compose.onNodeWithTag("guide-count").assertIsDisplayed() // the map stays in view beside it
+        compose.onNodeWithTag("unlock").performScrollTo().performClick()
+        compose.onNodeWithTag("contact-name").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("pane-close").performClick()
+        compose.onNodeWithTag("guide-pane").assertDoesNotExist()
+    }
+
+    @Test
+    fun `on a phone the offer opens as a sheet, not a pane`() {
+        launch()
+        compose.onNodeWithTag("guide-bear").performClick()
+        compose.onNodeWithTag("guide-detail").assertIsDisplayed()
+        compose.onNodeWithTag("guide-pane").assertDoesNotExist()
+    }
+
+    @Test
     fun `become a guide opens the form`() {
         launch()
         compose.onNodeWithTag("become-guide").performClick()

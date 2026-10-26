@@ -4,6 +4,10 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import ca.kallistesoft.guidehunter.core.ads.AdConsent
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
@@ -23,7 +27,9 @@ class MainActivity : AppCompatActivity() {
         adConsent.gatherConsent(this)
         setContent {
             GuideHunterTheme {
-                GuideHunterApp()
+                // Test tags as resource ids: the baseline profile generator (UiAutomator) finds the screens by them.
+                @OptIn(ExperimentalComposeUiApi::class)
+                GuideHunterApp(Modifier.semantics { testTagsAsResourceId = true })
             }
         }
     }

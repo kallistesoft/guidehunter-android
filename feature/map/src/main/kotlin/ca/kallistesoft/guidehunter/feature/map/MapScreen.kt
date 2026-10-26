@@ -12,9 +12,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -182,19 +184,32 @@ internal fun MapContent(
             )
         },
     ) { padding ->
-        Column(Modifier.padding(padding).fillMaxSize()) {
-            Filters(state.filter, onDiscipline, onSpecies)
-            Box(Modifier.weight(1f).fillMaxWidth()) {
-                map(MapContent(state.guides, state.userLocation, onSelect), Modifier.fillMaxSize())
-                when {
-                    state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    else -> GuideCards(state.guides, onSelect, Modifier.align(Alignment.BottomCenter))
+        BoxWithConstraints(Modifier.padding(padding).fillMaxSize()) {
+            // A wide window (tablet, unfolded foldable): the guide's offer beside the map, so the map stays in view.
+            val sidePane = maxWidth >= Sizes.sidePaneMinWindowWidth
+            Row(Modifier.fillMaxSize()) {
+                Column(Modifier.weight(1f).fillMaxHeight()) {
+                    Filters(state.filter, onDiscipline, onSpecies)
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                        map(MapContent(state.guides, state.userLocation, onSelect), Modifier.fillMaxSize())
+                        when {
+                            state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                            else -> GuideCards(state.guides, onSelect, Modifier.align(Alignment.BottomCenter))
+                        }
+                    }
+                }
+                if (sidePane) {
+                    state.selected?.let { selected ->
+                        GuidePane(selected, onUnlock, onDismiss, Modifier.width(Sizes.sidePaneWidth).fillMaxHeight())
+                    }
+                }
+            }
+            if (!sidePane) {
+                state.selected?.let { selected ->
+                    GuideSheet(selected = selected, onUnlock = onUnlock, onDismiss = onDismiss)
                 }
             }
         }
-    }
-    state.selected?.let { selected ->
-        GuideSheet(selected = selected, onUnlock = onUnlock, onDismiss = onDismiss)
     }
 }
 

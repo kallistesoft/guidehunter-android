@@ -23,11 +23,12 @@ class Maps(
 
 /** App navigation (Navigation 3): the map, and the "Become a guide" form over it. */
 @Composable
-fun GuideHunterApp(maps: Maps = Maps()) {
+fun GuideHunterApp(modifier: Modifier = Modifier, maps: Maps = Maps()) {
     val backStack = rememberNavBackStack(GuideMap)
     // Guarded: two quick taps on back (or "Back to the map") during the animation must not empty the stack.
     val back: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
     NavDisplay(
+        modifier = modifier,
         backStack = backStack,
         onBack = back,
         entryDecorators = listOf(

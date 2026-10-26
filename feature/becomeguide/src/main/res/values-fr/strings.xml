@@ -12,6 +12,15 @@
     <string name="field_location">Où les chasseurs et pêcheurs vous rejoignent</string>
     <string name="field_location_help">Touchez la carte pour placer votre repère.</string>
     <string name="field_location_set">Repère placé. Touchez ailleurs pour le déplacer.</string>
+    <string name="use_my_location">Utiliser ma position</string>
+    <string name="type_coordinates">Entrer les coordonnées</string>
+    <string name="location_failed">Votre position est introuvable. Touchez la carte ou entrez les coordonnées.</string>
+    <string name="location_denied">Position non autorisée. Touchez la carte ou entrez les coordonnées.</string>
+    <string name="coordinates_help">En degrés décimaux, comme sur un GPS ou une application de cartes.</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="coordinates_place">Placer le repère</string>
+    <string name="coordinates_cancel">Annuler</string>
     <string name="field_price">Prix par personne, à partir de (facultatif)</string>
     <string name="field_price_suffix">$ CA</string>
     <string name="field_email">Courriel</string>

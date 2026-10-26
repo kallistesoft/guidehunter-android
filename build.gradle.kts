@@ -2,6 +2,8 @@
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
+    alias(libs.plugins.android.test) apply false
+    alias(libs.plugins.baselineprofile) apply false
     alias(libs.plugins.compose) apply false
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.hilt) apply false
@@ -13,7 +15,7 @@ plugins {
 }
 
 // Unit test coverage of the app's modules, merged (see KoverConventionPlugin): ./gradlew koverVerifyUnit.
-// Not :core:testing (test doubles).
+// Not :core:testing (test doubles) nor :baselineprofile (a device test that records the profile).
 dependencies {
     listOf(
         ":app",

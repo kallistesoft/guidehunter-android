@@ -1,11 +1,16 @@
 package ca.kallistesoft.guidehunter.feature.becomeguide
 
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,20 +35,27 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
+import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GhTextStyles
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
@@ -69,6 +81,12 @@ fun BecomeGuideScreen(
     },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    // "Use my location" needs the (approximate) location permission; refused, the pin is placed another way.
+    var locationDenied by rememberSaveable { mutableStateOf(false) }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) viewModel.useMyLocation() else locationDenied = true
+    }
     // Made once: a new instance per keystroke would stop every field from skipping recomposition.
     val actions = remember(viewModel) {
         FormActions(
@@ -83,11 +101,16 @@ fun BecomeGuideScreen(
             phone = viewModel::setPhone,
             website = viewModel::setWebsite,
             submit = viewModel::submit,
+            useMyLocation = {
+                val granted = ContextCompat.checkSelfPermission(context, LOCATION_PERMISSION) == PackageManager.PERMISSION_GRANTED
+                if (granted) viewModel.useMyLocation() else permission.launch(LOCATION_PERMISSION)
+            },
         )
     }
     BecomeGuideContent(
         state = state,
         actions = actions,
+        locationDenied = locationDenied,
         onBack = onBack,
         picker = picker,
         modifier = modifier,
@@ -107,6 +130,7 @@ internal class FormActions(
     val phone: (String) -> Unit,
     val website: (String) -> Unit,
     val submit: () -> Unit,
+    val useMyLocation: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,6 +138,7 @@ internal class FormActions(
 internal fun BecomeGuideContent(
     state: BecomeGuideUiState,
     actions: FormActions,
+    locationDenied: Boolean,
     onBack: () -> Unit,
     picker: @Composable (GeoPoint?, (GeoPoint) -> Unit, Modifier) -> Unit,
     modifier: Modifier = Modifier,
@@ -136,7 +161,7 @@ internal fun BecomeGuideContent(
             if (state.send == SendState.SENT) {
                 Sent(onBack)
             } else {
-                Form(state, actions, picker)
+                Form(state, actions, locationDenied, picker)
             }
         }
     }
@@ -147,10 +172,12 @@ internal fun BecomeGuideContent(
 private fun Form(
     state: BecomeGuideUiState,
     actions: FormActions,
+    locationDenied: Boolean,
     picker: @Composable (GeoPoint?, (GeoPoint) -> Unit, Modifier) -> Unit,
 ) {
     val form = state.form
     val errors = state.errors
+    var coordinates by rememberSaveable { mutableStateOf(false) }
     Column(
         Modifier
             .widthIn(max = Sizes.contentMaxWidth)
@@ -213,7 +240,24 @@ private fun Form(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        // Two ways that need no map (TalkBack, a switch, or just a guide who knows the coordinates).
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+            SecondaryButton(stringResource(R.string.use_my_location), actions.useMyLocation, Modifier.weight(1f).testTag("use-my-location"))
+            SecondaryButton(stringResource(R.string.type_coordinates), { coordinates = true }, Modifier.weight(1f).testTag("type-coordinates"))
+        }
+        if (state.locationFailed) Error(stringResource(R.string.location_failed))
+        if (locationDenied) Error(stringResource(R.string.location_denied))
         errors.message(ApplicationField.LOCATION)?.let { Error(it) }
+        if (coordinates) {
+            CoordinatesEntry(
+                initial = form.location,
+                onPick = {
+                    actions.location(it)
+                    coordinates = false
+                },
+                onCancel = { coordinates = false },
+            )
+        }
 
         Field(
             form.priceFrom,
@@ -242,6 +286,52 @@ private fun Form(
             enabled = !sending,
         )
     }
+}
+
+/** Latitude and longitude typed in, for a guide who knows them (or can't use the map): inline, under the map. */
+@Composable
+private fun CoordinatesEntry(initial: GeoPoint?, onPick: (GeoPoint) -> Unit, onCancel: () -> Unit) {
+    var latitude by rememberSaveable { mutableStateOf(initial?.latitude?.toString().orEmpty()) }
+    var longitude by rememberSaveable { mutableStateOf(initial?.longitude?.toString().orEmpty()) }
+    val point = parseCoordinates(latitude, longitude)
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.m), modifier = Modifier.testTag("coordinates")) {
+        Text(stringResource(R.string.coordinates_help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+            OutlinedTextField(
+                value = latitude,
+                onValueChange = { latitude = it },
+                label = { Text(stringResource(R.string.latitude)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
+                modifier = Modifier.weight(1f).testTag("latitude"),
+            )
+            OutlinedTextField(
+                value = longitude,
+                onValueChange = { longitude = it },
+                label = { Text(stringResource(R.string.longitude)) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
+                modifier = Modifier.weight(1f).testTag("longitude"),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+            TextButton(onClick = onCancel, modifier = Modifier.testTag("coordinates-cancel")) { Text(stringResource(R.string.coordinates_cancel)) }
+            SecondaryButton(
+                stringResource(R.string.coordinates_place),
+                { point?.let(onPick) },
+                Modifier.weight(1f).testTag("coordinates-ok"),
+                enabled = point != null,
+            )
+        }
+    }
+}
+
+/** "48.24" and "-79,02" (a comma as typed in French) within the world, else null. */
+internal fun parseCoordinates(latitude: String, longitude: String): GeoPoint? {
+    val lat = latitude.trim().replace(',', '.').toDoubleOrNull() ?: return null
+    val lng = longitude.trim().replace(',', '.').toDoubleOrNull() ?: return null
+    if (lat !in -90.0..90.0 || lng !in -180.0..180.0) return null
+    return GeoPoint(lat, lng)
 }
 
 @Composable
@@ -317,3 +407,6 @@ private fun Set<ApplicationField>.message(field: ApplicationField): String? {
 }
 
 private const val DESCRIPTION_LINES = 4
+
+/** Approximate is enough to place the pin near the lodge. */
+private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION

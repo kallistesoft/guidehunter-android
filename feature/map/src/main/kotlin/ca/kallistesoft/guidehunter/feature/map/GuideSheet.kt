@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
@@ -23,7 +24,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -55,6 +58,19 @@ import java.util.Currency
 internal fun GuideSheet(selected: SelectedGuide, onUnlock: () -> Unit, onDismiss: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         GuideDetail(selected, onUnlock, rememberLinkOpener())
+    }
+}
+
+/** A guide's offer beside the map, on a wide window: a close button, then the same detail as the sheet. */
+@Composable
+internal fun GuidePane(selected: SelectedGuide, onUnlock: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(modifier.testTag("guide-pane"), color = MaterialTheme.colorScheme.surfaceContainerLow) {
+        Column {
+            IconButton(onClick = onDismiss, modifier = Modifier.padding(Spacing.s).testTag("pane-close")) {
+                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.close))
+            }
+            GuideDetail(selected, onUnlock, rememberLinkOpener())
+        }
     }
 }
 

@@ -31,4 +31,8 @@ object Sizes {
 
     /** The width of a sheet or form on a large screen (tablet, landscape): wider is hard to read. */
     val contentMaxWidth = 640.dp
+
+    /** From this window width (a tablet, an unfolded foldable) a guide's offer opens beside the map, not over it. */
+    val sidePaneMinWindowWidth = 840.dp
+    val sidePaneWidth = 400.dp
 }

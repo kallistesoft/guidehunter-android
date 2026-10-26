@@ -12,6 +12,15 @@
     <string name="field_location">Where hunters and anglers meet you</string>
     <string name="field_location_help">Tap the map to place your pin.</string>
     <string name="field_location_set">Pin placed. Tap elsewhere to move it.</string>
+    <string name="use_my_location">Use my location</string>
+    <string name="type_coordinates">Type coordinates</string>
+    <string name="location_failed">Your location couldn\'t be found. Tap the map or type the coordinates.</string>
+    <string name="location_denied">Location not allowed. Tap the map or type the coordinates.</string>
+    <string name="coordinates_help">Decimal degrees, as a GPS or a maps app shows them.</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="coordinates_place">Place the pin</string>
+    <string name="coordinates_cancel">Cancel</string>
     <string name="field_price">Price per person, from (optional)</string>
     <string name="field_price_suffix">CAD</string>
     <string name="field_email">Email</string>
