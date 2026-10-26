@@ -327,6 +327,22 @@
       "h": 960,
       "title": "Logo concepts · light",
       "page": "logo"
+    },
+    "Logo.dc.html": {
+      "x": 1480,
+      "y": 0,
+      "w": 1400,
+      "h": 760,
+      "title": "Chosen: the hook pin",
+      "page": "logo"
+    },
+    "LogoLight.dc.html": {
+      "x": 1480,
+      "y": 1380,
+      "w": 1400,
+      "h": 760,
+      "title": "Chosen: the hook pin · light",
+      "page": "logo"
     }
   },
   "order": [
@@ -367,7 +383,9 @@
     "FormFailedLight.dc.html",
     "SentLight.dc.html",
     "Logos.dc.html",
-    "LogosLight.dc.html"
+    "LogosLight.dc.html",
+    "Logo.dc.html",
+    "LogoLight.dc.html"
   ],
   "notes": {
     "findDark": {
@@ -407,7 +425,7 @@
       "y": -300,
       "text": "Logo · dark",
       "kind": "title1",
-      "maxW": 1400,
+      "maxW": 2880,
       "page": "logo"
     },
     "logoLight": {
@@ -415,7 +433,7 @@
       "y": 1080,
       "text": "Logo · light",
       "kind": "title1",
-      "maxW": 1400,
+      "maxW": 2880,
       "page": "logo"
     }
   },

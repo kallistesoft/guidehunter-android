@@ -13,11 +13,14 @@ body{margin:0}
 </style>
 </helmet>
 <a href="{{mapHref}}" aria-label="Open the map" style="width: 390px; height: 844px; box-sizing: border-box; background: {{bg}}; display: flex; align-items: center; justify-content: center; text-decoration: none">
-  <svg width="168" height="168" viewBox="0 0 168 168" role="img" aria-label="GuideHunter">
-    <circle cx="84" cy="84" r="66" fill="{{disc}}"/>
-    <path d="M84 34C66 34 52 48 52 66c0 24 32 62 32 62s32-38 32-62c0-18-14-32-32-32Z" fill="#F27B2B"/>
-    <circle cx="84" cy="66" r="13" fill="{{disc}}"/>
-    <path d="M60 136h48" stroke="#F7F2EA" stroke-width="5" stroke-linecap="round"/>
+  <svg width="168" height="168" viewBox="18 18 72 72" role="img" aria-label="GuideHunter">
+    <!-- The hook pin (Logo.dc.html), on the adaptive icon's 108 grid. -->
+    <g transform="translate(0 -3)" fill="#F27B2B" stroke="#F27B2B">
+      <path fill-rule="evenodd" stroke="none" d="M54 23 C44.6 23 37 30.6 37 40 C37 51 50 62 54 68 C58 62 71 51 71 40 C71 30.6 63.4 23 54 23 Z M48 40 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 Z"/>
+      <path d="M54 62 L54 76 A9 9 0 0 1 36 76 L36 72" fill="none" stroke-width="5"/>
+      <path d="M33.5 73 L37.5 64 L38.5 73 Z" stroke="none"/>
+      <path d="M38.2 67.5 L42.5 72.5 L38.4 71.5 Z" stroke="none"/>
+    </g>
   </svg>
 </a>
 </x-dc>
@@ -27,7 +30,6 @@ class Component extends DCLogic {
     const light = (this.props.theme ?? 'dark') === 'light';
     return {
       bg: light ? '#2D5B38' : '#1F4229',
-      disc: light ? '#1F4229' : '#17331F',
       mapHref: light ? 'MapLight.dc.html' : 'Main.dc.html'
     };
   }

@@ -1,27 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- App icon and splash icon foreground, from the mockup's splash (design/mockup/Splash.dc.html): a blaze-orange map
-     pin over a cream ground line, on the icon's green. Drawn on the mockup's 168 grid, scaled into the 66 dp safe zone;
-     the pin's hole is cut out (even-odd), so the green shows through. -->
+<!-- App icon and splash icon foreground: the hook pin (design/mockup/Logo.dc.html), in blaze orange on the icon's green. The map pin's tip runs into a fish hook; the pin's hole is cut out (even-odd), so the green shows through. Drawn on the adaptive icon's 108 grid, inside the 66 dp safe zone. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <group
-        android:pivotX="84"
-        android:pivotY="84"
-        android:scaleX="0.62"
-        android:scaleY="0.62"
-        android:translateX="-30"
-        android:translateY="-30">
+    <group android:translateY="-3">
         <path
             android:fillColor="#F27B2B"
             android:fillType="evenOdd"
-            android:pathData="M84,34C66,34 52,48 52,66c0,24 32,62 32,62s32,-38 32,-62c0,-18 -14,-32 -32,-32ZM71,66a13,13 0,1 0,26 0a13,13 0,1 0,-26 0Z" />
+            android:pathData="M54,23C44.6,23 37,30.6 37,40C37,51 50,62 54,68C58,62 71,51 71,40C71,30.6 63.4,23 54,23ZM48,40a6,6 0,1 0,12 0a6,6 0,1 0,-12 0Z" />
         <path
-            android:pathData="M62,138h44"
+            android:pathData="M54,62L54,76A9,9 0,0 1,36 76L36,72"
             android:strokeWidth="5"
-            android:strokeColor="#F7F2EA"
-            android:strokeLineCap="round" />
+            android:strokeColor="#F27B2B" />
+        <!-- The hook's point, leaning in toward the shank, and its barb. -->
+        <path
+            android:fillColor="#F27B2B"
+            android:pathData="M33.5,73L37.5,64L38.5,73Z" />
+        <path
+            android:fillColor="#F27B2B"
+            android:pathData="M38.2,67.5L42.5,72.5L38.4,71.5Z" />
     </group>
 </vector>

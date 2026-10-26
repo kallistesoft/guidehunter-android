@@ -27,6 +27,7 @@ other artboards are small wrappers that `<dc-import>` them with another theme or
 | `Tablet.dc.html`: a tablet (1280×800), the offer beside the map | | `TabletLight` |
 | `Sent.dc.html`: application sent | | `SentLight` |
 | `Logos.dc.html`: app icon concepts (A crossed rod and rifle, B pin, C badge) at launcher sizes and themed | | `LogosLight` |
+| `Logo.dc.html`: the chosen icon, the hook pin, at launcher sizes, themed, and on the splash | | `LogoLight` |
 
 ## Pages
 
@@ -34,7 +35,7 @@ other artboards are small wrappers that `<dc-import>` them with another theme or
 |---|---|
 | 1 · Find a guide | 1 Splash → 2 Map → 3 Fishing, species picker → 4 Location permission → 5 Map, nearest first → 6 Guide offer, contact hidden → 7 Rewarded ad → 8 Contact unlocked (8b ad closed early, 8c offline) → 9 Tablet: the offer beside the map |
 | 2 · Become a guide | 1 Form → 2 Sent empty: errors → 3 Species, description, pin (scrolled) → 3b No map: coordinates → 4 Location buttons, price, contact, send (4b couldn't send) → 5 Application sent |
-| 3 · Logo | App icon concepts: crossed rod and rifle, three ways (not chosen yet; the app uses the orange pin) |
+| 3 · Logo | Concepts: crossed rod and rifle, three ways → Chosen: the hook pin (the app's icon and splash) |
 
 ## Decisions shown in the mockup
 
@@ -45,7 +46,10 @@ other artboards are small wrappers that `<dc-import>` them with another theme or
   (and a guide who knows the coordinates); the coordinates open inline, not in a dialog.
 - **Tablets and unfolded foldables** (840 dp and wider): the guide's offer in a 400 dp pane beside the map, with a
   close button; the open guide's card is outlined in orange and its pin is larger.
-- **The icon and splash:** the orange pin over a cream ground line, on the green.
+- **The icon and splash: the hook pin.** The map pin's tip runs into a fish hook (its point leaning in, with a
+  barb). The pin says where, the hook says outdoors: one bold shape that holds at 48 px, with no weapon, for the
+  newcomers the app is for. Orange on the icon's green; one colour in Android 13's themed icon. Chosen over a crossed
+  rod and rifle (`Logos.dc.html`), which turns into a thin "X" at home-screen size.
 - **Map:** the mockup draws a stylised southern Quebec. The app shows Google Maps (Compose), dark map style in dark
   theme.
 - **Sample guides** are made up (`*.example` addresses); real ones come from Firestore.

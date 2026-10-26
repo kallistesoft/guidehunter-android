@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter logo, the hook pin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 1400px; height: 760px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; padding: 48px 56px; display: flex; flex-direction: column; gap: 28px; position: relative">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute">
+    <defs>
+      <!-- The hook pin on the adaptive icon's 108 grid: the pin (its hole cut out) and the hook its tip runs into. -->
+      <g id="gh-hookpin" transform="translate(0 -3)">
+        <path fill-rule="evenodd" d="M54 23 C44.6 23 37 30.6 37 40 C37 51 50 62 54 68 C58 62 71 51 71 40 C71 30.6 63.4 23 54 23 Z M48 40 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 Z"/>
+        <path d="M54 62 L54 76 A9 9 0 0 1 36 76 L36 72" fill="none" stroke-width="5"/>
+        <path d="M33.5 73 L37.5 64 L38.5 73 Z"/>
+        <path d="M38.2 67.5 L42.5 72.5 L38.4 71.5 Z"/>
+      </g>
+    </defs>
+  </svg>
+
+  <div style="display: flex; flex-direction: column; gap: 6px">
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.label}}">App icon · chosen</span>
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 40px; line-height: 1.05">The hook pin</h1>
+    <p style="margin: 0; font-size: 16px; color: {{c.muted}}; max-width: 880px">The map pin says where; its tip running into a fish hook says what. One bold shape, so it holds at home-screen size.</p>
+  </div>
+
+  <div style="display: flex; gap: 56px; align-items: flex-start">
+    <svg width="320" height="320" viewBox="18 18 72 72" role="img" aria-label="The hook pin, large">
+      <circle cx="54" cy="54" r="36" fill="#1F4229"/>
+      <use href="#gh-hookpin" fill="#F27B2B" stroke="#F27B2B"/>
+    </svg>
+
+    <div style="display: flex; flex-direction: column; gap: 28px">
+      <div style="display: flex; align-items: flex-end; gap: 24px">
+        <sc-for list="{{sizes}}" as="t" hint-placeholder-count="3">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+            <svg width="{{t.size}}" height="{{t.size}}" viewBox="18 18 72 72" role="img" aria-label="The hook pin, {{t.caption}}">
+              <circle cx="54" cy="54" r="36" fill="#1F4229"/>
+              <use href="#gh-hookpin" fill="#F27B2B" stroke="#F27B2B"/>
+            </svg>
+            <span style="font-size: 12px; color: {{c.muted}}">{{t.caption}}</span>
+          </div>
+        </sc-for>
+      </div>
+      <span style="height: 1px; background: {{c.border}}"></span>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Themed icon (Android 13+)</span>
+      <div style="display: flex; gap: 24px">
+        <sc-for list="{{themed}}" as="t" hint-placeholder-count="2">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 8px">
+            <svg width="64" height="64" viewBox="18 18 72 72" role="img" aria-label="The hook pin, themed, {{t.caption}}">
+              <circle cx="54" cy="54" r="36" fill="{{t.bg}}"/>
+              <use href="#gh-hookpin" fill="{{t.fg}}" stroke="{{t.fg}}"/>
+            </svg>
+            <span style="font-size: 12px; color: {{c.muted}}">{{t.caption}}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-left: auto">
+      <a href="{{splashHref}}" aria-label="The splash screen" style="width: 210px; height: 455px; border-radius: 28px; background: {{c.splash}}; display: flex; align-items: center; justify-content: center; border: 1px solid {{c.border}}">
+        <svg width="120" height="120" viewBox="18 18 72 72" aria-hidden="true">
+          <use href="#gh-hookpin" fill="#F27B2B" stroke="#F27B2B"/>
+        </svg>
+      </a>
+      <span style="font-size: 12px; color: {{c.muted}}">Splash screen</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1400,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', text:'#17201A', muted:'#5B6659', label:'#B4500F', border:'#E6E1D5', splash:'#2D5B38'}
+      : {bg:'#0E1611', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', border:'#24352A', splash:'#1F4229'};
+    const sizes = [192, 96, 48].map(size => ({size, caption: size === 48 ? '48 px · home screen' : size + ' px'}));
+    const themed = [
+      {caption: 'Light', bg: '#E3EFE4', fg: '#2F6B3E'},
+      {caption: 'Dark', bg: '#22382A', fg: '#8FD19E'}
+    ];
+    return {c, sizes, themed, splashHref: light ? 'SplashLight.dc.html' : 'Splash.dc.html'};
+  }
+}
+</script>
+</body>
+</html>
