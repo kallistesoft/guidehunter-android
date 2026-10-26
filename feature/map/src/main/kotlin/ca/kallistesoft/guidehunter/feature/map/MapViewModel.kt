@@ -3,6 +3,7 @@ package ca.kallistesoft.guidehunter.feature.map
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ca.kallistesoft.guidehunter.core.ads.AdConsent
 import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -67,6 +69,8 @@ data class MapUiState(
     val userLocation: GeoPoint? = null,
     /** The guide whose offer is open, or null. */
     val selected: SelectedGuide? = null,
+    /** The user's region requires a way back to their ad consent choices: show "Privacy options". */
+    val privacyOptionsRequired: Boolean = false,
 )
 
 /**
@@ -79,6 +83,7 @@ class MapViewModel @Inject constructor(
     private val guideRepository: GuideRepository,
     private val locationRepository: LocationRepository,
     private val rewardedAds: RewardedAds,
+    private val adConsent: AdConsent,
     private val savedState: SavedStateHandle,
 ) : ViewModel() {
     private val filter = MutableStateFlow(
@@ -94,28 +99,44 @@ class MapViewModel @Inject constructor(
     private val unlocked = MutableStateFlow(savedState.get<Array<String>>(KEY_UNLOCKED).orEmpty().toSet())
     private val contacts = MutableStateFlow<Map<String, ContactState>>(emptyMap())
 
-    val uiState: StateFlow<MapUiState> = combine(
-        guideRepository.guides,
-        filter,
-        userLocation,
-        selectedId,
-        contacts,
-    ) { guides, filter, location, selectedId, contacts ->
+    /**
+     * Every guide with its distance, and the ones the filter shows (nearest first). Computed only when the guides,
+     * the filter or the location change: opening a guide doesn't rebuild the list, so the map's markers and the
+     * cards don't redraw. (A few dozen guides: cheap enough for the main thread.)
+     */
+    private val listing = combine(guideRepository.guides, filter, userLocation) { guides, filter, location ->
         val items = guides.map { guide ->
             GuideItem(guide, location?.let { guide.location.distanceKm(it).roundToInt() })
         }
-        val shown = items.filter { filter.matches(it.guide) }.sortedBy { it.distanceKm ?: 0 }
+        Listing(items, items.filter { filter.matches(it.guide) }.sortedBy { it.distanceKm ?: 0 }, filter, location)
+    }.distinctUntilChanged()
+
+    val uiState: StateFlow<MapUiState> = combine(
+        listing,
+        selectedId,
+        contacts,
+        adConsent.privacyOptionsRequired,
+    ) { listing, selectedId, contacts, privacyRequired ->
         MapUiState(
             loading = false,
-            guides = shown,
-            filter = filter,
-            userLocation = location,
-            selected = items.find { it.guide.id == selectedId }?.let { item ->
+            guides = listing.shown,
+            filter = listing.filter,
+            userLocation = listing.location,
+            selected = listing.all.find { it.guide.id == selectedId }?.let { item ->
                 SelectedGuide(item, contacts[item.guide.id] ?: ContactState.Locked)
             },
+            privacyOptionsRequired = privacyRequired,
         )
-    }.onStart { reloadRestoredContact() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
+    }.onStart {
+        reloadRestoredContact()
+        // The distances show at once when the location permission was given before (null without it).
+        if (userLocation.value == null) refreshLocation()
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
+
+    private data class Listing(val all: List<GuideItem>, val shown: List<GuideItem>, val filter: GuideFilter, val location: GeoPoint?)
+
+    /** "Privacy options": the ad consent choices again (only offered where the user's region requires it). */
+    fun showPrivacyOptions() = adConsent.showPrivacyOptions()
 
     /** Shows the guides of [discipline] (null: both). A species of the other discipline is cleared. */
     fun chooseDiscipline(discipline: Discipline?) = setFilter { current ->
@@ -129,7 +150,9 @@ class MapViewModel @Inject constructor(
         selectedId.value = guideId
         savedState[KEY_SELECTED] = guideId
         if (guideId in unlocked.value) {
-            if (contacts.value[guideId] !is ContactState.Unlocked) viewModelScope.launch { load(guideId) }
+            // Unlocked before: read the contact unless it's there or already on its way (no second ad, ever).
+            val contact = contacts.value[guideId]
+            if (contact !is ContactState.Unlocked && contact != ContactState.Unlocking) viewModelScope.launch { load(guideId) }
         } else {
             rewardedAds.preload()
         }
@@ -159,7 +182,7 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /** Reads the user's location again (the permission was just granted, or the screen opened with it). */
+    /** Reads the user's location (the permission was just granted, or the screen opened with it). */
     fun refreshLocation() {
         viewModelScope.launch { locationRepository.current()?.let { userLocation.value = it } }
     }

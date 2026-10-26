@@ -74,7 +74,7 @@ class GuideMapTest {
 
         compose.setContent {
             GuideHunterTheme {
-                GuideMap(MapContent(TestGuides.all.map { GuideItem(it) }, TestGuides.quebecCity, null) { selected += it })
+                GuideMap(MapContent(TestGuides.all.map { GuideItem(it) }, TestGuides.quebecCity) { selected += it })
             }
         }
         compose.waitForIdle()

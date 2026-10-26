@@ -8,4 +8,6 @@ android {
 
 dependencies {
     implementation(libs.maps.compose)
+
+    testImplementation(libs.mockk)
 }

@@ -14,6 +14,7 @@ import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
+import ca.kallistesoft.guidehunter.core.model.GuideApplication
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideApplicationRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
@@ -89,7 +90,7 @@ class BecomeGuideScreenTest {
             str(R.string.error_business_name),
             str(R.string.error_activity),
             str(R.string.error_species),
-            str(R.string.error_description, 30),
+            str(R.string.error_description, GuideApplication.MIN_DESCRIPTION),
             str(R.string.error_region),
             str(R.string.error_location),
             str(R.string.error_email),
@@ -100,8 +101,10 @@ class BecomeGuideScreenTest {
     @Test
     fun `a wrong price and phone are flagged`() {
         launch()
+        type("field-price", "0")
         type("field-phone", "555")
         compose.onNodeWithTag("send").performScrollTo().performClick()
+        compose.onNodeWithText(str(R.string.error_price)).performScrollTo()
         compose.onNodeWithText(str(R.string.error_phone)).performScrollTo()
     }
 

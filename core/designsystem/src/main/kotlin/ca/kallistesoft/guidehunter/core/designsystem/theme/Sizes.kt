@@ -15,15 +15,16 @@ object Sizes {
     val borderEmphasis = 1.5.dp
 
     // Touch and buttons
-    /** Smallest touch target (round icon buttons). */
-    val touchTarget = 44.dp
+    /** Smallest touch target (round icon buttons), Android's minimum. */
+    val touchTarget = 48.dp
     val buttonHeight = 52.dp
 
     // Content
     val cardPadding = 18.dp
 
-    /** A guide's card over the map. */
+    /** A guide's card over the map, and the height the cards and their count take at the map's bottom. */
     val guideCardWidth = 240.dp
+    val guideCardsInset = 120.dp
 
     /** The "pick on map" map of the "Become a guide" form. */
     val pickerMapHeight = 220.dp

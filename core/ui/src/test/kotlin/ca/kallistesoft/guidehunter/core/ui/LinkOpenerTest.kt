@@ -30,8 +30,19 @@ class LinkOpenerTest {
     fun `a website opens over https, with or without its scheme`() {
         assertTrue(links.open("example.com"))
         assertEquals("https://example.com", started().data.toString())
-        assertTrue(links.open("http://example.com/a"))
-        assertEquals("http://example.com/a", started().data.toString())
+        assertTrue(links.open(" HTTP://example.com/a "))
+        assertEquals("upgraded, whatever the case", "https://example.com/a", started().data.toString())
+        assertTrue(links.open("https://Example.com/b?c=d"))
+        assertEquals("https://Example.com/b?c=d", started().data.toString())
+    }
+
+    @Test
+    fun `a website typed by a guide can't be a script or an empty host`() {
+        assertFalse(links.open("javascript:alert(1)"))
+        assertFalse(links.open("https://"))
+        assertFalse(links.open("   "))
+        assertFalse(links.open("not a host"))
+        assertEquals("nothing opened", null, shadowOf(app).nextStartedActivity)
     }
 
     @Test
@@ -40,8 +51,15 @@ class LinkOpenerTest {
         val intent = started()
         assertEquals(Intent.ACTION_SENDTO, intent.action)
         assertEquals("mailto:guide@example.com?subject=Trip%20found", intent.data.toString())
+        assertEquals("Trip found", intent.getStringExtra(Intent.EXTRA_SUBJECT))
         links.email("guide@example.com")
         assertEquals("mailto:guide@example.com", started().data.toString())
+    }
+
+    @Test
+    fun `an address typed by a guide can't add recipients or a body`() {
+        links.email(" a@b.com?cc=x@y.com&body=hi ")
+        assertEquals("mailto:a%40b.com%3Fcc%3Dx%40y.com%26body%3Dhi".replace("%40", "@"), started().data.toString())
     }
 
     @Test

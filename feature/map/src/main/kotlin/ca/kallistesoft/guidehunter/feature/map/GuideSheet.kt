@@ -17,7 +17,7 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material3.AssistChip
+import androidx.compose.foundation.border
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,9 +28,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import ca.kallistesoft.guidehunter.core.designsystem.component.LinkButton
@@ -80,9 +82,7 @@ internal fun GuideDetail(selected: SelectedGuide, onUnlock: () -> Unit, links: L
 
         Section(stringResource(R.string.section_species))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            guide.species.forEach { species ->
-                AssistChip(onClick = {}, enabled = false, label = { Text(stringResource(species.label)) })
-            }
+            guide.species.forEach { species -> SpeciesTag(stringResource(species.label)) }
         }
 
         Section(stringResource(R.string.section_about))
@@ -91,6 +91,18 @@ internal fun GuideDetail(selected: SelectedGuide, onUnlock: () -> Unit, links: L
         Section(stringResource(R.string.section_contact))
         ContactCard(selected.contact, onUnlock, links)
     }
+}
+
+/** A species the guide offers: a label, not a button (a disabled chip would read as one to TalkBack). */
+@Composable
+private fun SpeciesTag(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        modifier = Modifier
+            .border(Sizes.border, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.extraSmall)
+            .padding(horizontal = Spacing.m, vertical = Spacing.xs),
+    )
 }
 
 @Composable
@@ -122,7 +134,7 @@ private fun ContactCard(contact: ContactState, onUnlock: () -> Unit, links: Link
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Spacing.m),
                 ) {
-                    CircularProgressIndicator(Modifier.size(Sizes.iconL))
+                    CircularProgressIndicator(Modifier.size(Sizes.iconL).testTag("contact-loading"))
                     Text(stringResource(R.string.contact_unlocking))
                 }
                 is ContactState.Unlocked -> ContactDetails(contact.contact, links)
@@ -190,16 +202,25 @@ private fun ContactLink(icon: ImageVector, text: String, tag: String, onClick: (
 
 /** "Abitibi · About 470 km from you", or just the region while the user's location is unknown. */
 @Composable
-internal fun GuideItem.subtitle(): String = listOfNotNull(
-    guide.region.takeIf { it.isNotBlank() },
-    distanceKm?.let { stringResource(R.string.distance_km, NumberFormat.getIntegerInstance().format(it)) },
-).joinToString(" · ")
+internal fun GuideItem.subtitle(): String {
+    // Formats are made once per locale, not for every card on every pass.
+    val locale = LocalConfiguration.current.locales[0]
+    val format = remember(locale) { NumberFormat.getIntegerInstance(locale) }
+    return listOfNotNull(
+        guide.region.takeIf { it.isNotBlank() },
+        distanceKm?.let { stringResource(R.string.distance_km, format.format(it)) },
+    ).joinToString(" · ")
+}
 
 @Composable
-private fun Guide.price(): String = priceFrom?.let { price ->
-    val format = NumberFormat.getCurrencyInstance().apply {
-        runCatching { currency = Currency.getInstance(this@price.currency) }
-        maximumFractionDigits = 0
+private fun Guide.price(): String {
+    val price = priceFrom ?: return stringResource(R.string.price_on_request)
+    val locale = LocalConfiguration.current.locales[0]
+    val format = remember(locale, currency) {
+        NumberFormat.getCurrencyInstance(locale).apply {
+            runCatching { this.currency = Currency.getInstance(this@price.currency) }
+            maximumFractionDigits = 0
+        }
     }
-    stringResource(R.string.price_from, format.format(price))
-} ?: stringResource(R.string.price_on_request)
+    return stringResource(R.string.price_from, format.format(price))
+}

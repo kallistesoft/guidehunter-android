@@ -1,8 +1,13 @@
 package ca.kallistesoft.guidehunter.feature.map
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +25,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -35,10 +42,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +53,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -63,7 +70,6 @@ import ca.kallistesoft.guidehunter.core.ui.label
 data class MapContent(
     val guides: List<GuideItem>,
     val userLocation: GeoPoint?,
-    val selectedId: String?,
     val onSelect: (String) -> Unit,
 )
 
@@ -80,18 +86,25 @@ fun MapScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-        if (granted.values.any { it }) viewModel.refreshLocation()
+    // The location permission, in its three states: granted (read the location), denied once (explain, then ask
+    // again), denied for good (only Settings can turn it on).
+    var rationale by rememberSaveable { mutableStateOf(false) }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        when {
+            granted -> viewModel.refreshLocation()
+            context.findActivity()?.let { ActivityCompat.shouldShowRequestPermissionRationale(it, LOCATION_PERMISSION) } == true ->
+                rationale = true
+            else -> openAppSettings(context)
+        }
     }
-    // Distances show at once when the permission was given before; otherwise only once the user asks.
-    LaunchedEffect(Unit) { if (hasLocationPermission(context)) viewModel.refreshLocation() }
 
     MapContent(
         state = state,
         onBecomeGuide = onBecomeGuide,
         onLocate = {
-            if (hasLocationPermission(context)) viewModel.refreshLocation() else permission.launch(LOCATION_PERMISSIONS)
+            if (hasLocationPermission(context)) viewModel.refreshLocation() else permission.launch(LOCATION_PERMISSION)
         },
+        onPrivacyOptions = viewModel::showPrivacyOptions,
         onDiscipline = viewModel::chooseDiscipline,
         onSpecies = viewModel::chooseSpecies,
         onSelect = viewModel::select,
@@ -99,6 +112,35 @@ fun MapScreen(
         onUnlock = viewModel::unlock,
         map = map,
         modifier = modifier,
+    )
+    if (rationale) {
+        LocationRationale(
+            onAllow = {
+                rationale = false
+                permission.launch(LOCATION_PERMISSION)
+            },
+            onDismiss = { rationale = false },
+        )
+    }
+}
+
+/** Why the app asks for the location, shown after a first "Don't allow". */
+@Composable
+private fun LocationRationale(onAllow: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.location_rationale_title)) },
+        text = { Text(stringResource(R.string.location_rationale)) },
+        confirmButton = {
+            TextButton(onClick = onAllow, modifier = Modifier.testTag("rationale-allow")) {
+                Text(stringResource(R.string.location_rationale_allow))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, modifier = Modifier.testTag("rationale-not-now")) {
+                Text(stringResource(R.string.location_rationale_not_now))
+            }
+        },
     )
 }
 
@@ -108,6 +150,7 @@ internal fun MapContent(
     state: MapUiState,
     onBecomeGuide: () -> Unit,
     onLocate: () -> Unit,
+    onPrivacyOptions: () -> Unit,
     onDiscipline: (Discipline?) -> Unit,
     onSpecies: (Species?) -> Unit,
     onSelect: (String) -> Unit,
@@ -127,6 +170,11 @@ internal fun MapContent(
                     }
                 },
                 actions = {
+                    if (state.privacyOptionsRequired) {
+                        IconButton(onClick = onPrivacyOptions, modifier = Modifier.testTag("privacy-options")) {
+                            Icon(Icons.Default.Shield, contentDescription = stringResource(R.string.privacy_options))
+                        }
+                    }
                     TextButton(onClick = onBecomeGuide, modifier = Modifier.testTag("become-guide")) {
                         Text(stringResource(R.string.become_guide))
                     }
@@ -137,7 +185,7 @@ internal fun MapContent(
         Column(Modifier.padding(padding).fillMaxSize()) {
             Filters(state.filter, onDiscipline, onSpecies)
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                map(MapContent(state.guides, state.userLocation, state.selected?.item?.guide?.id, onSelect), Modifier.fillMaxSize())
+                map(MapContent(state.guides, state.userLocation, onSelect), Modifier.fillMaxSize())
                 when {
                     state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                     else -> GuideCards(state.guides, onSelect, Modifier.align(Alignment.BottomCenter))
@@ -177,7 +225,7 @@ private fun Filters(filter: GuideFilter, onDiscipline: (Discipline?) -> Unit, on
 
 @Composable
 private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
     Box {
         FilterChip(
             selected = filter.species != null,
@@ -222,7 +270,7 @@ private fun GuideCards(guides: List<GuideItem>, onSelect: (String) -> Unit, modi
             contentPadding = PaddingValues(horizontal = Spacing.screen),
             horizontalArrangement = Arrangement.spacedBy(Spacing.m),
         ) {
-            items(guides, key = { it.guide.id }) { item ->
+            items(guides, key = { it.guide.id }, contentType = { "guide" }) { item ->
                 Card(
                     onClick = { onSelect(item.guide.id) },
                     modifier = Modifier.width(Sizes.guideCardWidth).testTag("guide-${item.guide.id}"),
@@ -249,7 +297,20 @@ private fun GuideCards(guides: List<GuideItem>, onSelect: (String) -> Unit, modi
     }
 }
 
-private val LOCATION_PERMISSIONS = arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
+/** Approximate is enough for "about 450 km away", and the only location the app ever asks for. */
+private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION
 
 private fun hasLocationPermission(context: Context): Boolean =
-    LOCATION_PERMISSIONS.any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+    ContextCompat.checkSelfPermission(context, LOCATION_PERMISSION) == PackageManager.PERMISSION_GRANTED
+
+/** Denied for good ("Don't ask again"): the app's settings page is the only way to allow the location. */
+private fun openAppSettings(context: Context) {
+    val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
+    context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
+}

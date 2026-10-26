@@ -21,8 +21,12 @@ class FakeGuideRepository(
     /** Set to make [contact] throw, like Firestore offline. */
     var failure: Exception? = null
 
+    /** Set to hold a contact read until it's completed, like a slow network. */
+    var onContact: CompletableDeferred<Unit>? = null
+
     override suspend fun contact(guideId: String): GuideContact? {
         contactsRead += guideId
+        onContact?.await()
         failure?.let { throw it }
         return contacts[guideId]
     }

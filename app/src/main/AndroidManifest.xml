@@ -4,9 +4,8 @@
 
     <!-- Network: the guides (Firestore), the maps and ads (AdMob). -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- "How far is it": asked only when the user taps the location button. Coarse is enough; fine if offered. -->
+    <!-- "How far is it": asked only when the user taps the location button. Approximate is all it needs. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <queries>
         <!-- A guide's contact: Custom Tabs and browsers for the website, mail apps, the dialer. -->

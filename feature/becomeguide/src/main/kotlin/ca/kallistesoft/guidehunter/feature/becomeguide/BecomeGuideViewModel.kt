@@ -41,11 +41,15 @@ class BecomeGuideViewModel @Inject constructor(
 ) : ViewModel() {
     private val form = MutableStateFlow(restore())
     private val showErrors = MutableStateFlow(savedState[KEY_SHOW_ERRORS] ?: false)
-    private val send = MutableStateFlow(SendState.EDITING)
+    /** Sent stays sent across process death, so the form can't go twice; a send in progress starts over. */
+    private val send = MutableStateFlow(if (savedState.get<Boolean>(KEY_SENT) == true) SendState.SENT else SendState.EDITING)
 
     val uiState: StateFlow<BecomeGuideUiState> = combine(form, showErrors, send) { form, showErrors, send ->
         BecomeGuideUiState(form, if (showErrors) form.errors() else emptySet(), send)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), BecomeGuideUiState(form.value))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), initialState())
+
+    private fun initialState() =
+        BecomeGuideUiState(form.value, if (showErrors.value) form.value.errors() else emptySet(), send.value)
 
     fun setBusinessName(value: String) = edit { it.copy(businessName = value) }
 
@@ -85,6 +89,7 @@ class BecomeGuideViewModel @Inject constructor(
         viewModelScope.launch {
             send.value = try {
                 repository.submit(application)
+                savedState[KEY_SENT] = true
                 SendState.SENT
             } catch (e: CancellationException) {
                 throw e
@@ -134,6 +139,7 @@ class BecomeGuideViewModel @Inject constructor(
         const val KEY_SPECIES = "species"
         const val KEY_LOCATION = "location"
         const val KEY_SHOW_ERRORS = "showErrors"
+        const val KEY_SENT = "sent"
         const val MAX_PRICE_DIGITS = 6
     }
 }

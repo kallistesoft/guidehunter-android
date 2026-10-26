@@ -38,6 +38,9 @@ val admobRelease = mapOf(
     "appId" to (setting("ADMOB_APP_ID") ?: admobTest.getValue("appId")),
     "rewarded" to (setting("ADMOB_REWARDED_ID") ?: admobTest.getValue("rewarded")),
 )
+if (admobRelease == admobTest && gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+    logger.warn("WARNING: ADMOB_APP_ID / ADMOB_REWARDED_ID not set: this release build serves Google's test ads only.")
+}
 
 /** The AdMob App ID goes in the manifest (`${admobAppId}`), the ad unit in BuildConfig. */
 fun com.android.build.api.dsl.ApplicationBuildType.admob(ids: Map<String, String>) {

@@ -130,6 +130,22 @@ class BecomeGuideViewModelTest {
         vm.submit()
         repository.onSubmit?.complete(Unit)
         assertEquals(1, repository.submitted.size)
+        assertEquals(SendState.SENT, vm.state.send)
+    }
+
+    @Test
+    fun `a sent form stays sent across process death`() = runTest {
+        val saved = SavedStateHandle()
+        viewModel(saved).apply {
+            fill()
+            submit()
+        }
+        val restored = viewModel(saved)
+        assertEquals("before collecting too", SendState.SENT, restored.state.send)
+        collecting(restored.uiState)
+        assertEquals(SendState.SENT, restored.state.send)
+        restored.submit()
+        assertEquals("not sent twice", 1, repository.submitted.size)
     }
 
     @Test
@@ -151,6 +167,7 @@ class BecomeGuideViewModelTest {
             submit()
         }
         val restored = viewModel(saved)
+        assertEquals("the errors are back before the screen collects", setOf(ApplicationField.EMAIL), restored.state.errors)
         collecting(restored.uiState)
         assertEquals(TestGuides.application.copy(website = "example.com", location = GeoPoint(1.0, 2.0), email = ""), restored.state.form)
         assertEquals(setOf(ApplicationField.EMAIL), restored.state.errors)

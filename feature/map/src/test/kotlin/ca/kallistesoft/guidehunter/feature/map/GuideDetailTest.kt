@@ -37,8 +37,8 @@ class GuideDetailTest {
     @Test
     fun `the offer shows its price, place and distance`() {
         show(ContactState.Locked)
-        compose.onNodeWithText("From CA$2,400 per person", substring = true, useUnmergedTree = true).assertExists()
-        compose.onNodeWithText("Abitibi · About 470 km from you").assertExists()
+        compose.onNodeWithText(app.getString(R.string.price_from, "CA$2,400"), useUnmergedTree = true).assertExists()
+        compose.onNodeWithText("Abitibi · " + app.getString(R.string.distance_km, "470")).assertExists()
         compose.onNodeWithText(app.getString(ca.kallistesoft.guidehunter.core.ui.R.string.species_black_bear)).assertExists()
     }
 
@@ -46,11 +46,12 @@ class GuideDetailTest {
     fun `loading shows progress`() {
         show(ContactState.Unlocking)
         compose.onNodeWithText(app.getString(R.string.contact_unlocking)).performScrollTo()
+        compose.onNodeWithTag("contact-loading").assertExists()
         compose.onNodeWithTag("unlock").assertDoesNotExist()
     }
 
     @Test
-    fun `an ad closed early or offline offers the ad again`() {
+    fun `an ad closed early offers the ad again`() {
         show(ContactState.Failed(UnlockError.NOT_EARNED))
         compose.onNodeWithText(app.getString(R.string.contact_not_earned)).performScrollTo()
         compose.onNodeWithTag("unlock").performScrollTo().performClick()
@@ -61,6 +62,8 @@ class GuideDetailTest {
     fun `offline says so`() {
         show(ContactState.Failed(UnlockError.OFFLINE))
         compose.onNodeWithText(app.getString(R.string.contact_offline)).performScrollTo()
+        compose.onNodeWithTag("unlock").performScrollTo().performClick()
+        assertEquals("the ad is offered again once online", 1, unlocks)
     }
 
     @Test

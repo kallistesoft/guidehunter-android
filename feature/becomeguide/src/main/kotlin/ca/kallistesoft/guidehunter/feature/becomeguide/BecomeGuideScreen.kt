@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,10 +33,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -66,9 +69,9 @@ fun BecomeGuideScreen(
     },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    BecomeGuideContent(
-        state = state,
-        actions = FormActions(
+    // Made once: a new instance per keystroke would stop every field from skipping recomposition.
+    val actions = remember(viewModel) {
+        FormActions(
             businessName = viewModel::setBusinessName,
             description = viewModel::setDescription,
             activity = viewModel::setActivity,
@@ -80,7 +83,11 @@ fun BecomeGuideScreen(
             phone = viewModel::setPhone,
             website = viewModel::setWebsite,
             submit = viewModel::submit,
-        ),
+        )
+    }
+    BecomeGuideContent(
+        state = state,
+        actions = actions,
         onBack = onBack,
         picker = picker,
         modifier = modifier,
@@ -124,7 +131,8 @@ internal fun BecomeGuideContent(
             )
         },
     ) { padding ->
-        Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        // The insets are consumed, so the form's imePadding adds the keyboard's height only, not the bars' again.
+        Box(Modifier.padding(padding).consumeWindowInsets(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             if (state.send == SendState.SENT) {
                 Sent(onBack)
             } else {
@@ -147,8 +155,8 @@ private fun Form(
         Modifier
             .widthIn(max = Sizes.contentMaxWidth)
             .fillMaxWidth()
+            .imePadding() // before the scroll, so the scrolling area shrinks above the keyboard
             .verticalScroll(rememberScrollState())
-            .imePadding()
             .padding(horizontal = Spacing.screen, vertical = Spacing.l),
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
     ) {
@@ -219,7 +227,7 @@ private fun Form(
         Text(stringResource(R.string.contact_private), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Field(form.email, actions.email, R.string.field_email, "field-email", errors.message(ApplicationField.EMAIL), keyboard = KeyboardType.Email)
         Field(form.phone, actions.phone, R.string.field_phone, "field-phone", errors.message(ApplicationField.PHONE), keyboard = KeyboardType.Phone)
-        Field(form.website, actions.website, R.string.field_website, "field-website", null, keyboard = KeyboardType.Uri)
+        Field(form.website, actions.website, R.string.field_website, "field-website", null, keyboard = KeyboardType.Uri, last = true)
 
         when (state.send) {
             SendState.FAILED -> Error(stringResource(R.string.send_failed))
@@ -247,6 +255,7 @@ private fun Field(
     singleLine: Boolean = true,
     keyboard: KeyboardType = KeyboardType.Text,
     suffix: String? = null,
+    last: Boolean = false,
 ) {
     OutlinedTextField(
         value = value,
@@ -256,7 +265,8 @@ private fun Field(
         supportingText = (error ?: help)?.let { { Text(it) } },
         singleLine = singleLine,
         minLines = if (singleLine) 1 else DESCRIPTION_LINES,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+        // Next moves the keyboard to the next field; the last field's Done closes it.
+        keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = if (last) ImeAction.Done else ImeAction.Next),
         suffix = suffix?.let { { Text(it) } },
         modifier = Modifier.fillMaxWidth().testTag(tag),
     )
@@ -275,7 +285,11 @@ private fun Error(text: String) {
 @Composable
 private fun Sent(onBack: () -> Unit) {
     Column(
-        Modifier.widthIn(max = Sizes.contentMaxWidth).padding(Spacing.screen).testTag("sent"),
+        Modifier
+            .widthIn(max = Sizes.contentMaxWidth)
+            .verticalScroll(rememberScrollState()) // a phone in landscape doesn't fit it all
+            .padding(Spacing.screen)
+            .testTag("sent"),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
     ) {

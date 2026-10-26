@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.Priority
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 
 /**
@@ -20,12 +21,17 @@ internal class FusedLocationRepository(
     override suspend fun current(): GeoPoint? {
         if (!granted()) return null
         @Suppress("MissingPermission") // checked just above
-        val location = runCatching {
+        val location = try {
             client.getCurrentLocation(Priority.PRIORITY_BALANCED_POWER_ACCURACY, null).await()
-        }.getOrNull()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            null // location off, Play services missing: no distance, nothing else
+        }
         return location?.let { GeoPoint(it.latitude, it.longitude) }
     }
 
-    private fun granted(): Boolean = listOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION)
-        .any { ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED }
+    /** Coarse is all the app asks for: a few km of error don't change "about 450 km away". */
+    private fun granted(): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
 }

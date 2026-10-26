@@ -29,7 +29,7 @@ service cloud.firestore {
     match /mail/{mailId} {
       allow create: if request.resource.data.keys().hasOnly(['to', 'replyTo', 'message'])
         && request.resource.data.to == 'contact@kallistesoft.ca' // keep in sync with APPLICATIONS_EMAIL
-        && request.resource.data.replyTo is string && request.resource.data.replyTo.size() <= 200
+        && email(request.resource.data.replyTo)
         && request.resource.data.message.keys().hasOnly(['subject', 'text'])
         && request.resource.data.message.subject is string && request.resource.data.message.subject.size() <= 300
         && request.resource.data.message.text is string && request.resource.data.message.text.size() <= 5000;
@@ -40,6 +40,10 @@ service cloud.firestore {
       return value is string && value.size() >= min && value.size() <= max;
     }
 
+    function email(value) {
+      return shortText(value, 3, 200) && value.matches('[^@\\s]+@[^@\\s]+\\.[^@\\s]+');
+    }
+
     function validApplication(data) {
       return data.keys().hasOnly([
           'businessName', 'description', 'activity', 'species', 'region', 'lat', 'lng', 'priceFrom', 'email',
@@ -47,14 +51,18 @@ service cloud.firestore {
         && shortText(data.businessName, 1, 200)
         && shortText(data.description, 30, 2000)
         && data.activity in ['HUNT', 'FISH', 'BOTH']
-        && data.species is list && data.species.size() >= 1 && data.species.size() <= 20
+        && data.species is list && data.species.size() >= 1 && data.species.size() <= 16
+        && data.species.hasOnly([
+          'BLACK_BEAR', 'MOOSE', 'WHITE_TAILED_DEER', 'CARIBOU', 'WILD_TURKEY', 'WATERFOWL', 'UPLAND_BIRDS', 'PREDATORS',
+          'WALLEYE', 'NORTHERN_PIKE', 'BROOK_TROUT', 'LAKE_TROUT', 'ATLANTIC_SALMON', 'SMALLMOUTH_BASS', 'MUSKELLUNGE',
+          'ICE_FISHING']) // keep in sync with core/model Species
         && shortText(data.region, 1, 200)
         && data.lat is number && data.lat >= -90 && data.lat <= 90
         && data.lng is number && data.lng >= -180 && data.lng <= 180
-        && (data.priceFrom == null || data.priceFrom is int)
-        && shortText(data.email, 3, 200)
-        && shortText(data.phone, 0, 50)
-        && shortText(data.website, 0, 300);
+        && (data.priceFrom == null || (data.priceFrom is int && data.priceFrom > 0 && data.priceFrom <= 999999))
+        && email(data.email)
+        && shortText(data.phone, 0, 50) && data.phone.matches('[0-9 +()\\-.]*')
+        && shortText(data.website, 0, 300) && data.website.matches('[^\\s]*');
     }
   }
 }

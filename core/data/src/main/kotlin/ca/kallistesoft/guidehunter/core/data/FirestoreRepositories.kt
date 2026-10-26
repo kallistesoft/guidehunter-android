@@ -4,20 +4,34 @@ import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideApplication
 import ca.kallistesoft.guidehunter.core.model.GuideContact
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.DocumentSnapshot
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 
-/** Published guides from Firestore, live: an offer added in the console shows on the map at once. */
-internal class FirestoreGuideRepository(private val firestore: FirebaseFirestore) : GuideRepository {
-    override val guides: Flow<List<Guide>> = callbackFlow {
+/**
+ * Published guides from Firestore, live: an offer added in the console shows on the map at once. The documents are
+ * parsed on [background] (the tests pass a test dispatcher).
+ */
+internal class FirestoreGuideRepository(
+    private val firestore: FirebaseFirestore,
+    private val background: CoroutineDispatcher = Dispatchers.Default,
+) : GuideRepository {
+    override val guides: Flow<List<Guide>> = callbackFlow<List<DocumentSnapshot>> {
         val registration = firestore.collection(Collections.GUIDES).addSnapshotListener { snapshot, _ ->
             // An error (offline with an empty cache, rules) keeps the last list: the map never empties on a hiccup.
-            if (snapshot != null) trySend(snapshot.documents.mapNotNull { guideFrom(it.id, it.data.orEmpty()) })
+            if (snapshot != null) trySend(snapshot.documents)
         }
         awaitClose { registration.remove() }
     }
+        // Firestore calls back on the main thread; the parsing of every guide happens off it.
+        .map { documents -> documents.mapNotNull { guideFrom(it.id, it.data.orEmpty()) } }
+        .flowOn(background)
 
     override suspend fun contact(guideId: String): GuideContact? {
         val document = firestore.collection(Collections.CONTACTS).document(guideId).get().await()

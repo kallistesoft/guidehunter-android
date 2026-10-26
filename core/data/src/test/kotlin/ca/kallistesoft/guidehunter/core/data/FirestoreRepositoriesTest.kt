@@ -41,7 +41,8 @@ class FirestoreRepositoriesTest {
         }
         val received = mutableListOf<List<String>>()
         val job = launch(UnconfinedTestDispatcher(testScheduler)) {
-            FirestoreGuideRepository(firestore).guides.collect { guides -> received += guides.map { it.id } }
+            FirestoreGuideRepository(firestore, UnconfinedTestDispatcher(testScheduler)).guides
+                .collect { guides -> received += guides.map { it.id } }
         }
         val good = mapOf("title" to "T", "activity" to "HUNT", "lat" to 1.0, "lng" to 2.0)
         listener.captured.onEvent(mockk { every { documents } returns listOf(document("a", good), document("b", null)) }, null)

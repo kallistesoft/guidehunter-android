@@ -6,6 +6,7 @@ import androidx.compose.ui.test.performClick
 import ca.kallistesoft.guidehunter.di.AppModule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,17 +37,15 @@ class GuideHunterAppTest {
         compose.onNodeWithTag("field-business-name").assertExists()
         compose.onNodeWithTag("back").performClick()
         compose.onNodeWithTag("become-guide").assertExists()
+        // Back on the map (the only entry) leaves the app, as Android does.
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.activityRule.scenario.onActivity { assertTrue(it.isFinishing) }
     }
 
     @Test
     fun `ads are off under tests, and forms go to the configured address`() {
-        assertFalse(AdsConfigUnderTest.enabled)
+        assertFalse(AppModule.adsConfig().enabled)
         assertEquals(BuildConfig.APPLICATIONS_EMAIL, AppModule.dataConfig().applicationsEmail)
-    }
-
-    private object AdsConfigUnderTest {
-        val enabled get() = AppModule.adsConfig().enabled
     }
 
     private fun hasTag(tag: String) = androidx.compose.ui.test.hasTestTag(tag)

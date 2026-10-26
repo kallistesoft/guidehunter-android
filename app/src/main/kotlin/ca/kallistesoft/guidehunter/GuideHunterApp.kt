@@ -25,7 +25,8 @@ class Maps(
 @Composable
 fun GuideHunterApp(maps: Maps = Maps()) {
     val backStack = rememberNavBackStack(GuideMap)
-    val back: () -> Unit = { backStack.removeLastOrNull() }
+    // Guarded: two quick taps on back (or "Back to the map") during the animation must not empty the stack.
+    val back: () -> Unit = { if (backStack.size > 1) backStack.removeLastOrNull() }
     NavDisplay(
         backStack = backStack,
         onBack = back,
@@ -35,7 +36,8 @@ fun GuideHunterApp(maps: Maps = Maps()) {
         ),
         entryProvider = entryProvider<NavKey> {
             entry<GuideMap> {
-                val open: () -> Unit = { backStack.add(BecomeGuide) }
+                // Guarded: two quick taps must not push the form twice (duplicate keys break the saved state).
+                val open: () -> Unit = { if (backStack.lastOrNull() != BecomeGuide) backStack.add(BecomeGuide) }
                 maps.guides?.let { MapScreen(onBecomeGuide = open, map = it) } ?: MapScreen(onBecomeGuide = open)
             }
             entry<BecomeGuide> {

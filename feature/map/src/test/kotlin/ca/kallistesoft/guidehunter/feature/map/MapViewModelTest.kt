@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
@@ -11,14 +12,21 @@ import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import kotlin.math.roundToInt
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
@@ -26,8 +34,9 @@ class MapViewModelTest {
     private val guides = FakeGuideRepository()
     private val location = FakeLocationRepository()
     private val ads = FakeRewardedAds()
+    private val consent = FakeAdConsent()
 
-    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = MapViewModel(guides, location, ads, saved)
+    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = MapViewModel(guides, location, ads, consent, saved)
 
     private val MapViewModel.ids get() = uiState.value.guides.map { it.guide.id }
     private val MapViewModel.contact get() = uiState.value.selected?.contact
@@ -39,6 +48,18 @@ class MapViewModelTest {
         collecting(vm.uiState)
         assertEquals(listOf("bear", "salmon", "moose"), vm.ids)
         assertTrue(vm.uiState.value.guides.all { it.distanceKm == null })
+        assertEquals("the location is read once at start (null without the permission)", 1, location.reads)
+    }
+
+    @Test
+    fun `privacy options are offered where the region requires them`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertFalse(vm.uiState.value.privacyOptionsRequired)
+        consent.privacyOptionsRequired.value = true
+        assertTrue(vm.uiState.value.privacyOptionsRequired)
+        vm.showPrivacyOptions()
+        assertEquals(1, consent.privacyOptionsShown)
     }
 
     @Test
@@ -73,14 +94,13 @@ class MapViewModelTest {
 
     @Test
     fun `with the user's location, guides show their distance, nearest first`() = runTest {
+        location.location = TestGuides.quebecCity
         val vm = viewModel()
         collecting(vm.uiState)
-        location.location = TestGuides.quebecCity
-        vm.refreshLocation()
-        assertEquals(TestGuides.quebecCity, vm.uiState.value.userLocation)
+        assertEquals("read when the screen opens", TestGuides.quebecCity, vm.uiState.value.userLocation)
         assertEquals(listOf("moose", "salmon", "bear"), vm.ids)
         val bear = vm.uiState.value.guides.first { it.guide.id == "bear" }
-        assertEquals(TestGuides.bear.location.distanceKm(TestGuides.quebecCity).toInt().toDouble(), bear.distanceKm!!.toDouble(), 1.0)
+        assertEquals(TestGuides.bear.location.distanceKm(TestGuides.quebecCity).roundToInt(), bear.distanceKm)
 
         location.location = null // permission revoked: the last known place stays
         vm.refreshLocation()
@@ -113,7 +133,23 @@ class MapViewModelTest {
         vm.select("bear")
         assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
         assertEquals("no second ad", 1, ads.shown)
+        assertEquals("no second read either", listOf("bear"), guides.contactsRead)
         assertEquals("no preload for an unlocked guide", 1, ads.preloads)
+    }
+
+    @Test
+    fun `reopening a guide whose contact is on its way doesn't read it twice`() = runTest {
+        guides.onContact = CompletableDeferred()
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.select("bear")
+        vm.unlock()
+        vm.dismiss()
+        vm.select("bear")
+        assertEquals(ContactState.Unlocking, vm.contact)
+        guides.onContact?.complete(Unit)
+        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
+        assertEquals(listOf("bear"), guides.contactsRead)
     }
 
     @Test
@@ -217,6 +253,36 @@ class MapViewModelTest {
         collecting(restored.uiState)
         assertEquals("bear", restored.uiState.value.selected?.item?.guide?.id)
         assertEquals("reloaded without an ad", ContactState.Unlocked(TestGuides.bearContact), restored.contact)
+        assertEquals(1, ads.shown)
+    }
+
+    @Test
+    fun `the restored contact is reloaded once, not on every return to the screen`() = runTest {
+        val saved = SavedStateHandle()
+        viewModel(saved).apply {
+            select("bear")
+            unlock()
+        }
+        val restored = viewModel(saved)
+        val first = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { restored.uiState.collect {} }
+        assertEquals(listOf("bear", "bear"), guides.contactsRead)
+        first.cancel()
+        advanceTimeBy(10_000) // sharing stops, and starts again on the next collection
+        collecting(restored.uiState)
+        assertEquals("not read again", listOf("bear", "bear"), guides.contactsRead)
+    }
+
+    @Test
+    fun `a restored contact that fails to load says so, still without an ad`() = runTest {
+        val saved = SavedStateHandle()
+        viewModel(saved).apply {
+            select("bear")
+            unlock()
+        }
+        guides.failure = IllegalStateException("offline")
+        val restored = viewModel(saved)
+        collecting(restored.uiState)
+        assertEquals(ContactState.Failed(UnlockError.LOAD_FAILED), restored.contact)
         assertEquals(1, ads.shown)
     }
 
