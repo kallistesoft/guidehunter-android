@@ -88,12 +88,17 @@ class GuideMapTest {
         val ne = LatLng(50.0, -64.0)
         every { map.projection.visibleRegion } returns VisibleRegion(sw, LatLng(45.0, -64.0), LatLng(50.0, -80.0), ne, LatLngBounds(sw, ne))
         val areas = mutableListOf<GeoBounds>()
+        val loaded = slot<GoogleMap.OnMapLoadedCallback>()
+        every { map.setOnMapLoadedCallback(capture(loaded)) } returns Unit
 
         compose.setContent {
             GuideHunterTheme {
                 GuideMap(MapContent(TestGuides.all.map { GuideItem(it) }, TestGuides.quebecCity, { areas += it }) { selected += it })
             }
         }
+        compose.waitForIdle()
+        assertTrue("no area before the map is loaded", areas.isEmpty())
+        loaded.captured.onMapLoaded()
         compose.waitForIdle()
 
         assertEquals(TestGuides.all.map { it.title }, added.map { it.title })

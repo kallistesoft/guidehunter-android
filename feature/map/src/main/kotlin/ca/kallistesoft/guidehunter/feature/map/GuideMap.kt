@@ -47,10 +47,15 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
     }
     var centredOnUser by rememberSaveable { mutableStateOf(false) }
     // The cards list the guides on screen: the area is reported each time the camera stops (the padding under the
-    // cards excluded), and once the map is ready.
+    // cards excluded). Not before the map is loaded: until it's laid out, its projection is stale (a camera restored
+    // after a relaunch would report the default area).
+    var loaded by remember { mutableStateOf(false) }
     val onVisibleArea by rememberUpdatedState(content.onVisibleArea)
     LaunchedEffect(camera) {
-        snapshotFlow { if (camera.isMoving) null else camera.projection?.visibleRegion?.latLngBounds }
+        snapshotFlow {
+            camera.position // re-read once a move settles
+            if (!loaded || camera.isMoving) null else camera.projection?.visibleRegion?.latLngBounds
+        }
             .filterNotNull()
             .distinctUntilChanged()
             .collect { onVisibleArea(GeoBounds(it.southwest.toGeoPoint(), it.northeast.toGeoPoint())) }
@@ -70,6 +75,7 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
         mapColorScheme = if (dark) ComposeMapColorScheme.DARK else ComposeMapColorScheme.LIGHT,
         // The guide cards cover the map's bottom: Google's logo and the camera's centre move up above them.
         contentPadding = PaddingValues(bottom = Sizes.guideCardsInset),
+        onMapLoaded = { loaded = true },
     ) {
         // One icon per activity, made once per theme: a new descriptor per pass would redraw every marker.
         val icons = remember(dark, density) {
