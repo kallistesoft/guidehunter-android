@@ -3,6 +3,8 @@ package ca.kallistesoft.guidehunter.feature.map
 import androidx.lifecycle.SavedStateHandle
 import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.model.Discipline
+import ca.kallistesoft.guidehunter.core.model.GeoBounds
+import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
@@ -49,6 +51,19 @@ class MapViewModelTest {
         assertEquals(listOf("bear", "salmon", "moose"), vm.ids)
         assertTrue(vm.uiState.value.guides.all { it.distanceKm == null })
         assertEquals("the location is read once at start (null without the permission)", 1, location.reads)
+    }
+
+    @Test
+    fun `the cards keep the guides on screen, the pins every guide`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertEquals("all of them until the map tells", vm.ids, vm.uiState.value.inView.map { it.guide.id })
+        // Southern Quebec, west of Gaspé: the bear and the moose.
+        vm.showArea(GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -70.0)))
+        assertEquals(listOf("bear", "moose"), vm.uiState.value.inView.map { it.guide.id })
+        assertEquals(listOf("bear", "salmon", "moose"), vm.ids)
+        vm.chooseDiscipline(Discipline.FISHING)
+        assertEquals("the filters still apply", listOf("moose"), vm.uiState.value.inView.map { it.guide.id })
     }
 
     @Test

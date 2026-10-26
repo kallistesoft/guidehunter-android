@@ -11,8 +11,13 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.VisibleRegion
+import ca.kallistesoft.guidehunter.core.model.GeoBounds
+import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -62,7 +67,7 @@ class GuideMapTest {
     fun tearDown() = unmockkAll()
 
     @Test
-    fun `a pin per guide, coloured by activity, and a tap opens the guide`() {
+    fun `a pin per guide, coloured by activity, a tap opens the guide, and the area on screen is reported`() {
         ShadowMapView.ready = map
         mockkStatic(CameraUpdateFactory::class, BitmapDescriptorFactory::class)
         every { CameraUpdateFactory.newCameraPosition(any()) } returns mockk()
@@ -79,12 +84,21 @@ class GuideMapTest {
         }
         every { map.setOnMarkerClickListener(capture(clicks)) } returns Unit
         val selected = mutableListOf<String>()
+        val sw = LatLng(45.0, -80.0)
+        val ne = LatLng(50.0, -64.0)
+        every { map.projection.visibleRegion } returns VisibleRegion(sw, LatLng(45.0, -64.0), LatLng(50.0, -80.0), ne, LatLngBounds(sw, ne))
+        val areas = mutableListOf<GeoBounds>()
+        val loaded = slot<GoogleMap.OnMapLoadedCallback>()
+        every { map.setOnMapLoadedCallback(capture(loaded)) } returns Unit
 
         compose.setContent {
             GuideHunterTheme {
-                GuideMap(MapContent(TestGuides.all.map { GuideItem(it) }, TestGuides.quebecCity) { selected += it })
+                GuideMap(MapContent(TestGuides.all.map { GuideItem(it) }, TestGuides.quebecCity, { areas += it }) { selected += it })
             }
         }
+        compose.waitForIdle()
+        assertTrue("no area before the map is loaded", areas.isEmpty())
+        loaded.captured.onMapLoaded()
         compose.waitForIdle()
 
         assertEquals(TestGuides.all.map { it.title }, added.map { it.title })
@@ -94,5 +108,6 @@ class GuideMapTest {
         )
         assertTrue("the sheet shows the offer, not an info window", clicks.captured.onMarkerClick(markers.getValue(TestGuides.salmon.title)))
         assertEquals(listOf("salmon"), selected)
+        assertEquals("once the map is ready", listOf(GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -64.0))), areas)
     }
 }

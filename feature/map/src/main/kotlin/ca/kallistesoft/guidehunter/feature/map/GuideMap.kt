@@ -8,13 +8,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import ca.kallistesoft.guidehunter.core.designsystem.theme.DarkPinColors
 import ca.kallistesoft.guidehunter.core.designsystem.theme.LightPinColors
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
+import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -27,6 +30,8 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberUpdatedMarkerState
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 
 /**
  * Google Maps with a pin per guide, the mockup's: orange for hunting, teal for fishing, gold for both. It opens on southern
@@ -41,6 +46,20 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
         position = CameraPosition.fromLatLngZoom(GeoPoint.DEFAULT_CENTER.toLatLng(), DEFAULT_ZOOM)
     }
     var centredOnUser by rememberSaveable { mutableStateOf(false) }
+    // The cards list the guides on screen: the area is reported each time the camera stops (the padding under the
+    // cards excluded). Not before the map is loaded: until it's laid out, its projection is stale (a camera restored
+    // after a relaunch would report the default area).
+    var loaded by remember { mutableStateOf(false) }
+    val onVisibleArea by rememberUpdatedState(content.onVisibleArea)
+    LaunchedEffect(camera) {
+        snapshotFlow {
+            camera.position // re-read once a move settles
+            if (!loaded || camera.isMoving) null else camera.projection?.visibleRegion?.latLngBounds
+        }
+            .filterNotNull()
+            .distinctUntilChanged()
+            .collect { onVisibleArea(GeoBounds(it.southwest.toGeoPoint(), it.northeast.toGeoPoint())) }
+    }
     LaunchedEffect(content.userLocation) {
         val location = content.userLocation
         if (location != null && !centredOnUser) {
@@ -56,6 +75,7 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
         mapColorScheme = if (dark) ComposeMapColorScheme.DARK else ComposeMapColorScheme.LIGHT,
         // The guide cards cover the map's bottom: Google's logo and the camera's centre move up above them.
         contentPadding = PaddingValues(bottom = Sizes.guideCardsInset),
+        onMapLoaded = { loaded = true },
     ) {
         // One icon per activity, made once per theme: a new descriptor per pass would redraw every marker.
         val icons = remember(dark, density) {
@@ -81,6 +101,8 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
 }
 
 private fun GeoPoint.toLatLng() = LatLng(latitude, longitude)
+
+private fun LatLng.toGeoPoint() = GeoPoint(latitude, longitude)
 
 private const val DEFAULT_ZOOM = 5f
 private const val USER_ZOOM = 6f

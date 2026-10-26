@@ -66,15 +66,20 @@ import ca.kallistesoft.guidehunter.core.designsystem.theme.GhTextStyles
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
 import ca.kallistesoft.guidehunter.core.model.Discipline
+import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.ui.label
 
-/** What the map draws: the guides to pin, the user's location, and what a tap on a pin does. */
+/**
+ * What the map draws: the guides to pin and the user's location; what it reports: the area on screen once the camera
+ * stops, and a tap on a pin.
+ */
 data class MapContent(
     val guides: List<GuideItem>,
     val userLocation: GeoPoint?,
+    val onVisibleArea: (GeoBounds) -> Unit = {},
     val onSelect: (String) -> Unit,
 )
 
@@ -112,6 +117,7 @@ fun MapScreen(
         onPrivacyOptions = viewModel::showPrivacyOptions,
         onDiscipline = viewModel::chooseDiscipline,
         onSpecies = viewModel::chooseSpecies,
+        onVisibleArea = viewModel::showArea,
         onSelect = viewModel::select,
         onDismiss = viewModel::dismiss,
         onUnlock = viewModel::unlock,
@@ -158,6 +164,7 @@ internal fun MapContent(
     onPrivacyOptions: () -> Unit,
     onDiscipline: (Discipline?) -> Unit,
     onSpecies: (Species?) -> Unit,
+    onVisibleArea: (GeoBounds) -> Unit,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
     onUnlock: () -> Unit,
@@ -194,10 +201,10 @@ internal fun MapContent(
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     Filters(state.filter, onDiscipline, onSpecies)
                     Box(Modifier.weight(1f).fillMaxWidth()) {
-                        map(MapContent(state.guides, state.userLocation, onSelect), Modifier.fillMaxSize())
+                        map(MapContent(state.guides, state.userLocation, onVisibleArea, onSelect), Modifier.fillMaxSize())
                         when {
                             state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                            else -> GuideCards(state.guides, onSelect, Modifier.align(Alignment.BottomCenter))
+                            else -> GuideCards(state.inView, state.guides.isEmpty(), onSelect, Modifier.align(Alignment.BottomCenter))
                         }
                     }
                 }
@@ -274,9 +281,12 @@ private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
     }
 }
 
-/** The guides as cards over the bottom of the map, nearest first: a way in without hunting for pins. */
+/**
+ * The guides on screen as cards over the bottom of the map, nearest first: a way in without hunting for pins. [noMatch]:
+ * no guide matches the filters anywhere, rather than none in this part of the map.
+ */
 @Composable
-private fun GuideCards(guides: List<GuideItem>, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun GuideCards(guides: List<GuideItem>, noMatch: Boolean, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(bottom = Spacing.l)) {
         val count = pluralStringResource(R.plurals.guide_count, guides.size, guides.size)
         // A pill, so the count reads over any part of the map.
@@ -287,7 +297,11 @@ private fun GuideCards(guides: List<GuideItem>, onSelect: (String) -> Unit, modi
             modifier = Modifier.padding(start = Spacing.screen, end = Spacing.screen, bottom = Spacing.s),
         ) {
             Text(
-                if (guides.isEmpty()) stringResource(R.string.no_guides) else count,
+                when {
+                    noMatch -> stringResource(R.string.no_guides)
+                    guides.isEmpty() -> stringResource(R.string.no_guides_here)
+                    else -> count
+                },
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier.padding(horizontal = Spacing.m, vertical = Spacing.xs).testTag("guide-count"),
             )
