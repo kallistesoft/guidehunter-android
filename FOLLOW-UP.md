@@ -4,8 +4,9 @@ What the MVP leaves for later, most urgent first.
 
 ## Before the first Play upload
 
-1. **Name, package and icon.** "GuideHunter" and `ca.kallistesoft.guidehunter` are working names; the launcher icon
-   and the theme are BetterHunter's. Choose them before the first upload (the package can't change after).
+1. **Name: GuideHunter (final), icon: logo B (done).** The package `ca.kallistesoft.guidehunter` stays. A website
+   for it: `guidehunter.ca` (and `guidehunter.app` to protect the name) looked free in DNS on 2026-10-27;
+   `guidehunter.com` is parked for sale. It hosts the privacy policy (item 3) and a page for guides.
 2. **Firebase, Maps and AdMob** set up (README, "Setup", step by step), and the CI secrets and variables added. A
    **release keystore** too: the debug key lives on whichever machine builds, so the Maps key and Firebase need the
    release key's SHA-1 for anything installed from Play.
