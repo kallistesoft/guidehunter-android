@@ -1,16 +1,20 @@
 package ca.kallistesoft.guidehunter.core.data.di
 
 import android.content.Context
-import ca.kallistesoft.guidehunter.core.data.FirestoreGuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.data.AuthRepository
+import ca.kallistesoft.guidehunter.core.data.FirebaseAuthRepository
+import ca.kallistesoft.guidehunter.core.data.FirestoreGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.FirestoreGuideRepository
 import ca.kallistesoft.guidehunter.core.data.FusedLocationRepository
-import ca.kallistesoft.guidehunter.core.data.GuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
 import ca.kallistesoft.guidehunter.core.data.SampleGuideRepository
-import ca.kallistesoft.guidehunter.core.data.UnconfiguredGuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredAuthRepository
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredGuideAccountRepository
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.FirebaseApp
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Module
 import dagger.Provides
@@ -21,17 +25,17 @@ import javax.inject.Singleton
 
 /** Where application emails go and whether Firebase is set up; the app provides it from its build. */
 data class DataConfig(
-    /** Who the "Become a guide" emails are sent to (must match firestore.rules). */
+    /** Who the new and edited offers are emailed to, for review (must match firestore.rules). */
     val applicationsEmail: String,
 )
 
 /**
- * Firestore when the build has Firebase (`google-services.json`), otherwise sample guides and a form that can't be
- * sent: the app still builds and runs from a fresh clone.
+ * Firebase when the build has it (`google-services.json`), otherwise sample guides and no guide sign-in: the app
+ * still builds and runs from a fresh clone. Public so app tests can swap it for fakes (`@UninstallModules`).
  */
 @Module
 @InstallIn(SingletonComponent::class)
-internal object DataModule {
+object DataModule {
     @Provides
     @Singleton
     fun guideRepository(@ApplicationContext context: Context): GuideRepository =
@@ -39,14 +43,21 @@ internal object DataModule {
 
     @Provides
     @Singleton
-    fun guideApplicationRepository(@ApplicationContext context: Context, config: DataConfig): GuideApplicationRepository =
-        firestore(context)?.let { FirestoreGuideApplicationRepository(it, config.applicationsEmail) }
-            ?: UnconfiguredGuideApplicationRepository()
+    fun authRepository(@ApplicationContext context: Context): AuthRepository =
+        if (configured(context)) FirebaseAuthRepository(FirebaseAuth.getInstance()) else UnconfiguredAuthRepository()
+
+    @Provides
+    @Singleton
+    fun guideAccountRepository(@ApplicationContext context: Context, config: DataConfig): GuideAccountRepository =
+        firestore(context)?.let { FirestoreGuideAccountRepository(it, config.applicationsEmail) }
+            ?: UnconfiguredGuideAccountRepository()
 
     @Provides
     fun locationRepository(@ApplicationContext context: Context): LocationRepository =
         FusedLocationRepository(context, LocationServices.getFusedLocationProviderClient(context))
 
+    private fun configured(context: Context) = FirebaseApp.getApps(context).isNotEmpty()
+
     private fun firestore(context: Context): FirebaseFirestore? =
-        if (FirebaseApp.getApps(context).isEmpty()) null else FirebaseFirestore.getInstance()
+        if (configured(context)) FirebaseFirestore.getInstance() else null
 }

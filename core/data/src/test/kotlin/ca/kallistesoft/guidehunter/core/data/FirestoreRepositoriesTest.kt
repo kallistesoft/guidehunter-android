@@ -1,6 +1,9 @@
 package ca.kallistesoft.guidehunter.core.data
 
 import ca.kallistesoft.guidehunter.core.model.GuideContact
+import ca.kallistesoft.guidehunter.core.model.GuideOffer
+import ca.kallistesoft.guidehunter.core.model.GuideProfile
+import ca.kallistesoft.guidehunter.core.model.OfferStatus
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import com.google.android.gms.tasks.Tasks
 import com.google.firebase.firestore.CollectionReference
@@ -9,6 +12,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.EventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 import com.google.firebase.firestore.WriteBatch
 import io.mockk.every
@@ -68,20 +72,139 @@ class FirestoreRepositoriesTest {
         assertNull(repository.contact("none"))
     }
 
-    @Test
-    fun `an application and its email are written together`() = runTest {
-        val application = mockk<DocumentReference>()
-        val mail = mockk<DocumentReference>()
-        every { firestore.collection("guideApplications") } returns mockk { every { document() } returns application }
-        every { firestore.collection("mail") } returns mockk { every { document() } returns mail }
-        val batch = mockk<WriteBatch>(relaxed = true)
+    // A guide's account: offers in `guideOffers` (one live, one waiting), the profile in `guideProfiles`.
+    private val offers = mockk<CollectionReference>()
+    private val profiles = mockk<CollectionReference>()
+    private val guides = mockk<CollectionReference>()
+    private val contacts = mockk<CollectionReference>()
+    private val mails = mockk<CollectionReference>()
+    private val mine = mockk<Query>()
+    private val batch = mockk<WriteBatch>(relaxed = true)
+    private val refs = mutableMapOf<String, DocumentReference>()
+
+    /** Made up front: MockK can't create a mock inside `every { }` or `verify { }`. */
+    private fun ref(path: String) = refs.getValue(path)
+
+    private val liveDoc = TestGuides.offer.toDocument("u1", live = true) + ("status" to "PUBLISHED")
+    private val pendingDoc = TestGuides.offer.copy(title = "Walleye").toDocument("u1", live = false)
+
+    private fun account(): FirestoreGuideAccountRepository {
+        val paths = listOf("guideProfiles/u1", "mail/m", "guideOffers/new", "guideOffers/gone") +
+            listOf("live", "pending").flatMap { id -> listOf("guideOffers/$id", "guides/$id", "guideContacts/$id") }
+        for (path in paths) refs[path] = mockk(relaxed = true) { every { id } returns path.substringAfter('/') }
+        val snapshot = mockk<QuerySnapshot> { every { documents } returns listOf(document("live", liveDoc), document("pending", pendingDoc)) }
+        every { firestore.collection("guideOffers") } returns offers
+        every { firestore.collection("guideProfiles") } returns profiles
+        every { firestore.collection("guides") } returns guides
+        every { firestore.collection("guideContacts") } returns contacts
+        every { firestore.collection("mail") } returns mails
+        every { offers.whereEqualTo("ownerUid", "u1") } returns mine
+        every { mine.get() } returns Tasks.forResult(snapshot)
+        for ((collection, name) in listOf(offers to "guideOffers", profiles to "guideProfiles", guides to "guides", contacts to "guideContacts")) {
+            every { collection.document(any()) } answers { ref("$name/${firstArg<String>()}") }
+        }
+        every { offers.document() } returns ref("guideOffers/new")
+        every { mails.document() } returns ref("mail/m")
         every { firestore.batch() } returns batch
         every { batch.commit() } returns Tasks.forResult(null)
+        return FirestoreGuideAccountRepository(firestore, "owner@example.com")
+    }
 
-        FirestoreGuideApplicationRepository(firestore, "owner@example.com").submit(TestGuides.application)
+    @Test
+    fun `the profile is followed live`() = runTest {
+        val repository = account()
+        val listener = slot<EventListener<DocumentSnapshot>>()
+        val registration = mockk<ListenerRegistration>(relaxed = true)
+        val profile = ref("guideProfiles/u1")
+        val empty = document("u1", null)
+        val saved = document("u1", TestGuides.profile.toDocument())
+        every { profile.addSnapshotListener(capture(listener)) } returns registration
+        val received = mutableListOf<GuideProfile?>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { repository.profile("u1").toList(received) }
+        listener.captured.onEvent(empty, null)
+        listener.captured.onEvent(saved, null)
+        listener.captured.onEvent(null, mockk())
+        job.cancel()
+        assertEquals(listOf(null, TestGuides.profile), received)
+        verify { registration.remove() }
+    }
 
-        verify { batch.set(application, TestGuides.application.toDocument()) }
-        verify { batch.set(mail, TestGuides.application.toMail("owner@example.com")) }
+    @Test
+    fun `the offers are the guide's own, followed live`() = runTest {
+        val repository = account()
+        val listener = slot<EventListener<QuerySnapshot>>()
+        val registration = mockk<ListenerRegistration>(relaxed = true)
+        every { mine.addSnapshotListener(capture(listener)) } returns registration
+        val received = mutableListOf<List<String>>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { repository.offers("u1").collect { received += it.map(GuideOffer::id) } }
+        val pending = document("pending", pendingDoc)
+        val snapshot = mockk<QuerySnapshot> { every { documents } returns listOf(pending) }
+        listener.captured.onEvent(snapshot, null)
+        listener.captured.onEvent(null, mockk())
+        job.cancel()
+        assertEquals(listOf(listOf("pending")), received)
+        verify { registration.remove() }
+    }
+
+    @Test
+    fun `one offer is read by its id`() = runTest {
+        val repository = account()
+        val live = document("live", liveDoc)
+        val gone = document("gone", null)
+        every { ref("guideOffers/live").get() } returns Tasks.forResult(live)
+        every { ref("guideOffers/gone").get() } returns Tasks.forResult(gone)
+        assertEquals(GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true), repository.offer("u1", "live"))
+        assertNull(repository.offer("u1", "gone"))
+    }
+
+    @Test
+    fun `saving the profile updates the contact of the offers on the map`() = runTest {
+        account().saveProfile("u1", TestGuides.profile)
+        verify { batch.set(ref("guideProfiles/u1"), TestGuides.profile.toDocument()) }
+        verify { batch.update(ref("guideContacts/live"), TestGuides.profile.toContact()) }
+        verify(exactly = 0) { batch.update(ref("guideContacts/pending"), any<Map<String, Any>>()) }
         verify { batch.commit() }
+    }
+
+    @Test
+    fun `a new offer and its email are written together`() = runTest {
+        val id = account().saveOffer("u1", null, TestGuides.offer, TestGuides.profile)
+        assertEquals("new", id)
+        verify { batch.set(ref("guideOffers/new"), TestGuides.offer.toDocument("u1", live = false)) }
+        verify { batch.set(ref("mail/m"), offerMail("owner@example.com", "new", "u1", TestGuides.offer, TestGuides.profile, edited = false)) }
+        verify { batch.commit() }
+    }
+
+    @Test
+    fun `an edit keeps the offer on the map while it's reviewed again`() = runTest {
+        val repository = account()
+        val live = document("live", liveDoc)
+        every { ref("guideOffers/live").get() } returns Tasks.forResult(live)
+        val edit = TestGuides.offer.copy(priceFrom = "2600")
+        assertEquals("live", repository.saveOffer("u1", "live", edit, TestGuides.profile))
+        verify { batch.set(ref("guideOffers/live"), edit.toDocument("u1", live = true)) }
+        verify { batch.set(ref("mail/m"), offerMail("owner@example.com", "live", "u1", edit, TestGuides.profile, edited = true)) }
+    }
+
+    @Test
+    fun `deleting an offer on the map takes it off`() = runTest {
+        val repository = account()
+        repository.deleteOffer("u1", GuideOffer("pending", TestGuides.offer))
+        verify { batch.delete(ref("guideOffers/pending")) }
+        verify(exactly = 0) { batch.delete(ref("guides/pending")) }
+        repository.deleteOffer("u1", GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true))
+        verify { batch.delete(ref("guideOffers/live")) }
+        verify { batch.delete(ref("guides/live")) }
+        verify { batch.delete(ref("guideContacts/live")) }
+    }
+
+    @Test
+    fun `deleting everything removes every offer and the profile`() = runTest {
+        account().deleteAll("u1")
+        listOf("guideOffers/live", "guides/live", "guideContacts/live", "guideOffers/pending", "guideProfiles/u1").forEach {
+            verify { batch.delete(ref(it)) }
+        }
+        verify(exactly = 0) { batch.delete(ref("guides/pending")) }
+        verify(exactly = 1) { batch.commit() }
     }
 }

@@ -1,13 +1,16 @@
 package ca.kallistesoft.guidehunter.core.data.di
 
 import android.app.Application
-import ca.kallistesoft.guidehunter.core.data.FirestoreGuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.data.FirebaseAuthRepository
+import ca.kallistesoft.guidehunter.core.data.FirestoreGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.FirestoreGuideRepository
 import ca.kallistesoft.guidehunter.core.data.FusedLocationRepository
 import ca.kallistesoft.guidehunter.core.data.SampleGuideRepository
-import ca.kallistesoft.guidehunter.core.data.UnconfiguredGuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredAuthRepository
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredGuideAccountRepository
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.mockk.every
 import io.mockk.mockk
@@ -35,20 +38,24 @@ class DataModuleTest {
     }
 
     @Test
-    fun `without Firebase the app shows sample guides and can't send forms`() {
+    fun `without Firebase the app shows sample guides and guides can't sign in`() {
         assertTrue(DataModule.guideRepository(app) is SampleGuideRepository)
-        assertTrue(DataModule.guideApplicationRepository(app, config) is UnconfiguredGuideApplicationRepository)
+        assertTrue(DataModule.authRepository(app) is UnconfiguredAuthRepository)
+        assertTrue(DataModule.guideAccountRepository(app, config) is UnconfiguredGuideAccountRepository)
         assertTrue(DataModule.locationRepository(app) is FusedLocationRepository)
     }
 
     @Test
-    fun `with Firebase the guides and forms go through Firestore`() {
+    fun `with Firebase the guides and accounts go through Firestore and Firebase Auth`() {
         val options = FirebaseOptions.Builder().setApplicationId("1:1:android:1").setApiKey("key").setProjectId("test").build()
         FirebaseApp.initializeApp(app, options)
         // Firestore registers itself through the app manifest, which a library's unit tests don't merge.
         mockkStatic(FirebaseFirestore::class)
         every { FirebaseFirestore.getInstance() } returns mockk()
+        mockkStatic(FirebaseAuth::class)
+        every { FirebaseAuth.getInstance() } returns mockk()
         assertTrue(DataModule.guideRepository(app) is FirestoreGuideRepository)
-        assertTrue(DataModule.guideApplicationRepository(app, config) is FirestoreGuideApplicationRepository)
+        assertTrue(DataModule.authRepository(app) is FirebaseAuthRepository)
+        assertTrue(DataModule.guideAccountRepository(app, config) is FirestoreGuideAccountRepository)
     }
 }

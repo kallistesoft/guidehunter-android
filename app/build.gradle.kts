@@ -133,5 +133,8 @@ dependencies {
 
     testImplementation(project(":core:testing"))
     testImplementation(libs.androidx.test.ext.junit)
+    // The guide's screens under Robolectric with fake repositories (GuideAccountNavigationTest).
+    testImplementation(libs.hilt.android.testing)
+    kspTest(libs.hilt.compiler)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

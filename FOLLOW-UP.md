@@ -12,10 +12,12 @@ What the MVP leaves for later, most urgent first.
 3. **Privacy policy**, linked from the Play listing and from the app (an About entry, and a line above the form's
    Send button). It covers: the approximate location (read on the device only, never sent), ads (AdMob, with
    consent; the advertising ID and the `AD_ID` permission come with the ads SDK), and what guides type in the form
-   (name, email, phone, website, coordinates: stored in Firestore and emailed through the SMTP service).
+   (name, email, phone, website, coordinates: stored in Firestore and emailed through the SMTP service), and guides'
+   Google account (its email and a Firebase user id) and how they delete it.
 4. **Play's Data safety form**, saying the same: device IDs, approximate location and interactions collected and
-   shared by AdMob for advertising; personal info and a location typed in the form, collected. Plus the Advertising
-   ID declaration.
+   shared by AdMob for advertising; personal info and a location typed in the form, collected; guides' account (email,
+   user id), collected. Plus the Advertising ID declaration, and Play's **account deletion** answers: in the app
+   (Delete my account), and a web page or email address for guides who uninstalled it (Play requires one).
 5. **Ad policy check**: a rewarded ad must be optional and say what it gives ("Watch an ad to see the contact" does).
 6. **AdMob IDs set** for the release build (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`): without them the build only warns
    and serves Google's test ads.
@@ -31,17 +33,20 @@ for an MVP; before it matters:
 - **AdMob server-side verification (SSV)** of rewarded ads, calling a Cloud Function that returns the contact only
   for a verified reward.
 - **Firebase App Check** (Play Integrity), so only the real app reaches Firestore.
-- Rate limits on applications (App Check, then a Cloud Function instead of client writes). Today anyone with the
-  app's Firebase config can create `mail` documents (to your address only, bounded in size) without limit, which
-  can flood your inbox or use up the SMTP quota: prefer a dedicated mailbox or SendGrid over a personal Gmail.
-- A `mail` document that doesn't come with its `guideApplications` document is accepted; a Cloud Function that
-  writes both is the fix.
+- Rate limits on offers (App Check, then a Cloud Function instead of client writes). Today any signed-in Google
+  account can create `mail` documents (to your address only, bounded in size) and offers without limit, which can
+  flood your inbox or use up the SMTP quota: prefer a dedicated mailbox or SendGrid over a personal Gmail.
+- A `mail` document that doesn't come with an offer is accepted; a Cloud Function that sends the email when an
+  offer is written (a Firestore trigger) is the fix, and lets the app stop writing `mail` at all.
 
 ## Guides
 
-- An approval flow instead of copying documents in the console: a small admin page, or a Cloud Function that
-  publishes an application marked approved.
-- Guide accounts (sign-in) so guides edit their own offer, photos, seasons, languages spoken, availability.
+- Approval is `scripts/approve-offer.py` (README, "Firestore"); a small admin page would let someone else review.
+- A **refused** status the guide sees in the app, with our reason (today we reply by email and the offer stays
+  "waiting for review").
+- Guides' offers: photos, seasons, languages spoken, availability.
+- Release: add the release key's SHA-1 (and Play App Signing's) to the production Firebase app, then download its
+  `google-services.json` again, or Google sign-in fails in release builds.
 - Bookings and payments, then reviews, like Airbnb.
 
 ## Users

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="become_guide_title">Devenir guide</string>
-    <string name="become_guide_intro">Présentez vos séjours de chasse ou de pêche. Nous vérifions chaque guide avant de mettre son offre sur la carte et nous vous répondons par courriel.</string>
+    <string name="become_guide_intro">Mettez vos séjours de chasse ou de pêche sur la carte. Nous vérifions chaque offre avant de la mettre sur la carte et nous vous répondons par courriel.</string>
     <string name="field_business_name">Votre nom ou celui de votre entreprise</string>
     <string name="field_activity">Vous offrez</string>
     <string name="field_species">Espèces</string>
     <string name="field_species_help">Choisissez d\'abord ce que vous offrez.</string>
-    <string name="field_description">Décrivez vos séjours</string>
+    <string name="field_description">Décrivez le séjour</string>
     <string name="field_description_help">Au moins %1$d caractères : ce qui est inclus, saisons, hébergement, langues.</string>
     <string name="field_region">Ville ou région</string>
     <string name="field_location">Où les chasseurs et pêcheurs vous rejoignent</string>
@@ -39,11 +39,53 @@
     <string name="error_phone">Entrez un numéro de téléphone valide, ou laissez vide.</string>
     <string name="form_has_errors">Certains champs sont à corriger.</string>
 
-    <string name="send">Envoyer ma demande</string>
+    <string name="send_for_review">Envoyer pour vérification</string>
     <string name="sending">Envoi…</string>
-    <string name="send_failed">Votre demande n\'a pas pu être envoyée. Vérifiez votre connexion et réessayez.</string>
-    <string name="send_not_configured">Cette version de l\'application ne peut pas encore envoyer de demandes.</string>
-    <string name="sent_title">Demande envoyée</string>
-    <string name="sent_body">Merci! Nous vérifierons votre offre et vous répondrons par courriel avant de la mettre sur la carte.</string>
-    <string name="back_to_map">Retour à la carte</string>
+    <string name="send_failed">L\'envoi a échoué. Vérifiez votre connexion et réessayez.</string>
+    <string name="send_not_configured">Cette version de l\'application ne peut pas encore l\'envoyer.</string>
+
+    <string name="sign_in_why">Connectez-vous avec votre compte Google pour envoyer des offres et les modifier plus tard. Il ne sert qu\'à savoir quelles offres sont les vôtres.</string>
+    <string name="sign_in_google">Continuer avec Google</string>
+    <string name="signing_in">Connexion…</string>
+    <string name="sign_in_failed">La connexion a échoué. Vérifiez votre connexion Internet et réessayez.</string>
+    <string name="sign_in_not_configured">Les guides ne peuvent pas encore se connecter avec cette version de l\'application.</string>
+    <string name="signed_in_as">Connecté avec %1$s</string>
+    <string name="dismiss">OK</string>
+    <string name="cancel">Annuler</string>
+
+    <string name="my_offers_title">Mes offres</string>
+    <string name="my_offers_heading">Vos offres</string>
+    <string name="no_offers">Aucune offre pour l\'instant. Ajoutez la première : une chasse, un séjour de pêche, un forfait.</string>
+    <string name="add_offer">Ajouter une offre</string>
+    <string name="review_note">Nous vérifions chaque nouvelle offre et chaque modification avant de les mettre sur la carte, et nous répondons par courriel.</string>
+    <string name="status_pending">En attente de vérification</string>
+    <string name="status_published">Sur la carte</string>
+    <string name="status_changes_pending">Sur la carte · modifications en attente de vérification</string>
+    <string name="account_menu">Compte</string>
+    <string name="sign_out">Se déconnecter</string>
+    <string name="delete_account">Supprimer mon compte</string>
+    <string name="delete_account_title">Supprimer votre compte?</string>
+    <string name="delete_account_body">Vos offres sont retirées de la carte, puis vos offres, votre profil et votre compte sont supprimés. Google vous demande d\'abord de confirmer votre compte. C\'est définitif.</string>
+    <string name="delete_account_failed">Votre compte n\'a pas pu être supprimé. Vérifiez votre connexion et réessayez.</string>
+
+    <string name="profile_title">Mon profil</string>
+    <string name="profile_intro">Votre entreprise et comment les chasseurs et pêcheurs vous joignent. Ils accompagnent chacune de vos offres.</string>
+    <string name="profile_missing">Remplissez d\'abord votre profil : le nom de votre entreprise et comment les chasseurs et pêcheurs vous joignent.</string>
+    <string name="profile_fill_in">Remplir mon profil</string>
+    <string name="profile_edit">Modifier mon profil</string>
+    <string name="save">Enregistrer</string>
+    <string name="saving">Enregistrement…</string>
+
+    <string name="offer_new_title">Nouvelle offre</string>
+    <string name="offer_edit_title">Modifier l\'offre</string>
+    <string name="offer_intro">Décrivez un séjour ou un forfait. Nous le vérifions avant de le mettre sur la carte.</string>
+    <string name="offer_live_intro">Cette offre est sur la carte. Nous vérifions d\'abord vos modifications : d\'ici là, la carte la montre telle qu\'elle était.</string>
+    <string name="field_title">Titre de l\'offre</string>
+    <string name="field_title_help">Ce que c\'est, par exemple « Chasse à l\'ours noir en Abitibi ».</string>
+    <string name="error_title">Donnez un titre à votre offre.</string>
+    <string name="offer_needs_profile">Remplissez votre profil avant d\'envoyer : les chasseurs et pêcheurs doivent pouvoir vous joindre.</string>
+    <string name="offer_delete">Supprimer l\'offre</string>
+    <string name="offer_delete_title">Supprimer cette offre?</string>
+    <string name="offer_delete_body">Elle sera supprimée. C\'est définitif.</string>
+    <string name="offer_delete_live_body">Elle est retirée de la carte et supprimée. C\'est définitif.</string>
 </resources>

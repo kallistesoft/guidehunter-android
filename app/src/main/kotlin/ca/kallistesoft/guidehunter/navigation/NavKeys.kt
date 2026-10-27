@@ -9,6 +9,14 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object GuideMap : NavKey
 
-/** The "Become a guide" form. */
+/** "Become a guide": Google sign-in, then the guide's profile and offers. */
 @Serializable
-data object BecomeGuide : NavKey
+data object MyOffers : NavKey
+
+/** The guide's profile (business and contact). */
+@Serializable
+data object GuideProfile : NavKey
+
+/** A guide's offer: a new one ([offerId] null) or one sent before. */
+@Serializable
+data class OfferEditor(val offerId: String? = null) : NavKey
