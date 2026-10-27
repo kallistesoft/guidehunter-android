@@ -6,7 +6,6 @@ import androidx.compose.ui.test.performClick
 import ca.kallistesoft.guidehunter.di.AppModule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -44,10 +43,14 @@ class GuideHunterAppTest {
     }
 
     @Test
-    fun `ads are off under tests, offers go to the configured address, and without Firebase no one signs in`() {
+    fun `ads are off under tests, offers go to the configured address, and sign-in uses Firebase's web client`() {
         assertFalse(AppModule.adsConfig().enabled)
         assertEquals(BuildConfig.APPLICATIONS_EMAIL, AppModule.dataConfig().applicationsEmail)
-        compose.activityRule.scenario.onActivity { assertNull(AppModule.googleSignInConfig(it).webClientId) }
+        // Generated from google-services.json when the build has one (local, CI); none in a fresh clone.
+        compose.activityRule.scenario.onActivity {
+            val id = AppModule.googleSignInConfig(it).webClientId
+            assertTrue("$id", id == null || id.endsWith(".apps.googleusercontent.com"))
+        }
     }
 
     private fun hasTag(tag: String) = androidx.compose.ui.test.hasTestTag(tag)

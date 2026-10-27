@@ -4,6 +4,7 @@
     <string name="become_guide_intro">Mettez vos séjours de chasse ou de pêche sur la carte. Nous vérifions d\'abord chaque offre et vous répondons par courriel.</string>
     <string name="field_business_name">Votre nom ou celui de votre entreprise</string>
     <string name="field_activity">Vous offrez</string>
+    <string name="activity_both_short">Les deux</string>
     <string name="field_species">Espèces</string>
     <string name="field_species_help">Choisissez d\'abord ce que vous offrez.</string>
     <string name="field_description">Décrivez le séjour</string>

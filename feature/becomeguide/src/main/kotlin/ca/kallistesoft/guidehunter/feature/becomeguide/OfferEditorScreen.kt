@@ -48,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -238,7 +239,11 @@ private fun Form(
                     onClick = { actions.activity(activity) },
                     shape = SegmentedButtonDefaults.itemShape(index, GuideActivity.entries.size),
                     modifier = Modifier.testTag("activity-${activity.name}"),
-                ) { Text(stringResource(activity.label)) }
+                ) {
+                    // "Hunting and fishing" doesn't fit a third of a phone's width: the button says "Both".
+                    val label = if (activity == GuideActivity.BOTH) R.string.activity_both_short else activity.label
+                    Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
         errors.message(OfferField.ACTIVITY)?.let { Error(it) }
