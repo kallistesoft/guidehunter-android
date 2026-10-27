@@ -27,12 +27,18 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Firebase is optional: without this secret the app builds with the sample guides (README, "Firebase").
+      # Firebase is optional: without these secrets the app builds with the sample guides (README, "Firebase"). Debug
+      # builds use the dev project, release builds the production one.
       - name: Firebase config
         env:
-          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          GOOGLE_SERVICES_JSON_DEBUG: ${{ secrets.GOOGLE_SERVICES_JSON_DEBUG }}
+          GOOGLE_SERVICES_JSON_RELEASE: ${{ secrets.GOOGLE_SERVICES_JSON_RELEASE }}
         run: |
-          if [ -n "$GOOGLE_SERVICES_JSON" ]; then echo "$GOOGLE_SERVICES_JSON" > app/google-services.json; fi
+          if [ -n "$GOOGLE_SERVICES_JSON_DEBUG" ]; then echo "$GOOGLE_SERVICES_JSON_DEBUG" > app/src/debug/google-services.json; fi
+          if [ -n "$GOOGLE_SERVICES_JSON_RELEASE" ]; then
+            mkdir -p app/src/release
+            echo "$GOOGLE_SERVICES_JSON_RELEASE" > app/src/release/google-services.json
+          fi
 
       - name: Conventions
         run: scripts/check-conventions.sh

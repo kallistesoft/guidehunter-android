@@ -9,6 +9,7 @@ import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
 import ca.kallistesoft.guidehunter.core.model.Discipline
+import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
@@ -65,6 +66,8 @@ data class MapUiState(
     val loading: Boolean = true,
     /** The guides that match [filter], nearest first once the user's location is known. */
     val guides: List<GuideItem> = emptyList(),
+    /** The [guides] in the part of the map on screen (all of them until the map tells): the cards. */
+    val inView: List<GuideItem> = emptyList(),
     val filter: GuideFilter = GuideFilter(),
     val userLocation: GeoPoint? = null,
     /** The guide whose offer is open, or null. */
@@ -94,6 +97,7 @@ class MapViewModel @Inject constructor(
     )
     private val selectedId = MutableStateFlow(savedState.get<String>(KEY_SELECTED))
     private val userLocation = MutableStateFlow<GeoPoint?>(null)
+    private val visibleArea = MutableStateFlow<GeoBounds?>(null)
 
     /** The guides whose ad the user has watched (this session): they never pay twice. */
     private val unlocked = MutableStateFlow(savedState.get<Array<String>>(KEY_UNLOCKED).orEmpty().toSet())
@@ -113,13 +117,15 @@ class MapViewModel @Inject constructor(
 
     val uiState: StateFlow<MapUiState> = combine(
         listing,
+        visibleArea,
         selectedId,
         contacts,
         adConsent.privacyOptionsRequired,
-    ) { listing, selectedId, contacts, privacyRequired ->
+    ) { listing, area, selectedId, contacts, privacyRequired ->
         MapUiState(
             loading = false,
             guides = listing.shown,
+            inView = if (area == null) listing.shown else listing.shown.filter { it.guide.location in area },
             filter = listing.filter,
             userLocation = listing.location,
             selected = listing.all.find { it.guide.id == selectedId }?.let { item ->
@@ -134,6 +140,11 @@ class MapViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MapUiState())
 
     private data class Listing(val all: List<GuideItem>, val shown: List<GuideItem>, val filter: GuideFilter, val location: GeoPoint?)
+
+    /** The map stopped moving over [area]: the cards follow it. */
+    fun showArea(area: GeoBounds) {
+        visibleArea.value = area
+    }
 
     /** "Privacy options": the ad consent choices again (only offered where the user's region requires it). */
     fun showPrivacyOptions() = adConsent.showPrivacyOptions()
