@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="become_guide_title">Devenir guide</string>
-    <string name="become_guide_intro">Mettez vos séjours de chasse ou de pêche sur la carte. Nous vérifions chaque offre avant de la mettre sur la carte et nous vous répondons par courriel.</string>
+    <string name="become_guide_intro">Mettez vos séjours de chasse ou de pêche sur la carte. Nous vérifions d\'abord chaque offre et vous répondons par courriel.</string>
     <string name="field_business_name">Votre nom ou celui de votre entreprise</string>
     <string name="field_activity">Vous offrez</string>
     <string name="field_species">Espèces</string>

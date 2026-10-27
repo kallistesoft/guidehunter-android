@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="become_guide_title">Become a guide</string>
-    <string name="become_guide_intro">Put your hunting or fishing trips on the map. We review every offer before it goes on the map, and we\'ll reply by email.</string>
+    <string name="become_guide_intro">Put your hunting or fishing trips on the map. We review every offer first, and reply by email.</string>
     <string name="field_business_name">Your name or business name</string>
     <string name="field_activity">You offer</string>
     <string name="field_species">Species</string>
