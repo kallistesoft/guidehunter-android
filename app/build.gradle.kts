@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.baselineprofile)
 }
 
-// Firebase (the guides and the "Become a guide" emails) is set up only when the project's config file is present, so
+// Firebase (the guides, the accounts and the offer emails) is set up only when the project's config file is present, so
 // the app also builds without it (pull requests, a fresh clone): it then shows sample guides (README, "Firebase").
 if (listOf("", "src/debug/", "src/release/").any { file("${it}google-services.json").exists() }) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
@@ -112,9 +112,11 @@ android {
 
 dependencies {
     implementation(project(":core:ads"))
+    implementation(project(":core:auth"))
     implementation(project(":core:data"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
+    implementation(project(":feature:account"))
     implementation(project(":feature:becomeguide"))
     implementation(project(":feature:map"))
 

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_title">Trouvez votre guide de chasse ou de pêche</string>
+    <string name="welcome_body">Des guides partout au Canada, sur une seule carte. Connectez-vous pour envoyer des demandes aux guides ou publier vos propres offres.</string>
+    <string name="sign_in_google">Se connecter avec Google</string>
+    <string name="signing_in">Connexion…</string>
+    <string name="later">Plus tard</string>
+    <string name="later_note">Vous pourrez vous connecter à tout moment dans les paramètres.</string>
+
+    <string name="signed_in_as">Connecté : %1$s</string>
+    <string name="choose_mode_title">Qu\'est-ce qui vous amène?</string>
+    <string name="choose_mode_body">Un seul compte pour les deux. Vous pourrez changer à tout moment dans les paramètres.</string>
+    <string name="mode_user_title">Je cherche un guide</string>
+    <string name="mode_user_body">Parcourez les offres sur la carte et envoyez des demandes aux guides.</string>
+    <string name="mode_guide_title">Je suis guide</string>
+    <string name="mode_guide_body">Publiez vos offres et répondez aux demandes reçues.</string>
+
+    <string name="section_guide">Guide</string>
+    <string name="section_mode">Mode</string>
+    <string name="section_account">Compte</string>
+    <string name="guide_profile">Profil de guide</string>
+    <string name="guide_profile_body">Votre entreprise et comment vous joindre</string>
+    <string name="switch_to_guide">Passer en mode guide</string>
+    <string name="switch_to_guide_body">Publier des offres et répondre aux demandes</string>
+    <string name="switch_to_user">Passer en mode utilisateur</string>
+    <string name="switch_to_user_body">Trouver des guides sur la carte</string>
+    <string name="signed_in_with_google">Connecté avec Google</string>
+    <string name="sign_in_body">Pour publier des offres ou contacter des guides</string>
+    <string name="privacy_options">Options de confidentialité</string>
+    <string name="privacy_options_body">Publicités et consentement</string>
+    <string name="sign_out">Se déconnecter</string>
+    <string name="delete_account">Supprimer mon compte</string>
+    <string name="delete_account_title">Supprimer votre compte?</string>
+    <string name="delete_account_body">Vos offres sont retirées de la carte, et vos offres, votre profil et votre compte sont supprimés. Google vous demande d\'abord de confirmer votre compte. C\'est irréversible.</string>
+    <string name="cancel">Annuler</string>
+    <string name="dismiss">OK</string>
+
+    <string name="sign_in_failed">La connexion a échoué. Vérifiez votre connexion Internet et réessayez.</string>
+    <string name="sign_in_not_configured">Cette version de l\'application ne permet pas encore de se connecter.</string>
+    <string name="delete_account_failed">Votre compte n\'a pas pu être supprimé. Vérifiez votre connexion Internet et réessayez.</string>
+</resources>

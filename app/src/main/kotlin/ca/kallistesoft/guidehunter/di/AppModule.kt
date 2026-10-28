@@ -4,8 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import ca.kallistesoft.guidehunter.BuildConfig
 import ca.kallistesoft.guidehunter.core.ads.AdsConfig
+import ca.kallistesoft.guidehunter.core.auth.GoogleSignInConfig
 import ca.kallistesoft.guidehunter.core.data.di.DataConfig
-import ca.kallistesoft.guidehunter.feature.becomeguide.GoogleSignInConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

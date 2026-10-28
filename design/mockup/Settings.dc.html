@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="height: 64px; padding: 8px 8px 0; box-sizing: border-box; display: flex; align-items: center; gap: 4px">
+    <a href="{{l.home}}" aria-label="Back" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px">Settings</h1>
+  </header>
+  <div style="flex: 1; padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 8px">
+    <sc-for list="{{sections}}" as="sec" hint-placeholder-count="3">
+      <span style="margin: 12px 4px 0; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">{{sec.title}}</span>
+      <div style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column">
+        <sc-for list="{{sec.rows}}" as="r" hint-placeholder-count="3">
+          <a href="{{r.href}}" style="min-height: 60px; padding: 10px 16px; box-sizing: border-box; display: flex; align-items: center; gap: 14px; text-decoration: none; color: {{r.color}}; border-top: 1px solid {{r.divider}}">
+            <span style="flex-shrink: 0; width: 24px; display: flex; color: {{r.iconColor}}" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{r.icon}}"/></svg>
+            </span>
+            <span style="flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0">
+              <span style="font-size: 16px; font-weight: 600">{{r.label}}</span>
+              <sc-if value="{{r.sub}}" hint-placeholder-val="{{ true }}"><span style="font-size: 14px; color: {{c.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.sub}}</span></sc-if>
+            </span>
+            <sc-if value="{{r.badge}}" hint-placeholder-val="{{ false }}"><span style="min-width: 24px; height: 24px; padding: 0 7px; box-sizing: border-box; border-radius: 999px; background: {{c.primary}}; color: #1A0E05; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{r.badge}}</span></sc-if>
+            <sc-if value="{{r.chevron}}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></sc-if>
+          </a>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"mode":{"editor":"enum","options":["user","guide"],"default":"user"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const guide = (this.props.mode ?? 'user') === 'guide';
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', green:'#2F6B3E', primary:'#E8691E', border:'#E6E1D5', error:'#B3261E'}
+      : {bg:'#0E1611', card:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', green:'#8FD19E', primary:'#F27B2B', border:'#24352A', error:'#F2867A'};
+    const sfx = light ? 'Light' : '';
+    const f = (n) => n + sfx + '.dc.html';
+    const I = {
+      species: 'M3 12c3-5 8-6 12-3l4-3v12l-4-3c-4 3-9 2-12-3zM7 12h.01',
+      person: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21c1.5-4 4.5-6 8-6s6.5 2 8 6',
+      inbox: 'M4 13l2.5-8h11L20 13v6H4zM4 13h5l1 2h4l1-2h5',
+      swap: 'M7 7h12l-3-3M17 17H5l3 3',
+      shield: 'M12 3l7 3v5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6z',
+      out: 'M15 4h4v16h-4M10 8l-4 4 4 4M6 12h10',
+      trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+      store: 'M4 9l1.5-5h13L20 9M4 9v11h16V9M4 9h16M9 20v-6h6v6'
+    };
+    const home = guide ? f('GuideHome') : (light ? 'MapLight.dc.html' : 'Main.dc.html');
+    const row = (label, sub, icon, href, opts = {}) => ({label, sub, icon, href, badge: opts.badge ?? '', chevron: opts.chevron ?? true, color: opts.danger ? c.error : c.text, iconColor: opts.danger ? c.error : (opts.accent ? c.green : c.muted), divider: opts.first ? 'transparent' : c.border});
+    const sections = guide
+      ? [
+          {title: 'Guide', rows: [
+            row('Guide profile', 'Pourvoirie du Lac Rond · info@lacrond.example', I.store, f('GuideProfile'), {first: true}),
+            row('Requests received', '2 waiting for your answer', I.inbox, f('RequestsReceived'), {badge: '2'})
+          ]},
+          {title: 'Mode', rows: [row('Switch to user mode', 'Find guides on the map and send requests', I.swap, light ? 'MapLight.dc.html' : 'Main.dc.html', {first: true, accent: true})]},
+          {title: 'Account', rows: [
+            row('alex.t@example.com', 'Signed in with Google', I.person, '#', {first: true, chevron: false}),
+            row('Privacy options', 'Ads and consent', I.shield, '#'),
+            row('Sign out', '', I.out, light ? 'MapLight.dc.html' : 'Main.dc.html', {chevron: false}),
+            row('Delete account', 'Your offers, requests and profile', I.trash, '#', {danger: true, chevron: false})
+          ]}
+        ]
+      : [
+          {title: 'Looking for a guide', rows: [
+            row('Species on the map', 'Brook trout, Walleye', I.species, f('SpeciesPicker'), {first: true}),
+            row('My contact info', 'Alex Tremblay · +1 418 555 0199', I.person, f('MyContact')),
+            row('My requests', '1 pending', I.inbox, f('MyRequests'))
+          ]},
+          {title: 'Mode', rows: [row('Switch to guide mode', 'Publish offers and answer requests', I.swap, f('GuideHome'), {first: true, accent: true})]},
+          {title: 'Account', rows: [
+            row('alex.t@example.com', 'Signed in with Google', I.person, '#', {first: true, chevron: false}),
+            row('Privacy options', 'Ads and consent', I.shield, '#'),
+            row('Sign out', '', I.out, light ? 'MapLight.dc.html' : 'Main.dc.html', {chevron: false}),
+            row('Delete account', 'Your requests and contact info', I.trash, '#', {danger: true, chevron: false})
+          ]}
+        ];
+    return {c, sections, l: {home}};
+  }
+}
+</script>
+</body>
+</html>

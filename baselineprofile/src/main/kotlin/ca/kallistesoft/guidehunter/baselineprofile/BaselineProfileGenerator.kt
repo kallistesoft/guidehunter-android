@@ -9,7 +9,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * What most users do first: a cold start, the map with its guides, a guide's offer. The profile precompiles these
+ * What most users do first: a cold start, the welcome ("Later"), the map with its guides, a guide's offer. The profile precompiles these
  * paths, so the first launch after an install doesn't run them interpreted.
  */
 @RunWith(AndroidJUnit4::class)
@@ -21,14 +21,16 @@ class BaselineProfileGenerator {
     fun generate() = rule.collect(packageName = PACKAGE, includeInStartupProfile = true) {
         pressHome()
         startActivityAndWait()
+        // A first launch shows the welcome; later runs go straight to the map.
+        device.findObject(By.res("later"))?.click()
         // The guide cards (the sample guides without Firebase, the real ones with it).
         device.wait(Until.hasObject(By.res("guide-count")), TIMEOUT)
         device.findObject(By.res("guide-sample-bear"))?.click()
         device.wait(Until.hasObject(By.res("guide-detail")), TIMEOUT)
         device.pressBack()
-        // The form.
-        device.findObject(By.res("become-guide"))?.click()
-        device.wait(Until.hasObject(By.res("field-business-name")), TIMEOUT)
+        // The settings.
+        device.findObject(By.res("settings"))?.click()
+        device.wait(Until.hasObject(By.res("settings-screen")), TIMEOUT)
         device.pressBack()
     }
 

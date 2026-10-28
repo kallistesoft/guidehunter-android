@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="become_guide_title">Devenir guide</string>
-    <string name="become_guide_intro">Mettez vos séjours de chasse ou de pêche sur la carte. Nous vérifions d\'abord chaque offre et vous répondons par courriel.</string>
     <string name="field_business_name">Votre nom ou celui de votre entreprise</string>
     <string name="field_activity">Vous offrez</string>
     <string name="field_species">Espèces</string>
@@ -44,13 +42,6 @@
     <string name="send_failed">L\'envoi a échoué. Vérifiez votre connexion et réessayez.</string>
     <string name="send_not_configured">Cette version de l\'application ne peut pas encore l\'envoyer.</string>
 
-    <string name="sign_in_why">Connectez-vous avec votre compte Google pour envoyer des offres et les modifier plus tard. Il ne sert qu\'à savoir quelles offres sont les vôtres.</string>
-    <string name="sign_in_google">Continuer avec Google</string>
-    <string name="signing_in">Connexion…</string>
-    <string name="sign_in_failed">La connexion a échoué. Vérifiez votre connexion Internet et réessayez.</string>
-    <string name="sign_in_not_configured">Les guides ne peuvent pas encore se connecter avec cette version de l\'application.</string>
-    <string name="signed_in_as">Connecté avec %1$s</string>
-    <string name="dismiss">OK</string>
     <string name="cancel">Annuler</string>
 
     <string name="my_offers_title">Mes offres</string>
@@ -61,12 +52,6 @@
     <string name="status_pending">En attente de vérification</string>
     <string name="status_published">Sur la carte</string>
     <string name="status_changes_pending">Sur la carte · modifications en attente de vérification</string>
-    <string name="account_menu">Compte</string>
-    <string name="sign_out">Se déconnecter</string>
-    <string name="delete_account">Supprimer mon compte</string>
-    <string name="delete_account_title">Supprimer votre compte?</string>
-    <string name="delete_account_body">Vos offres sont retirées de la carte, puis vos offres, votre profil et votre compte sont supprimés. Google vous demande d\'abord de confirmer votre compte. C\'est définitif.</string>
-    <string name="delete_account_failed">Votre compte n\'a pas pu être supprimé. Vérifiez votre connexion et réessayez.</string>
 
     <string name="profile_title">Mon profil</string>
     <string name="profile_intro">Votre entreprise et comment les chasseurs et pêcheurs vous joignent. Ils accompagnent chacune de vos offres.</string>

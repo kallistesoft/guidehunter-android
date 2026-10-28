@@ -27,7 +27,6 @@ import androidx.compose.ui.test.performScrollTo
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
-import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
@@ -55,8 +54,7 @@ class MapScreenTest {
     private val guides = FakeGuideRepository()
     private val location = FakeLocationRepository()
     private val ads = FakeRewardedAds()
-    private val consent = FakeAdConsent()
-    private var becomeGuide = 0
+    private var settings = 0
 
     /** What the system answers to the permission request: granted or not. */
     private var permissionAnswer = false
@@ -75,14 +73,14 @@ class MapScreenTest {
     }
 
     private fun launch() {
-        val viewModel = MapViewModel(guides, location, ads, consent, SavedStateHandle(), { TestGuides.today })
+        val viewModel = MapViewModel(guides, location, ads, SavedStateHandle(), { TestGuides.today })
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
             }
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 GuideHunterTheme {
-                    MapScreen(onBecomeGuide = { becomeGuide++ }, viewModel = viewModel, map = { content, modifier ->
+                    MapScreen(onSettings = { settings++ }, viewModel = viewModel, map = { content, modifier ->
                         // A pin per guide, tapped like on the map.
                         Column(modifier) {
                             LazyRow {
@@ -202,15 +200,6 @@ class MapScreenTest {
     }
 
     @Test
-    fun `privacy options show only where required, and open the consent choices`() {
-        launch()
-        compose.onNodeWithTag("privacy-options").assertDoesNotExist()
-        consent.privacyOptionsRequired.value = true
-        compose.onNodeWithTag("privacy-options").performClick()
-        assertEquals(1, consent.privacyOptionsShown)
-    }
-
-    @Test
     @Config(qualifiers = "en-w1000dp-h800dp")
     fun `on a wide window the offer opens beside the map, and closes`() {
         launch()
@@ -233,10 +222,10 @@ class MapScreenTest {
     }
 
     @Test
-    fun `become a guide opens the form`() {
+    fun `the settings button opens the settings`() {
         launch()
-        compose.onNodeWithTag("become-guide").performClick()
-        assertEquals(1, becomeGuide)
+        compose.onNodeWithTag("settings").performClick()
+        assertEquals(1, settings)
     }
 
     private val distance

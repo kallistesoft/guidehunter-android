@@ -19,6 +19,10 @@
       "name": "2 · Become a guide"
     },
     {
+      "id": "account",
+      "name": "4 · Account and requests (user)"
+    },
+    {
       "id": "logo",
       "name": "3 · Logo"
     }
@@ -45,7 +49,7 @@
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "3 Fishing, species menu (several)",
+      "title": "3 Species: one screen, also in Settings",
       "page": "find"
     },
     "LocationAsk.dc.html": {
@@ -69,7 +73,7 @@
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "6 Guide offer, contact hidden",
+      "title": "6 Guide offer: contact the guide",
       "page": "find"
     },
     "RewardedAd.dc.html": {
@@ -85,7 +89,7 @@
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "8 Contact unlocked",
+      "title": "8 After the ad: I'm interested",
       "page": "find"
     },
     "SheetNotEarned.dc.html": {
@@ -125,7 +129,7 @@
       "y": 1264,
       "w": 390,
       "h": 844,
-      "title": "3 Fishing, species menu (several) · light",
+      "title": "3 Species: one screen, also in Settings · light",
       "page": "find"
     },
     "LocationAskLight.dc.html": {
@@ -149,7 +153,7 @@
       "y": 1264,
       "w": 390,
       "h": 844,
-      "title": "6 Guide offer, contact hidden · light",
+      "title": "6 Guide offer: contact the guide · light",
       "page": "find"
     },
     "RewardedAdLight.dc.html": {
@@ -165,7 +169,7 @@
       "y": 1264,
       "w": 390,
       "h": 844,
-      "title": "8 Contact unlocked · light",
+      "title": "8 After the ad: I'm interested · light",
       "page": "find"
     },
     "SheetNotEarnedLight.dc.html": {
@@ -359,6 +363,150 @@
       "h": 844,
       "title": "5 Price and send · light",
       "page": "become"
+    },
+    "Welcome.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 Welcome: sign in or later",
+      "page": "account"
+    },
+    "WelcomeLight.dc.html": {
+      "x": 0,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "1 Welcome: sign in or later · light",
+      "page": "account"
+    },
+    "ChooseMode.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 What brings you here?",
+      "page": "account"
+    },
+    "ChooseModeLight.dc.html": {
+      "x": 470,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "2 What brings you here? · light",
+      "page": "account"
+    },
+    "Settings.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 Settings (user mode)",
+      "page": "account"
+    },
+    "SettingsLight.dc.html": {
+      "x": 940,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "3 Settings (user mode) · light",
+      "page": "account"
+    },
+    "MyContact.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 My contact info",
+      "page": "account"
+    },
+    "MyContactLight.dc.html": {
+      "x": 1410,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "4 My contact info · light",
+      "page": "account"
+    },
+    "SheetFeatured.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5 A featured offer",
+      "page": "account"
+    },
+    "SheetFeaturedLight.dc.html": {
+      "x": 1880,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "5 A featured offer · light",
+      "page": "account"
+    },
+    "ConfirmRequest.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "6 Send your request?",
+      "page": "account"
+    },
+    "ConfirmRequestLight.dc.html": {
+      "x": 2350,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "6 Send your request? · light",
+      "page": "account"
+    },
+    "SheetSent.dc.html": {
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "7 Request sent, pending",
+      "page": "account"
+    },
+    "SheetSentLight.dc.html": {
+      "x": 2820,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "7 Request sent, pending · light",
+      "page": "account"
+    },
+    "MyRequests.dc.html": {
+      "x": 3290,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "8 My requests, every status",
+      "page": "account"
+    },
+    "MyRequestsLight.dc.html": {
+      "x": 3290,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "8 My requests, every status · light",
+      "page": "account"
+    },
+    "SheetOwn.dc.html": {
+      "x": 3760,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "9 Your own offer",
+      "page": "account"
+    },
+    "SheetOwnLight.dc.html": {
+      "x": 3760,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "9 Your own offer · light",
+      "page": "account"
     }
   },
   "order": [
@@ -403,7 +551,25 @@
     "Logos.dc.html",
     "LogosLight.dc.html",
     "Logo.dc.html",
-    "LogoLight.dc.html"
+    "LogoLight.dc.html",
+    "Welcome.dc.html",
+    "ChooseMode.dc.html",
+    "Settings.dc.html",
+    "MyContact.dc.html",
+    "SheetFeatured.dc.html",
+    "ConfirmRequest.dc.html",
+    "SheetSent.dc.html",
+    "MyRequests.dc.html",
+    "SheetOwn.dc.html",
+    "WelcomeLight.dc.html",
+    "ChooseModeLight.dc.html",
+    "SettingsLight.dc.html",
+    "MyContactLight.dc.html",
+    "SheetFeaturedLight.dc.html",
+    "ConfirmRequestLight.dc.html",
+    "SheetSentLight.dc.html",
+    "MyRequestsLight.dc.html",
+    "SheetOwnLight.dc.html"
   ],
   "notes": {
     "findDark": {
@@ -453,6 +619,22 @@
       "kind": "title1",
       "maxW": 2880,
       "page": "logo"
+    },
+    "accountDark": {
+      "x": 0,
+      "y": -300,
+      "text": "Account and requests · dark",
+      "kind": "title1",
+      "maxW": 4150,
+      "page": "account"
+    },
+    "accountLight": {
+      "x": 0,
+      "y": 964,
+      "text": "Account and requests · light",
+      "kind": "title1",
+      "maxW": 4150,
+      "page": "account"
     }
   },
   "designSystems": []

@@ -37,6 +37,7 @@
     <string name="activity_fish">Pêche</string>
     <string name="activity_both">Chasse et pêche</string>
 
+    <string name="settings">Paramètres</string>
     <string name="back">Retour</string>
 
     <string name="slot_morning_of">%1$s, matin</string>

@@ -11,7 +11,6 @@ import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.model.Trip
 import ca.kallistesoft.guidehunter.core.model.TripLength
-import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
@@ -42,9 +41,8 @@ class MapViewModelTest {
     private val guides = FakeGuideRepository()
     private val location = FakeLocationRepository()
     private val ads = FakeRewardedAds()
-    private val consent = FakeAdConsent()
 
-    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = MapViewModel(guides, location, ads, consent, saved, { TestGuides.today })
+    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = MapViewModel(guides, location, ads, saved, { TestGuides.today })
 
     private val MapViewModel.ids get() = uiState.value.guides.map { it.guide.id }
     private val MapViewModel.contact get() = uiState.value.selected?.contact
@@ -70,17 +68,6 @@ class MapViewModelTest {
         assertEquals(listOf("bear", "salmon", "moose"), vm.ids)
         vm.chooseDiscipline(Discipline.FISHING)
         assertEquals("the filters still apply", listOf("moose"), vm.uiState.value.inView.map { it.guide.id })
-    }
-
-    @Test
-    fun `privacy options are offered where the region requires them`() = runTest {
-        val vm = viewModel()
-        collecting(vm.uiState)
-        assertFalse(vm.uiState.value.privacyOptionsRequired)
-        consent.privacyOptionsRequired.value = true
-        assertTrue(vm.uiState.value.privacyOptionsRequired)
-        vm.showPrivacyOptions()
-        assertEquals(1, consent.privacyOptionsShown)
     }
 
     @Test

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter my contact info</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column">
+  <header style="height: 64px; padding: 8px 8px 0; box-sizing: border-box; display: flex; align-items: center; gap: 4px">
+    <a href="{{l.settings}}" aria-label="Back" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px">My contact info</h1>
+  </header>
+  <form style="flex: 1; padding: 8px 20px 24px; display: flex; flex-direction: column; gap: 18px">
+    <p style="margin: 0; font-size: 15px; line-height: 1.45; color: {{c.muted}}">Sent to a guide only when you tap I’m interested, so they can reach you.</p>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="name" style="font-size: 14px; font-weight: 600">Name</label>
+      <input id="name" value="Alex Tremblay" style="height: 52px; padding: 0 14px; box-sizing: border-box; border-radius: 12px; border: 2px solid {{c.primary}}; background: {{c.field}}; color: {{c.text}}; font: 400 16px Barlow, sans-serif">
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="email" style="font-size: 14px; font-weight: 600">Email</label>
+      <div style="position: relative">
+        <input id="email" value="alex.t@example.com" readonly aria-describedby="email-help" style="width: 100%; height: 52px; padding: 0 44px 0 14px; box-sizing: border-box; border-radius: 12px; border: 1px solid {{c.outline}}; background: {{c.locked}}; color: {{c.muted}}; font: 400 16px Barlow, sans-serif">
+        <svg style="position: absolute; right: 14px; top: 16px" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      </div>
+      <span id="email-help" style="font-size: 13px; color: {{c.muted}}">From your Google account. It can’t be changed here.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="phone" style="font-size: 14px; font-weight: 600">Phone <span style="font-weight: 400; color: {{c.muted}}">(optional)</span></label>
+      <input id="phone" type="tel" value="+1 418 555 0199" style="height: 52px; padding: 0 14px; box-sizing: border-box; border-radius: 12px; border: 1px solid {{c.outline}}; background: {{c.field}}; color: {{c.text}}; font: 400 16px Barlow, sans-serif">
+    </div>
+    <div style="display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 12px; background: {{c.note}}">
+      <svg style="flex-shrink: 0; margin-top: 1px" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+      <span style="font-size: 14px; line-height: 1.4; color: {{c.muted}}">Requests you already sent keep the details you had then.</span>
+    </div>
+    <span style="flex: 1"></span>
+    <a href="{{l.settings}}" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center">Save</a>
+  </form>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', field:'#FFFFFF', locked:'#ECE8DE', note:'#ECE8DE', text:'#17201A', muted:'#5B6659', primary:'#E8691E', outline:'#C9C2B2'}
+      : {bg:'#0E1611', field:'#17221A', locked:'#141D17', note:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', primary:'#F27B2B', outline:'#3A4B3F'};
+    return {c, l: {settings: 'Settings' + (light ? 'Light' : '') + '.dc.html'}};
+  }
+}
+</script>
+</body>
+</html>

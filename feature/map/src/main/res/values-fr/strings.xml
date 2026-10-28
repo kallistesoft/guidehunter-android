@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="map_title">GuideHunter</string>
-    <string name="become_guide">Devenir guide</string>
     <string name="my_location">Afficher les distances depuis ma position</string>
-    <string name="privacy_options">Options de confidentialité</string>
     <string name="location_rationale_title">Afficher les distances?</string>
     <string name="location_rationale">Avec votre position approximative, chaque guide indique à quelle distance il se trouve. Votre position reste sur ce téléphone.</string>
     <string name="location_rationale_allow">Autoriser</string>

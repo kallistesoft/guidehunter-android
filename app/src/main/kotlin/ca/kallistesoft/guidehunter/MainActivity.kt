@@ -2,6 +2,7 @@ package ca.kallistesoft.guidehunter
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -19,8 +20,11 @@ import javax.inject.Inject
 class MainActivity : AppCompatActivity() {
     @Inject lateinit var adConsent: AdConsent
 
+    private val app: AppViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        // The splash stays until the app knows its home (the settings read from disk): no flash of the wrong screen.
+        installSplashScreen().setKeepOnScreenCondition { app.home.value == null }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // Ads consent (UMP) on each launch: the form shows only where it's required.
@@ -29,7 +33,7 @@ class MainActivity : AppCompatActivity() {
             GuideHunterTheme {
                 // Test tags as resource ids: the baseline profile generator (UiAutomator) finds the screens by them.
                 @OptIn(ExperimentalComposeUiApi::class)
-                GuideHunterApp(Modifier.semantics { testTagsAsResourceId = true })
+                GuideHunterApp(app, Modifier.semantics { testTagsAsResourceId = true })
             }
         }
     }

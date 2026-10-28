@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter choose a mode</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 72px 20px 32px; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; gap: 16px">
+  <span style="align-self: flex-start; height: 32px; padding: 0 12px; border-radius: 999px; background: {{c.greenTint}}; color: {{c.green}}; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Signed in as alex.t@example.com</span>
+  <h1 style="margin: 8px 0 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 34px; line-height: 1.05">What brings you here?</h1>
+  <p style="margin: 0 0 8px; font-size: 16px; color: {{c.muted}}">One account does both. You can switch anytime in Settings.</p>
+  <sc-for list="{{choices}}" as="ch" hint-placeholder-count="2">
+    <a href="{{ch.href}}" style="padding: 20px; border-radius: 20px; background: {{c.card}}; border: 1px solid {{c.border}}; color: {{c.text}}; text-decoration: none; display: flex; gap: 16px; align-items: center">
+      <span style="flex-shrink: 0; width: 56px; height: 56px; border-radius: 16px; background: {{ch.tint}}; color: {{ch.color}}; display: flex; align-items: center; justify-content: center"><sc-if value="{{ch.user}}" hint-placeholder-val="{{ true }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg></sc-if><sc-if value="{{ch.guide}}" hint-placeholder-val="{{ false }}"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z"/><circle cx="12" cy="9.8" r="2.3"/></svg></sc-if></span>
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+        <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 24px; line-height: 1.1">{{ch.title}}</span>
+        <span style="font-size: 15px; line-height: 1.4; color: {{c.muted}}">{{ch.sub}}</span>
+      </span>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="{{c.muted}}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+    </a>
+  </sc-for>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', green:'#2F6B3E', greenTint:'#E3EFE4', label:'#B4500F', labelTint:'#FBEBD9', border:'#E6E1D5'}
+      : {bg:'#0E1611', card:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', green:'#8FD19E', greenTint:'#22382A', label:'#F7A06A', labelTint:'#3A2A18', border:'#24352A'};
+    const sfx = light ? 'Light' : '';
+    const choices = [
+      {user: true, guide: false, title: 'I’m looking for a guide', sub: 'Browse offers on the map and send requests to guides.', tint: c.greenTint, color: c.green, href: light ? 'MapLight.dc.html' : 'Main.dc.html'},
+      {user: false, guide: true, title: 'I’m a guide', sub: 'Publish your offers and answer the requests you get.', tint: c.labelTint, color: c.label, href: 'GuideHome' + sfx + '.dc.html'}
+    ];
+    return {c, choices};
+  }
+}
+</script>
+</body>
+</html>

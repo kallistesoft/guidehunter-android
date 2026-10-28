@@ -4,6 +4,9 @@ import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
+import ca.kallistesoft.guidehunter.core.data.SettingsRepository
+import ca.kallistesoft.guidehunter.core.model.AppMode
+import ca.kallistesoft.guidehunter.core.model.AppSettings
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
@@ -147,5 +150,22 @@ class FakeLocationRepository(var location: GeoPoint? = null) : LocationRepositor
     override suspend fun current(): GeoPoint? {
         reads++
         return location
+    }
+}
+
+/** Settings in memory; [settings] is what a test starts from (a first launch by default). */
+class FakeSettingsRepository(settings: AppSettings = AppSettings()) : SettingsRepository {
+    override val settings = MutableStateFlow(settings)
+
+    override suspend fun finishOnboarding(mode: AppMode) {
+        settings.value = AppSettings(onboarded = true, mode = mode)
+    }
+
+    override suspend fun setMode(mode: AppMode) {
+        settings.value = settings.value.copy(mode = mode)
+    }
+
+    override suspend fun reset() {
+        settings.value = AppSettings()
     }
 }
