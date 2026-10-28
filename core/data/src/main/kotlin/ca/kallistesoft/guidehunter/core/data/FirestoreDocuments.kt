@@ -15,6 +15,7 @@ import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.Species
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 
 // The Firestore documents (see firestore.rules and README, "Firebase"), as plain maps so they're tested on the JVM.
@@ -54,8 +55,23 @@ internal fun guideFrom(id: String, data: Map<String, Any?>): Guide? {
         priceFrom = (data["priceFrom"] as? Number)?.toInt(),
         currency = data["currency"] as? String ?: "CAD",
         schedule = scheduleFrom(data),
+        boostedUntil = boostedUntilFrom(data),
     )
 }
+
+/** A `guides` document's `boostedUntil` (a timestamp, set by its guide after an ad); null if never boosted. */
+internal fun boostedUntilFrom(data: Map<String, Any?>): Instant? =
+    (data[BOOSTED_UNTIL] as? Timestamp)?.let { Instant.fromEpochSeconds(it.seconds, it.nanoseconds) }
+
+/** The update that boosts a `guides` document [until] then: that field only (firestore.rules allows nothing else). */
+internal fun boostUpdate(until: Instant): Map<String, Any> =
+    mapOf(BOOSTED_UNTIL to Timestamp(until.epochSeconds, until.nanosecondsOfSecond))
+
+/** The boosts of a guide's `guides` documents, by offer id: the ones never boosted are left out. */
+internal fun boostsFrom(documents: List<Pair<String, Map<String, Any?>>>): Map<String, Instant> =
+    documents.mapNotNull { (id, data) -> boostedUntilFrom(data)?.let { id to it } }.toMap()
+
+private const val BOOSTED_UNTIL = "boostedUntil"
 
 /**
  * An offer's schedule in a `guideOffers` or `guides` document: `tripLength` ("HALF_DAY" or a number of days),

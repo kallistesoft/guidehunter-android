@@ -55,6 +55,8 @@ internal class UnconfiguredGuideAccountRepository : GuideAccountRepository {
 
     override suspend fun deleteOffer(uid: String, offer: GuideOffer) = throw BackendNotConfiguredException()
 
+    override suspend fun boost(uid: String, offerId: String) = throw BackendNotConfiguredException()
+
     override suspend fun deleteAll(uid: String) = throw BackendNotConfiguredException()
 }
 

@@ -107,4 +107,20 @@
         <item quantity="other">%1$d dates, from %2$s</item>
     </plurals>
     <string name="field_activity_help">One type per offer: if you offer both, add a hunting offer and a fishing offer.</string>
+
+    <!-- Boost: a live offer featured on the map for 3 days, after an ad. -->
+    <string name="boost_pitch">Show it first on the map</string>
+    <string name="boost">Boost</string>
+    <string name="boost_again">Boost again</string>
+    <string name="boost_until">Featured until %1$s</string>
+    <string name="boost_ended">Featured ended %1$s</string>
+    <string name="boost_title">Feature “%1$s” for 3 days</string>
+    <string name="boost_point_pin">Its pin stands out on the map, drawn on top, with a “Featured” badge.</string>
+    <string name="boost_point_turns">Up to 3 featured offers show at a time; when more are in view, they take turns.</string>
+    <string name="boost_point_ad">Watch a short ad to start. Come back to boost again when it ends.</string>
+    <string name="boost_watch_ad">Watch an ad to boost</string>
+    <string name="boost_not_now">Not now</string>
+    <string name="boost_error_not_earned">The ad was closed before the end: the offer isn\'t boosted.</string>
+    <string name="boost_error_offline">No connection: connect to the internet and try again.</string>
+    <string name="boost_error_failed">The boost couldn\'t be saved. Try again.</string>
 </resources>

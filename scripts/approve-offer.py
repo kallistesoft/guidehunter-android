@@ -16,7 +16,8 @@ import sys
 import urllib.error
 import urllib.request
 
-# The fields that go on the map; the others (status, live, updatedAt) are the review's.
+# The fields that go on the map; the others (status, live, updatedAt) are the review's. The published offer's
+# `boostedUntil` (set by its guide after an ad) is kept as it is.
 PUBLIC = ["ownerUid", "title", "description", "activity", "species", "region", "lat", "lng", "priceFrom", "tripLength", "departures", "everyYear"]
 
 
@@ -84,6 +85,9 @@ def approve(db, offer_id):
 
     guide = {name: offer[name] for name in PUBLIC if name in offer and "nullValue" not in offer[name]}
     guide["currency"] = {"stringValue": "CAD"}
+    # A boost the guide earned (an ad watched, firestore.rules) outlives an edit: keep it.
+    if published is not None and "boostedUntil" in published:
+        guide["boostedUntil"] = published["boostedUntil"]
     contact = {
         "ownerUid": offer["ownerUid"],
         "name": profile["businessName"],

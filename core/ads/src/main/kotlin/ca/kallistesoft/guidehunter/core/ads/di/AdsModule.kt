@@ -8,6 +8,7 @@ import android.os.SystemClock
 import ca.kallistesoft.guidehunter.core.ads.AdConsent
 import ca.kallistesoft.guidehunter.core.ads.AdsConfig
 import ca.kallistesoft.guidehunter.core.ads.AdsManager
+import ca.kallistesoft.guidehunter.core.ads.BoostAds
 import ca.kallistesoft.guidehunter.core.ads.GoogleAdsSdk
 import ca.kallistesoft.guidehunter.core.ads.NativeAds
 import ca.kallistesoft.guidehunter.core.ads.ResumedActivity
@@ -54,6 +55,10 @@ internal object AdsModule {
 
     @Provides
     fun rewardedAds(manager: AdsManager): RewardedAds = manager
+
+    @Provides
+    @BoostAds
+    fun boostAds(manager: AdsManager): RewardedAds = manager.boost
 
     @Provides
     fun nativeAds(manager: AdsManager): NativeAds = manager

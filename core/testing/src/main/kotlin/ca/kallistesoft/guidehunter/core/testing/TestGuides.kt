@@ -12,6 +12,7 @@ import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.Schedule
 import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.TripLength
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 
 /**
@@ -21,6 +22,9 @@ import kotlinx.datetime.LocalDate
 object TestGuides {
     /** The day date tests run on. */
     val today = LocalDate(2027, 4, 15)
+
+    /** The time tests run at: noon (UTC) on [today]. */
+    val now: Instant = Instant.parse("2027-04-15T12:00:00Z")
 
     val bear = Guide(
         id = "bear",

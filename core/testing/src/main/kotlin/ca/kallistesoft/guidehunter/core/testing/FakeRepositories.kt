@@ -7,6 +7,7 @@ import ca.kallistesoft.guidehunter.core.data.LocationRepository
 import ca.kallistesoft.guidehunter.core.data.SettingsRepository
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.AppSettings
+import ca.kallistesoft.guidehunter.core.model.Boost
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
@@ -19,6 +20,7 @@ import ca.kallistesoft.guidehunter.core.model.Species
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import kotlin.time.Instant
 
 /** Guides a test sets ([guides]) and contacts it hands out; counts the contacts read. */
 class FakeGuideRepository(
@@ -84,7 +86,7 @@ class FakeAuthRepository(signedIn: GuideUser? = null) : AuthRepository {
 
 /**
  * Guides' profiles and offers in memory, by user id. [failure] makes the next writes throw, [onWrite] holds them
- * until completed; [mails] counts the offers emailed for review.
+ * until completed; [mails] counts the offers emailed for review. A boost ends [Boost.DURATION] after [now].
  */
 class FakeGuideAccountRepository : GuideAccountRepository {
     val profiles = MutableStateFlow<Map<String, GuideProfile>>(emptyMap())
@@ -124,6 +126,17 @@ class FakeGuideAccountRepository : GuideAccountRepository {
     override suspend fun deleteOffer(uid: String, offer: GuideOffer) {
         write()
         offersByUser.value += uid to offersByUser.value[uid].orEmpty().filter { it.id != offer.id }
+    }
+
+    /** The clock boosts start from. */
+    var now: Instant = TestGuides.now
+
+    override suspend fun boost(uid: String, offerId: String) {
+        write()
+        val offers = offersByUser.value[uid].orEmpty()
+        // firestore.rules: only the guide's own offer, and only one on the map (it has a published copy).
+        check(offers.any { it.id == offerId && it.live }) { "no live offer $offerId" }
+        offersByUser.value += uid to offers.map { if (it.id == offerId) it.copy(boostedUntil = Boost.until(now)) else it }
     }
 
     override suspend fun deleteAll(uid: String) {

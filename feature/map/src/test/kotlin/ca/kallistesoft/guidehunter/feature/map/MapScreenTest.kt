@@ -47,6 +47,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.days
 
 /** The map screen with a stand-in map that lists the pins it was given; Google Maps itself can't draw on the JVM. */
 @RunWith(RobolectricTestRunner::class)
@@ -80,7 +81,7 @@ class MapScreenTest {
     }
 
     private fun launch() {
-        val viewModel = MapViewModel(guides, location, ads, appSettings, SavedStateHandle(), { TestGuides.today })
+        val viewModel = MapViewModel(guides, location, ads, appSettings, SavedStateHandle(), { TestGuides.today }, { TestGuides.now })
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
@@ -93,7 +94,8 @@ class MapScreenTest {
                             LazyRow {
                                 items(content.guides.size) { index ->
                                     val id = content.guides[index].guide.id
-                                    Text("pin $id", Modifier.testTag("pin-$id").clickable { content.onSelect(id) })
+                                    val star = if (id in content.featured) " featured" else ""
+                                    Text("pin $id$star", Modifier.testTag("pin-$id").clickable { content.onSelect(id) })
                                 }
                             }
                             // The camera stopping over an area, like a pan or a zoom.
@@ -104,6 +106,20 @@ class MapScreenTest {
                 }
             }
         }
+    }
+
+    @Test
+    fun `a boosted guide's pin is featured, its card first and labelled, its sheet badged`() {
+        guides.guides.value = TestGuides.all + TestGuides.moose.copy(id = "boosted", title = "Boosted trip", boostedUntil = TestGuides.now + 1.days)
+        launch()
+        compose.onNodeWithText("pin boosted featured").assertExists()
+        compose.onNodeWithText("pin bear").assertExists()
+        compose.onNodeWithTag("featured-boosted", useUnmergedTree = true).assertIsDisplayed()
+        compose.onNodeWithTag("featured-bear", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("guide-boosted").performClick()
+        compose.onNode(hasTestTag("featured-boosted") and hasAnyAncestor(hasTestTag("guide-detail")), useUnmergedTree = true)
+            .assertExists()
+        assertEquals(str(UiR.string.featured), "Featured")
     }
 
     @Test

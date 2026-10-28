@@ -38,6 +38,8 @@
     <string name="activity_both">Hunting and fishing</string>
 
     <string name="settings">Settings</string>
+    <!-- A boosted offer's badge, on the map and on the guide's home: it says the place is promoted. -->
+    <string name="featured">Featured</string>
     <string name="back">Back</string>
 
     <string name="slot_morning_of">%1$s, morning</string>

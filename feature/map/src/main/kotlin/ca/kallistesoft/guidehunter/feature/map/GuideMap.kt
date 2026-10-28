@@ -34,7 +34,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 
 /**
- * Google Maps with a pin per guide, the mockup's: orange for hunting, teal for fishing, gold for both. It opens on southern
+ * Google Maps with a pin per guide, the mockup's: orange for hunting, teal for fishing, gold for both; a featured one
+ * in a gold ring with a star, on top. It opens on southern
  * Quebec and moves to the user once their location is known (once: not again after a rotation, nor over a pan). The
  * API key comes from the build (README, "Google Maps").
  */
@@ -77,19 +78,29 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
         contentPadding = PaddingValues(bottom = Sizes.guideCardsInset),
         onMapLoaded = { loaded = true },
     ) {
-        // One icon per activity, made once per theme: a new descriptor per pass would redraw every marker.
+        // One icon per activity, plain and featured, made once per theme: a new descriptor per pass would redraw every
+        // marker.
         val icons = remember(dark, density) {
             val colors = if (dark) DarkPinColors else LightPinColors
             GuideActivity.entries.associateWith {
                 BitmapDescriptorFactory.fromBitmap(pinBitmap(colors.of(it), colors.outline, density))
             }
         }
+        val featuredIcons = remember(dark, density) {
+            val colors = if (dark) DarkPinColors else LightPinColors
+            GuideActivity.entries.associateWith {
+                BitmapDescriptorFactory.fromBitmap(featuredPinBitmap(colors.of(it), colors.outline, colors.featured, density))
+            }
+        }
         content.guides.forEach { item ->
+            val featured = item.guide.id in content.featured
             key(item.guide.id) {
                 Marker(
                     state = rememberUpdatedMarkerState(item.guide.location.toLatLng()),
                     title = item.guide.title,
-                    icon = icons.getValue(item.guide.activity),
+                    icon = (if (featured) featuredIcons else icons).getValue(item.guide.activity),
+                    // Featured pins are drawn over the others.
+                    zIndex = if (featured) FEATURED_Z else 0f,
                     onClick = {
                         content.onSelect(item.guide.id)
                         true // the sheet shows the offer: no info window
@@ -106,3 +117,4 @@ private fun LatLng.toGeoPoint() = GeoPoint(latitude, longitude)
 
 private const val DEFAULT_ZOOM = 5f
 private const val USER_ZOOM = 6f
+private const val FEATURED_Z = 1f

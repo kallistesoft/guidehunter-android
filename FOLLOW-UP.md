@@ -21,7 +21,8 @@ What the MVP leaves for later, most urgent first.
 5. **Ad policy check**: a rewarded ad must be optional and say what it gives ("Watch an ad to see the contact" does).
 6. **AdMob IDs set** for the release build (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`, `ADMOB_NATIVE_ID`): without them
    the build only warns and serves Google's test ads. Create the **native ad unit** in GuideHunter's AdMob app (for
-   the ad cards in the lists) and set `ADMOB_NATIVE_ID` as a CI variable and in `local.properties`.
+   the ad cards in the lists) and set `ADMOB_NATIVE_ID` as a CI variable and in `local.properties`. Likewise a second
+   rewarded unit "Boost" (so the boosts' revenue is reported apart) for `ADMOB_BOOST_ID`.
 7. Test the release build on the emulator (`.claude/skills/testing-on-emulator`): the rewarded ad, the map, and a
    relaunch after process death ("Become a guide" open) for the Navigation 3 keys under R8.
 
@@ -39,6 +40,19 @@ for an MVP; before it matters:
   flood your inbox or use up the SMTP quota: prefer a dedicated mailbox or SendGrid over a personal Gmail.
 - A `mail` document that doesn't come with an offer is accepted; a Cloud Function that sends the email when an
   offer is written (a Firestore trigger) is the fix, and lets the app stop writing `mail` at all.
+
+## Offer boost
+
+A guide features a live offer for 3 days by watching a rewarded ad (README, "Offer boost"). For now:
+
+- **Production rules not deployed yet**: `firestore.rules` (the owner may set `boostedUntil`) is on the dev project
+  only; deploy it to `guidehunter-55e70` with your OK (`firebase deploy --only firestore:rules`), or Boost fails there.
+- **The ad is only checked in the app.** The rule bounds a boost to 3 days ahead, but a technical guide could renew
+  it without watching the ad. The fix: AdMob **server-side verification (SSV)** of the boost unit calling a Cloud
+  Function (the projects on Blaze, with a **$5 budget alert** first), which then writes `boostedUntil` alone; remove
+  the owner's `update` rule on `guides` then. The same function can check the contact's ad (above).
+- A **paid boost** later (Play Billing), longer or always first.
+- Create the AdMob "Boost" rewarded unit and set `ADMOB_BOOST_ID` (local.properties and the CI variable).
 
 ## Guides
 

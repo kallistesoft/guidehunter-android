@@ -8,12 +8,14 @@ import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
 import ca.kallistesoft.guidehunter.core.data.SettingsRepository
+import ca.kallistesoft.guidehunter.core.model.Boost
 import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
+import ca.kallistesoft.guidehunter.core.model.Now
 import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Today
 import ca.kallistesoft.guidehunter.core.model.Trip
@@ -33,6 +35,7 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.roundToInt
+import kotlin.random.Random
 import kotlinx.datetime.LocalDate
 
 /** A guide on the map, and how far it is from the user (null while the user's location is unknown). */
@@ -74,14 +77,21 @@ data class SelectedGuide(
     val contact: ContactState,
     val trips: List<Trip> = emptyList(),
     val trip: Trip? = null,
+    /** Boosted by its guide: the sheet says it's featured. */
+    val featured: Boolean = false,
 )
 
 data class MapUiState(
     val loading: Boolean = true,
     /** The guides that match [filter], nearest first once the user's location is known. */
     val guides: List<GuideItem> = emptyList(),
-    /** The [guides] in the part of the map on screen (all of them until the map tells): the cards. */
+    /** The [guides] in the part of the map on screen (all of them until the map tells): the cards, [featured] first. */
     val inView: List<GuideItem> = emptyList(),
+    /**
+     * The ids of the boosted guides in view that are featured: at most [Boost.MAX_FEATURED], picked at random when
+     * more are boosted (the same pick while the map pans). Their pins are on top, their cards first.
+     */
+    val featured: Set<String> = emptySet(),
     val filter: GuideFilter = GuideFilter(),
     val userLocation: GeoPoint? = null,
     /** The guide whose offer is open, or null. */
@@ -94,7 +104,7 @@ data class MapUiState(
  * The map of guides: filtered by discipline, species and the dates the user can go, with the distance from the user.
  * The species are a setting ([SettingsRepository], chosen on their own screen and kept for next time); the discipline
  * and the dates are this screen's. Opening a guide shows its public offer; its name and contact details are shown once the user has watched a rewarded ad (Pattern A of
- * .claude/skills/viewmodel-state).
+ * .claude/skills/viewmodel-state). Boosted guides among those shown are featured ([MapUiState.featured]).
  */
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -104,7 +114,14 @@ class MapViewModel @Inject constructor(
     private val settings: SettingsRepository,
     private val savedState: SavedStateHandle,
     private val today: Today,
+    private val now: Now,
 ) : ViewModel() {
+    /**
+     * Which boosted guides are featured when more are in view than can be: drawn once per map, kept while it pans
+     * (and over process death), a new draw on the next visit.
+     */
+    private val featureSeed: Long = savedState[KEY_SEED] ?: Random.nextLong().also { savedState[KEY_SEED] = it }
+
     /** The screen's own choices: the discipline and the dates (the species come from the settings). */
     private val choices = MutableStateFlow(
         GuideFilter(
@@ -147,10 +164,15 @@ class MapViewModel @Inject constructor(
         selection,
         contacts,
     ) { listing, area, selection, contacts ->
+        val time = now()
+        val inArea = if (area == null) listing.shown else listing.shown.filter { it.guide.location in area }
+        // The filters apply first: a boost never shows a guide that doesn't match them.
+        val featured = Boost.featured(inArea.map { it.guide }.filter { it.isBoosted(time) }, featureSeed).map { it.id }.toSet()
         MapUiState(
             loading = false,
             guides = listing.shown,
-            inView = if (area == null) listing.shown else listing.shown.filter { it.guide.location in area },
+            inView = inArea.sortedByDescending { it.guide.id in featured },
+            featured = featured,
             filter = listing.filter,
             userLocation = listing.location,
             selected = listing.all.find { it.guide.id == selection.id }?.let { item ->
@@ -161,6 +183,7 @@ class MapViewModel @Inject constructor(
                     trips = trips,
                     // Searching dates: the first trip that fits them, until the user picks another.
                     trip = selection.trip?.takeIf { it in trips } ?: listing.filter.dates?.let { free -> trips.find { it.within(free) } },
+                    featured = item.guide.isBoosted(time),
                 )
             },
             today = today(),
@@ -286,5 +309,6 @@ class MapViewModel @Inject constructor(
         const val KEY_UNLOCKED = "unlocked"
         const val KEY_DATES = "dates"
         const val KEY_TRIP = "trip"
+        const val KEY_SEED = "featureSeed"
     }
 }

@@ -77,13 +77,14 @@ import ca.kallistesoft.guidehunter.core.ui.label
 import kotlinx.datetime.LocalDate
 
 /**
- * What the map draws: the guides to pin and the user's location; what it reports: the area on screen once the camera
- * stops, and a tap on a pin.
+ * What the map draws: the guides to pin, the [featured] ones highlighted and on top, and the user's location; what it
+ * reports: the area on screen once the camera stops, and a tap on a pin.
  */
 data class MapContent(
     val guides: List<GuideItem>,
     val userLocation: GeoPoint?,
     val onVisibleArea: (GeoBounds) -> Unit = {},
+    val featured: Set<String> = emptySet(),
     val onSelect: (String) -> Unit,
 )
 
@@ -205,10 +206,10 @@ internal fun MapContent(
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     Filters(state, onDiscipline, onSpeciesFilter, onDates, onAnyDates)
                     Box(Modifier.weight(1f).fillMaxWidth()) {
-                        map(MapContent(state.guides, state.userLocation, onVisibleArea, onSelect), Modifier.fillMaxSize())
+                        map(MapContent(state.guides, state.userLocation, onVisibleArea, state.featured, onSelect), Modifier.fillMaxSize())
                         when {
                             state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                            else -> GuideCards(state.inView, state.guides.isEmpty(), onSelect, Modifier.align(Alignment.BottomCenter))
+                            else -> GuideCards(state.inView, state.featured, state.guides.isEmpty(), onSelect, Modifier.align(Alignment.BottomCenter))
                         }
                     }
                 }
@@ -309,11 +310,18 @@ private fun SpeciesChip(filter: GuideFilter, onSpeciesFilter: (Discipline?) -> U
 }
 
 /**
- * The guides on screen as cards over the bottom of the map, nearest first: a way in without hunting for pins. [noMatch]:
- * no guide matches the filters anywhere, rather than none in this part of the map.
+ * The guides on screen as cards over the bottom of the map, the [featured] ones first (labelled so), then nearest
+ * first: a way in without hunting for pins. [noMatch]: no guide matches the filters anywhere, rather than none in this
+ * part of the map.
  */
 @Composable
-private fun GuideCards(guides: List<GuideItem>, noMatch: Boolean, onSelect: (String) -> Unit, modifier: Modifier = Modifier) {
+private fun GuideCards(
+    guides: List<GuideItem>,
+    featured: Set<String>,
+    noMatch: Boolean,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier.fillMaxWidth().padding(bottom = Spacing.l)) {
         val count = pluralStringResource(R.plurals.guide_count, guides.size, guides.size)
         // A pill, so the count reads over any part of the map.
@@ -344,11 +352,7 @@ private fun GuideCards(guides: List<GuideItem>, noMatch: Boolean, onSelect: (Str
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
                 ) {
                     Column(Modifier.padding(Spacing.m)) {
-                        Text(
-                            stringResource(item.guide.activity.label).uppercase(),
-                            style = GhTextStyles.overline,
-                            color = MaterialTheme.colorScheme.tertiary,
-                        )
+                        ActivityLabel(item.guide, item.guide.id in featured)
                         Text(item.guide.title, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(
                             item.subtitle(),

@@ -1,5 +1,7 @@
 package ca.kallistesoft.guidehunter.core.model
 
+import kotlin.time.Instant
+
 /**
  * One of a guide's offers as they type it: what goes on the map once we've reviewed it. A guide can have several
  * (a bear hunt and a walleye trip), and edit them; every edit is reviewed again.
@@ -82,10 +84,16 @@ enum class OfferStatus {
     PUBLISHED,
 }
 
-/** A guide's offer as saved. [live]: a reviewed version is on the map (an edit waiting for review leaves it there). */
+/**
+ * A guide's offer as saved. [live]: a reviewed version is on the map (an edit waiting for review leaves it there).
+ * [boostedUntil]: until when the version on the map is boosted ([Boost]); null if never.
+ */
 data class GuideOffer(
     val id: String,
     val draft: OfferDraft,
     val status: OfferStatus = OfferStatus.PENDING,
     val live: Boolean = false,
-)
+    val boostedUntil: Instant? = null,
+) {
+    fun isBoosted(now: Instant): Boolean = boostedUntil != null && boostedUntil > now
+}

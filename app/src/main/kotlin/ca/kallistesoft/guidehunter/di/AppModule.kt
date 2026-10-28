@@ -16,13 +16,15 @@ import dagger.hilt.components.SingletonComponent
 @InstallIn(SingletonComponent::class)
 object AppModule {
     /**
-     * The rewarded and native ad units: Google's test units except in release builds (app/build.gradle.kts). Ads are off when the
-     * app runs under tests (Robolectric, instrumented): they test the app, and the consent form would cover it.
+     * The rewarded (the contact's, the boost's) and native ad units: Google's test units except in release builds
+     * (app/build.gradle.kts). Ads are off when the app runs under tests (Robolectric, instrumented): they test the app,
+     * and the consent form would cover it.
      */
     @Provides
     fun adsConfig() = AdsConfig(
         rewardedUnitId = BuildConfig.ADMOB_REWARDED_ID,
         nativeUnitId = BuildConfig.ADMOB_NATIVE_ID,
+        boostUnitId = BuildConfig.ADMOB_BOOST_ID,
         enabled = !underInstrumentation(),
     )
 

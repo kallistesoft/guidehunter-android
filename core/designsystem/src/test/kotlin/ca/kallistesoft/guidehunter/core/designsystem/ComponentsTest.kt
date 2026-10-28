@@ -20,7 +20,14 @@ import ca.kallistesoft.guidehunter.core.designsystem.component.PreviewSurface
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SectionToggle
+import ca.kallistesoft.guidehunter.core.designsystem.component.FeaturedBadge
+import ca.kallistesoft.guidehunter.core.designsystem.theme.DarkFeaturedColors
+import ca.kallistesoft.guidehunter.core.designsystem.theme.DarkPinColors
+import ca.kallistesoft.guidehunter.core.designsystem.theme.FeaturedColors
+import ca.kallistesoft.guidehunter.core.designsystem.theme.GhColors
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
+import ca.kallistesoft.guidehunter.core.designsystem.theme.LightFeaturedColors
+import ca.kallistesoft.guidehunter.core.designsystem.theme.LightPinColors
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -68,6 +75,26 @@ class ComponentsTest {
         compose.waitForIdle()
         assertEquals(true, dark)
         assertEquals(Color(0xFFF27B2B), primary)
+    }
+
+    @Test
+    fun `the featured badge is gold, in each theme`() {
+        var light: FeaturedColors? = null
+        var dark: FeaturedColors? = null
+        compose.setContent {
+            androidx.compose.foundation.layout.Column {
+                GuideHunterTheme(darkTheme = false) {
+                    light = GhColors.featured
+                    FeaturedBadge("Featured")
+                }
+                GuideHunterTheme(darkTheme = true) { dark = GhColors.featured }
+            }
+        }
+        compose.onNodeWithText("Featured").assertExists()
+        assertEquals(LightFeaturedColors, light)
+        assertEquals(DarkFeaturedColors, dark)
+        assertEquals(LightFeaturedColors, LightPinColors.featured)
+        assertEquals(DarkFeaturedColors, DarkPinColors.featured)
     }
 
     @Test

@@ -1,9 +1,11 @@
 package ca.kallistesoft.guidehunter.core.data
 
+import ca.kallistesoft.guidehunter.core.model.Boost
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
+import ca.kallistesoft.guidehunter.core.model.Now
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
@@ -13,9 +15,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
+import kotlin.time.Instant
 
 /**
  * Published guides from Firestore, live: an offer added in the console shows on the map at once. The documents are
@@ -45,11 +49,12 @@ internal class FirestoreGuideRepository(
 /**
  * A guide's profile and offers in Firestore (firestore.rules lets each guide reach only their own). Saving an offer
  * writes, in the same batch, a `mail` document that the "Trigger Email from Firestore" extension sends to
- * [notifyEmail] for review.
+ * [notifyEmail] for review. A boost ends [ca.kallistesoft.guidehunter.core.model.Boost.DURATION] after [now].
  */
 internal class FirestoreGuideAccountRepository(
     private val firestore: FirebaseFirestore,
     private val notifyEmail: String,
+    private val now: Now,
 ) : GuideAccountRepository {
     private val offers get() = firestore.collection(Collections.OFFERS)
 
@@ -69,9 +74,30 @@ internal class FirestoreGuideAccountRepository(
         batch.commit().await()
     }
 
-    override fun offers(uid: String): Flow<List<GuideOffer>> = callbackFlow {
+    override fun offers(uid: String): Flow<List<GuideOffer>> = combine(written(uid), boosts(uid)) { offers, boosts ->
+        offers.map { offer -> offer.copy(boostedUntil = boosts[offer.id]?.takeIf { offer.live }) }
+    }
+
+    /** The guide's offers as written. */
+    private fun written(uid: String): Flow<List<GuideOffer>> = callbackFlow {
         val registration = offers.whereEqualTo(OWNER, uid).addSnapshotListener { snapshot, _ ->
             if (snapshot != null) trySend(offersFrom(snapshot.documents.map { it.id to it.data.orEmpty() }))
+        }
+        awaitClose { registration.remove() }
+    }
+
+    /**
+     * The boosts of the guide's offers on the map, from their published copies (anyone reads `guides`). Failing
+     * before any came (offline with nothing cached), the offers show without them rather than not at all.
+     */
+    private fun boosts(uid: String): Flow<Map<String, Instant>> = callbackFlow {
+        var received = false
+        val registration = firestore.collection(Collections.GUIDES).whereEqualTo(OWNER, uid).addSnapshotListener { snapshot, _ ->
+            when {
+                snapshot != null -> trySend(boostsFrom(snapshot.documents.map { it.id to it.data.orEmpty() }))
+                !received -> trySend(emptyMap())
+            }
+            received = true
         }
         awaitClose { registration.remove() }
     }
@@ -98,6 +124,10 @@ internal class FirestoreGuideAccountRepository(
         val batch = firestore.batch()
         delete(batch, offer)
         batch.commit().await()
+    }
+
+    override suspend fun boost(uid: String, offerId: String) {
+        firestore.collection(Collections.GUIDES).document(offerId).update(boostUpdate(Boost.until(now()))).await()
     }
 
     override suspend fun deleteAll(uid: String) {
