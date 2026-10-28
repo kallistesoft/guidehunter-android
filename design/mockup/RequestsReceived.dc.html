@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter requests received</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="height: 64px; flex-shrink: 0; padding: 8px 8px 0; box-sizing: border-box; display: flex; align-items: center; gap: 4px">
+    <a href="{{l.home}}" aria-label="Back" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px">Requests received</h1>
+  </header>
+  <div style="padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 10px">
+    <span style="margin: 4px 4px 0; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Waiting for your answer · 2</span>
+    <sc-for list="{{pending}}" as="r" hint-placeholder-count="2">
+      <article style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+        <span style="font-size: 14px; color: {{c.muted}}">{{r.offer}} · {{r.trip}}</span>
+        <h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 21px">{{r.name}}</h2>
+        <div style="display: flex; flex-direction: column; margin: 0 -8px">
+          <a href="#" style="min-height: 40px; padding: 0 8px; display: flex; align-items: center; gap: 8px; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>Call {{r.phone}}</a>
+          <a href="#" style="min-height: 40px; padding: 0 8px; display: flex; align-items: center; gap: 8px; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email {{r.email}}</a>
+        </div>
+        <span style="font-size: 13px; color: {{c.muted}}">Received {{r.when}}</span>
+        <div style="display: flex; gap: 8px; margin-top: 4px">
+          <a href="#" style="flex: 1; min-height: 46px; border-radius: 12px; background: {{c.primary}}; color: #1A0E05; font-size: 15px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center">Accept</a>
+          <a href="{{l.reject}}" style="flex: 1; min-height: 46px; border-radius: 12px; border: 1.5px solid {{c.outline}}; color: {{c.text}}; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center">Decline</a>
+        </div>
+      </article>
+    </sc-for>
+    <div aria-label="Advertisement" style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 12px 14px; display: flex; gap: 12px; align-items: center">
+      <span style="flex-shrink: 0; width: 52px; height: 52px; border-radius: 10px; background: {{c.adImg}}; display: flex; align-items: center; justify-content: center; color: {{c.muted}}; font-size: 11px">[Icon]</span>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="display: flex; align-items: center; gap: 6px"><span style="padding: 0 6px; border-radius: 4px; background: #E9C25A; color: #1A0E05; font-size: 11px; font-weight: 700">Ad</span><span style="font-size: 15px; font-weight: 600">[Advertiser headline]</span></span><span style="font-size: 13px; color: {{c.muted}}">[Advertiser text]</span></span>
+      <a href="#" style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.outline}}; color: {{c.text}}; font-size: 14px; font-weight: 600; text-decoration: none; display: flex; align-items: center">[Action]</a>
+    </div>
+    <span style="margin: 8px 4px 0; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Answered</span>
+    <sc-for list="{{done}}" as="r" hint-placeholder-count="3">
+      <div style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 10px 14px; display: flex; align-items: center; gap: 10px">
+        <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 15px; font-weight: 600">{{r.name}}</span><span style="font-size: 13px; color: {{c.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.offer}}</span></span>
+        <span style="height: 26px; padding: 0 10px; border-radius: 999px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; background: {{r.bg}}; color: {{r.fg}}"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 999px; background: currentColor"></span>{{r.status}}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', green:'#2F6B3E', greenTint:'#E3EFE4', primary:'#E8691E', border:'#E6E1D5', outline:'#C9C2B2', error:'#B3261E', errorTint:'#F9E3E0', mutedTint:'#ECE8DE', adImg:'#ECE8DE'}
+      : {bg:'#0E1611', card:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', green:'#8FD19E', greenTint:'#22382A', primary:'#F27B2B', border:'#24352A', outline:'#3A4B3F', error:'#F2867A', errorTint:'#3A1F1C', mutedTint:'#26332A', adImg:'#26332A'};
+    const sfx = light ? 'Light' : '';
+    const pending = [
+      {offer:'Black bear over bait', trip:'May 18 to 21, 2027', name:'Alex Tremblay', phone:'+1 418 555 0199', email:'alex.t@example.com', when:'today'},
+      {offer:'Walleye on Lac Saint-Jean', trip:'Dates on request', name:'Sam Gagnon', phone:'+1 514 555 0123', email:'sam.g@example.com', when:'yesterday'}
+    ];
+    const done = [
+      {name:'Jordan Roy', offer:'Black bear over bait', status:'Accepted', bg:c.greenTint, fg:c.green},
+      {name:'Chris Côté', offer:'Moose by canoe', status:'Declined', bg:c.errorTint, fg:c.error},
+      {name:'Taylor Lee', offer:'Walleye on Lac Saint-Jean', status:'Cancelled', bg:c.mutedTint, fg:c.muted}
+    ];
+    return {c, pending, done, l: {home: 'GuideHome' + sfx + '.dc.html', reject: light ? 'RejectRequestLight.dc.html' : 'GuideDialog.dc.html'}};
+  }
+}
+</script>
+</body>
+</html>

@@ -7,7 +7,6 @@
     <string name="location_rationale_allow">Autoriser</string>
     <string name="location_rationale_not_now">Pas maintenant</string>
     <string name="filter_all">Tout</string>
-    <string name="filter_species_any">Toutes les espèces</string>
     <string name="filter_species">Espèce</string>
     <plurals name="guide_count">
         <item quantity="one">%d guide</item>

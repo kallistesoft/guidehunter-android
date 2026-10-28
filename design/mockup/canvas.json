@@ -23,6 +23,10 @@
       "name": "4 · Account and requests (user)"
     },
     {
+      "id": "guide",
+      "name": "5 · Guide home and requests (guide)"
+    },
+    {
       "id": "logo",
       "name": "3 · Logo"
     }
@@ -507,6 +511,118 @@
       "h": 844,
       "title": "9 Your own offer · light",
       "page": "account"
+    },
+    "GuideHome.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 Guide home: offers, requests, boost",
+      "page": "guide"
+    },
+    "GuideHomeLight.dc.html": {
+      "x": 0,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "1 Guide home: offers, requests, boost · light",
+      "page": "guide"
+    },
+    "SettingsGuide.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 Settings (guide mode)",
+      "page": "guide"
+    },
+    "SettingsGuideLight.dc.html": {
+      "x": 470,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "2 Settings (guide mode) · light",
+      "page": "guide"
+    },
+    "RequestsReceived.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 Requests received",
+      "page": "guide"
+    },
+    "RequestsReceivedLight.dc.html": {
+      "x": 940,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "3 Requests received · light",
+      "page": "guide"
+    },
+    "GuideDialog.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 Decline a request",
+      "page": "guide"
+    },
+    "RejectRequestLight.dc.html": {
+      "x": 1410,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "4 Decline a request · light",
+      "page": "guide"
+    },
+    "BoostSheet.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5 Boost an offer",
+      "page": "guide"
+    },
+    "BoostSheetLight.dc.html": {
+      "x": 1880,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "5 Boost an offer · light",
+      "page": "guide"
+    },
+    "GuideHomeBoosted.dc.html": {
+      "x": 2350,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "6 Boosted: featured until…",
+      "page": "guide"
+    },
+    "GuideHomeBoostedLight.dc.html": {
+      "x": 2350,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "6 Boosted: featured until… · light",
+      "page": "guide"
+    },
+    "DeleteOffer.dc.html": {
+      "x": 2820,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "7 Delete an offer with pending requests",
+      "page": "guide"
+    },
+    "DeleteOfferLight.dc.html": {
+      "x": 2820,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "7 Delete an offer with pending requests · light",
+      "page": "guide"
     }
   },
   "order": [
@@ -569,7 +685,21 @@
     "ConfirmRequestLight.dc.html",
     "SheetSentLight.dc.html",
     "MyRequestsLight.dc.html",
-    "SheetOwnLight.dc.html"
+    "SheetOwnLight.dc.html",
+    "GuideHome.dc.html",
+    "SettingsGuide.dc.html",
+    "RequestsReceived.dc.html",
+    "GuideDialog.dc.html",
+    "BoostSheet.dc.html",
+    "GuideHomeBoosted.dc.html",
+    "DeleteOffer.dc.html",
+    "GuideHomeLight.dc.html",
+    "SettingsGuideLight.dc.html",
+    "RequestsReceivedLight.dc.html",
+    "RejectRequestLight.dc.html",
+    "BoostSheetLight.dc.html",
+    "GuideHomeBoostedLight.dc.html",
+    "DeleteOfferLight.dc.html"
   ],
   "notes": {
     "findDark": {
@@ -635,6 +765,22 @@
       "kind": "title1",
       "maxW": 4150,
       "page": "account"
+    },
+    "guideDark": {
+      "x": 0,
+      "y": -300,
+      "text": "Guide home and requests · dark",
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "guide"
+    },
+    "guideLight": {
+      "x": 0,
+      "y": 964,
+      "text": "Guide home and requests · light",
+      "kind": "title1",
+      "maxW": 3210,
+      "page": "guide"
     }
   },
   "designSystems": []

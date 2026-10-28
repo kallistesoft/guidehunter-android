@@ -3,7 +3,9 @@ package ca.kallistesoft.guidehunter
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import ca.kallistesoft.guidehunter.di.AppModule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -48,6 +50,37 @@ class GuideHunterAppTest {
     }
 
     @Test
+    fun `the species chip opens the species screen, the choice filters the map and is kept`() {
+        later()
+        compose.onNodeWithTag("discipline-FISHING").performClick()
+        compose.onNodeWithTag("species-picker").performClick()
+        waitFor("species-filter-screen")
+        // From the map, only the discipline chosen there.
+        compose.onNodeWithTag("species-BLACK_BEAR").assertDoesNotExist()
+        compose.onNodeWithTag("species-ATLANTIC_SALMON").performScrollTo().performClick()
+        compose.onNodeWithTag("species-done").performClick()
+        waitFor("locate")
+        waitFor("species-picker", "Atlantic salmon")
+        waitFor("guide-sample-salmon")
+        compose.onNodeWithTag("guide-sample-moose").assertDoesNotExist()
+
+        compose.activityRule.scenario.recreate()
+        waitFor("guide-sample-salmon")
+        waitFor("species-picker", "Atlantic salmon")
+        compose.onNodeWithTag("guide-sample-moose").assertDoesNotExist()
+
+        // Also in the settings, which list every species.
+        compose.onNodeWithTag("settings").performClick()
+        waitFor("species-filter", "Atlantic salmon")
+        compose.onNodeWithTag("species-filter").performClick()
+        waitFor("species-filter-screen")
+        compose.onNodeWithTag("species-group-HUNTING").assertExists()
+        compose.onNodeWithTag("species-any").performClick()
+        compose.onNodeWithTag("back").performClick()
+        waitFor("species-filter", "Any species")
+    }
+
+    @Test
     fun `ads are off under tests, offers go to the configured address, and sign-in uses Firebase's web client`() {
         assertFalse(AppModule.adsConfig().enabled)
         assertEquals(BuildConfig.APPLICATIONS_EMAIL, AppModule.dataConfig().applicationsEmail)
@@ -67,6 +100,10 @@ class GuideHunterAppTest {
 
     private fun waitFor(tag: String) =
         compose.waitUntil(TIMEOUT) { compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty() }
+
+    /** [tag] showing [text] (the settings DataStore writes in the background). */
+    private fun waitFor(tag: String, text: String) =
+        compose.waitUntil(TIMEOUT) { compose.onAllNodes(hasTestTag(tag) and hasText(text, substring = true)).fetchSemanticsNodes().isNotEmpty() }
 
     private companion object {
         const val TIMEOUT = 5_000L

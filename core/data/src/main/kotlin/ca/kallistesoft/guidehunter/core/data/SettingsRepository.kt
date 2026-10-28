@@ -5,8 +5,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.AppSettings
+import ca.kallistesoft.guidehunter.core.model.Species
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -19,6 +21,9 @@ interface SettingsRepository {
 
     suspend fun setMode(mode: AppMode)
 
+    /** The species the map shows (empty: any species). */
+    suspend fun setSpeciesFilter(species: Set<Species>)
+
     /** Back to a first launch (the account was deleted). */
     suspend fun reset()
 }
@@ -29,6 +34,8 @@ class DataStoreSettingsRepository(private val store: DataStore<Preferences>) : S
         AppSettings(
             onboarded = prefs[ONBOARDED] ?: false,
             mode = prefs[MODE]?.let { name -> AppMode.entries.find { it.name == name } } ?: AppMode.USER,
+            // By name; a species removed since (or unknown to an older version) is dropped.
+            speciesFilter = Species.fromNames(prefs[SPECIES_FILTER].orEmpty()).toSet(),
         )
     }
 
@@ -43,6 +50,10 @@ class DataStoreSettingsRepository(private val store: DataStore<Preferences>) : S
         store.edit { it[MODE] = mode.name }
     }
 
+    override suspend fun setSpeciesFilter(species: Set<Species>) {
+        store.edit { it[SPECIES_FILTER] = species.map { s -> s.name }.toSet() }
+    }
+
     override suspend fun reset() {
         store.edit { it.clear() }
     }
@@ -50,5 +61,6 @@ class DataStoreSettingsRepository(private val store: DataStore<Preferences>) : S
     private companion object {
         val ONBOARDED = booleanPreferencesKey("onboarded")
         val MODE = stringPreferencesKey("mode")
+        val SPECIES_FILTER = stringSetPreferencesKey("species_filter")
     }
 }

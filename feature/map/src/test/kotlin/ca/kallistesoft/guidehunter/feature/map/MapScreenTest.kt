@@ -25,11 +25,16 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
+import ca.kallistesoft.guidehunter.core.model.AppSettings
+import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
+import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.ui.R as UiR
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
+import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import androidx.lifecycle.SavedStateHandle
 import org.junit.Assert.assertEquals
@@ -57,6 +62,8 @@ class MapScreenTest {
     private var settings = 0
 
     /** What the system answers to the permission request: granted or not. */
+    private val appSettings = FakeSettingsRepository()
+    private val speciesFilters = mutableListOf<Discipline?>()
     private var permissionAnswer = false
     private var permissionAsked = 0
 
@@ -73,14 +80,14 @@ class MapScreenTest {
     }
 
     private fun launch() {
-        val viewModel = MapViewModel(guides, location, ads, SavedStateHandle(), { TestGuides.today })
+        val viewModel = MapViewModel(guides, location, ads, appSettings, SavedStateHandle(), { TestGuides.today })
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
             }
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 GuideHunterTheme {
-                    MapScreen(onSettings = { settings++ }, viewModel = viewModel, map = { content, modifier ->
+                    MapScreen(onSettings = { settings++ }, onSpeciesFilter = { speciesFilters += it }, viewModel = viewModel, map = { content, modifier ->
                         // A pin per guide, tapped like on the map.
                         Column(modifier) {
                             LazyRow {
@@ -113,31 +120,31 @@ class MapScreenTest {
         launch()
         compose.onNodeWithTag("discipline-FISHING").performClick()
         compose.onNodeWithTag("pin-bear").assertDoesNotExist()
-        compose.onNodeWithTag("species-picker").performClick()
-        compose.onNodeWithTag("species-WALLEYE").performClick()
-        compose.onNodeWithText(count(1)).assertIsDisplayed()
-        // The menu stays open for more species; "Any species" clears them and closes it.
-        compose.onNodeWithTag("species-any").performClick()
+        compose.onNodeWithText(count(2)).assertIsDisplayed()
         compose.onNodeWithTag("discipline-all").performClick()
         compose.onNodeWithText(count(3)).assertIsDisplayed()
     }
 
     @Test
-    fun `with all disciplines, each species list opens under its heading`() {
+    fun `the species chip opens the species screen with the chosen discipline`() {
         launch()
         compose.onNodeWithTag("species-picker").performClick()
-        compose.onNodeWithTag("species-WALLEYE").assertDoesNotExist()
-        compose.onNodeWithTag("species-group-FISHING").performClick()
-        compose.onNodeWithTag("species-WALLEYE").assertExists()
-        compose.onNodeWithTag("species-BLACK_BEAR").assertDoesNotExist()
-        compose.onNodeWithTag("species-group-FISHING").performClick()
-        compose.onNodeWithTag("species-WALLEYE").assertDoesNotExist()
-        compose.onNodeWithTag("species-group-FISHING").performClick()
-        compose.onNodeWithTag("species-WALLEYE").performClick()
+        compose.onNodeWithTag("discipline-FISHING").performClick()
+        compose.onNodeWithTag("species-picker").performClick()
+        assertEquals(listOf(null, Discipline.FISHING), speciesFilters)
+    }
+
+    @Test
+    fun `the species chosen in the settings narrow the map and name the chip`() {
+        launch()
+        compose.onNodeWithText(str(R.string.filter_species)).assertExists()
+        appSettings.settings.value = AppSettings(speciesFilter = setOf(Species.WALLEYE))
+        compose.waitForIdle()
         compose.onNodeWithText(count(1)).assertIsDisplayed()
+        compose.onNodeWithText(str(UiR.string.species_walleye)).assertExists()
         // Several species: the guides offering any of them.
-        compose.onNodeWithTag("species-group-HUNTING").performClick()
-        compose.onNodeWithTag("species-BLACK_BEAR").performClick()
+        appSettings.settings.value = AppSettings(speciesFilter = setOf(Species.WALLEYE, Species.BLACK_BEAR))
+        compose.waitForIdle()
         compose.onNodeWithText(count(2)).assertIsDisplayed()
         compose.onNodeWithText(app.resources.getQuantityString(R.plurals.filter_species_count, 2, 2)).assertExists()
     }

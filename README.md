@@ -14,8 +14,9 @@ changes. Native Android first; iOS later (see FOLLOW-UP.md).
   Settings switches mode (guide mode needs an account), signs in or out and deletes the account. The mode is kept on
   the phone (DataStore); signing out goes back to user mode, deleting the account back to the welcome.
 - **Map of guides** (Google Maps): a pin per guide (orange for hunting, green for fishing, yellow for both), filters
-  (hunting, fishing, several species, the dates the user can go: guides with a trip that fits them), and how far each
-  guide is once the user shares their location. Offers whose dates are all over leave the map.
+  (hunting, fishing, several species on their own screen, also in Settings and kept for next time, the dates the
+  user can go: guides with a trip that fits them), and how far each guide is once the user shares their location.
+  Offers whose dates are all over leave the map.
 - **A guide's offer**: what, where, species, price, description, how long a trip lasts and its departures (the next
   one shown, the others under "Other dates"; the one the user picks goes into the email to the guide). The guide's
   **name and contact are hidden until the user watches a rewarded ad**. Then they get the phone, email and website,
@@ -37,14 +38,14 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 |---|---|
 | `:app` | `MainActivity`, navigation (`GuideHunterApp`, `navigation/NavKeys.kt`; `AppViewModel` picks the home: welcome, map or guide's offers), build-type settings (AdMob, Maps key, application email) |
 | `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `AppSettings` (`AppMode`), `GeoPoint.distanceKm` |
-| `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), `SettingsRepository` (onboarding done, mode; Preferences DataStore), sample guides when Firebase isn't set up |
+| `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), `SettingsRepository` (onboarding done, mode, the species the map shows; Preferences DataStore), sample guides when Firebase isn't set up |
 | `:core:auth` | Google sign-in (Credential Manager) and `AccountSession` (sign in, sign out, delete the account), shared by the welcome and the settings |
 | `:core:ads` | The rewarded ad and the consent form (AdMob, UMP), from BetterHunter |
 | `:core:designsystem` | Theme (BetterHunter's palette and Barlow fonts for now), spacing, sizes, buttons |
 | `:core:ui` | Species and activity labels (EN/FR), links (dialer, mail, website) |
 | `:core:testing` | Fakes and test rules |
 | `:feature:map` | The map, filters, guide cards, the guide's sheet and the unlock |
-| `:feature:account` | The welcome (sign in or later), user or guide, and the settings of both modes |
+| `:feature:account` | The welcome (sign in or later), user or guide, the settings of both modes, and the species the map shows |
 | `:feature:becomeguide` | Guide mode: their offers (the guide's home), profile and offer form |
 
 ### Firestore

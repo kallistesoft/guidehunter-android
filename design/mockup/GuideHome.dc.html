@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter guide home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="height: 64px; flex-shrink: 0; padding: 8px 8px 0 20px; box-sizing: border-box; display: flex; align-items: center; gap: 4px">
+    <h1 style="margin: 0; flex: 1; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 24px">My offers</h1>
+    <a href="{{l.requests}}" aria-label="Requests received, 2 new" style="position: relative; width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13l2.5-8h11L20 13v6H4zM4 13h5l1 2h4l1-2h5"/></svg><span aria-hidden="true" style="position: absolute; right: 4px; top: 4px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: {{c.primary}}; color: #1A0E05; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center">2</span></a>
+    <a href="{{l.settings}}" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
+  </header>
+  <div style="padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 10px">
+    <div style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+      <span style="flex: 1; display: flex; flex-direction: column; gap: 2px"><span style="font-size: 16px; font-weight: 600">Pourvoirie du Lac Rond</span><span style="font-size: 14px; color: {{c.muted}}">info@lacrond.example · +1 819 555 0142</span></span>
+      <a href="#" style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.outline}}; color: {{c.text}}; font-size: 14px; font-weight: 600; text-decoration: none; display: flex; align-items: center">Edit</a>
+    </div>
+    <span style="margin: 8px 4px 0; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Your offers</span>
+    <sc-for list="{{offers}}" as="o" hint-placeholder-count="3">
+      <article style="background: {{c.card}}; border: 1.5px solid {{o.border}}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; align-items: center; gap: 8px">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{o.kindColor}}">{{o.kind}}</span>
+          <sc-if value="{{o.featured}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: 999px; background: {{c.featuredTint}}; color: {{c.featuredText}}; font-size: 12px; font-weight: 600"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>Featured</span></sc-if>
+        </div>
+        <h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.15">{{o.title}}</h2>
+        <span style="font-size: 14px; color: {{o.statusColor}}; font-weight: 600">{{o.status}}</span>
+        <sc-if value="{{o.boostable}}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px">
+            <span style="font-size: 14px; color: {{c.muted}}">{{o.boostNote}}</span>
+            <sc-if value="{{o.canBoost}}" hint-placeholder-val="{{ true }}"><a href="{{l.boost}}" style="min-height: 40px; padding: 0 12px; border-radius: 10px; background: {{c.featuredTint}}; color: {{c.featuredText}}; font-size: 14px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>{{o.boostLabel}}</a></sc-if>
+          </div>
+        </sc-if>
+      </article>
+    </sc-for>
+    <a href="#" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add an offer</a>
+    <div aria-label="Advertisement" style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 12px 14px; display: flex; gap: 12px; align-items: center">
+      <span style="flex-shrink: 0; width: 52px; height: 52px; border-radius: 10px; background: {{c.adImg}}; display: flex; align-items: center; justify-content: center; color: {{c.muted}}; font-size: 11px">[Icon]</span>
+      <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px"><span style="display: flex; align-items: center; gap: 6px"><span style="padding: 0 6px; border-radius: 4px; background: #E9C25A; color: #1A0E05; font-size: 11px; font-weight: 700">Ad</span><span style="font-size: 15px; font-weight: 600">[Advertiser headline]</span></span><span style="font-size: 13px; color: {{c.muted}}">[Advertiser text]</span></span>
+      <a href="#" style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.outline}}; color: {{c.text}}; font-size: 14px; font-weight: 600; text-decoration: none; display: flex; align-items: center">[Action]</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"boosted":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const boosted = this.props.boosted ?? false;
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', label:'#B4500F', green:'#2F6B3E', primary:'#E8691E', border:'#E6E1D5', outline:'#DDD7C8', amber:'#8A3D0A', adImg:'#ECE8DE', featured:'#B08200', featuredTint:'rgba(201,154,18,0.18)', featuredText:'#6E5100'}
+      : {bg:'#0E1611', card:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', green:'#8FD19E', primary:'#F27B2B', border:'#24352A', outline:'#2C3B30', amber:'#F7B98A', adImg:'#26332A', featured:'#E9C25A', featuredTint:'rgba(233,194,90,0.22)', featuredText:'#F2D58A'};
+    const sfx = light ? 'Light' : '';
+    const offers = [
+      {kind:'Hunting', kindColor:c.label, title:'Black bear over bait', status:'On the map', statusColor:c.green, boostable:true,
+       featured:boosted, border: boosted ? c.featured : c.border,
+       boostNote: boosted ? 'Featured until Oct 31' : 'Show it first on the map', canBoost: !boosted, boostLabel:'Boost'},
+      {kind:'Fishing', kindColor:c.green, title:'Walleye on Lac Saint-Jean', status:'On the map', statusColor:c.green, boostable:true,
+       featured:false, border:c.border, boostNote:'Featured ended Oct 25', canBoost:true, boostLabel:'Boost again'},
+      {kind:'Hunting', kindColor:c.label, title:'Moose by canoe', status:'Waiting for review', statusColor:c.amber, boostable:false, featured:false, border:c.border}
+    ];
+    return {c, offers, l: {requests: 'RequestsReceived' + sfx + '.dc.html', settings: 'SettingsGuide' + sfx + '.dc.html', boost: 'BoostSheet' + sfx + '.dc.html'}};
+  }
+}
+</script>
+</body>
+</html>
