@@ -4,9 +4,8 @@
     <string name="become_guide_intro">Mettez vos séjours de chasse ou de pêche sur la carte. Nous vérifions d\'abord chaque offre et vous répondons par courriel.</string>
     <string name="field_business_name">Votre nom ou celui de votre entreprise</string>
     <string name="field_activity">Vous offrez</string>
-    <string name="activity_both_short">Les deux</string>
     <string name="field_species">Espèces</string>
-    <string name="field_species_help">Choisissez d\'abord ce que vous offrez.</string>
+    <string name="field_species_help">Choisissez d\'abord chasse ou pêche à la première étape.</string>
     <string name="field_description">Décrivez le séjour</string>
     <string name="field_description_help">Au moins %1$d caractères : ce qui est inclus, saisons, hébergement, langues.</string>
     <string name="field_region">Ville ou région</string>
@@ -89,10 +88,6 @@
     <string name="offer_delete_title">Supprimer cette offre?</string>
     <string name="offer_delete_body">Elle sera supprimée. C\'est définitif.</string>
     <string name="offer_delete_live_body">Elle est retirée de la carte et supprimée. C\'est définitif.</string>
-    <plurals name="species_chosen">
-        <item quantity="one">%d choisie</item>
-        <item quantity="other">%d choisies</item>
-    </plurals>
     <string name="step_what">Le séjour</string>
     <string name="step_species">Espèces</string>
     <string name="step_where">Où</string>
@@ -126,4 +121,5 @@
         <item quantity="one">%1$d date, dès le %2$s</item>
         <item quantity="other">%1$d dates, dès le %2$s</item>
     </plurals>
+    <string name="field_activity_help">Un type par offre : si vous offrez les deux, ajoutez une offre de chasse et une offre de pêche.</string>
 </resources>

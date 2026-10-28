@@ -23,6 +23,7 @@ import androidx.lifecycle.SavedStateHandle
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
+import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
@@ -157,20 +158,31 @@ class OfferEditorScreenTest {
     }
 
     @Test
-    fun `offering both, hunting and fishing species open apart and count what's chosen`() {
+    fun `an offer is hunting or fishing, with the species of that type only`() {
         launch()
-        type("field-title", "Camp")
-        compose.onNodeWithTag("activity-BOTH").performScrollTo().performClick()
+        compose.onNodeWithTag("activity-BOTH").assertDoesNotExist()
+        compose.onNodeWithText(str(R.string.field_activity_help)).assertExists()
+        type("field-title", "Walleye")
+        compose.onNodeWithTag("activity-FISH").performScrollTo().performClick()
         type("field-description", TestGuides.offer.description)
         next()
+        compose.onNodeWithTag("species-WALLEYE").performScrollTo().performClick()
         compose.onNodeWithTag("species-ELK").assertDoesNotExist()
-        compose.onNodeWithTag("species-group-HUNTING").performScrollTo().performClick()
-        compose.onNodeWithTag("species-ELK").performScrollTo().performClick()
-        compose.onNodeWithText(app.resources.getQuantityString(R.plurals.species_chosen, 1, 1)).assertExists()
-        compose.onNodeWithTag("species-group-HUNTING").performScrollTo().performClick()
-        compose.onNodeWithTag("species-ELK").assertDoesNotExist()
-        compose.onNodeWithTag("species-group-FISHING").performScrollTo().performClick()
-        compose.onNodeWithTag("species-WALLEYE").assertExists()
+    }
+
+    @Test
+    fun `an older offer for both has to choose a type`() {
+        account.give(uid, GuideOffer("old", TestGuides.offer.copy(activity = GuideActivity.BOTH)))
+        launch("old")
+        compose.onNodeWithTag("change-SPECIES").performScrollTo().performClick()
+        compose.onNodeWithText(str(R.string.field_species_help)).assertExists()
+        compose.onNodeWithTag("step-back").performClick() // back to the summary
+        compose.onNodeWithTag("send").performClick()
+        step(R.string.step_what)
+        compose.onNodeWithText(str(R.string.error_activity)).performScrollTo()
+        compose.onNodeWithTag("activity-HUNT").performScrollTo().performClick()
+        next()
+        step(R.string.step_review)
     }
 
     @Test

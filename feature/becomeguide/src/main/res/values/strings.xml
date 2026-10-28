@@ -4,9 +4,8 @@
     <string name="become_guide_intro">Put your hunting or fishing trips on the map. We review every offer first, and reply by email.</string>
     <string name="field_business_name">Your name or business name</string>
     <string name="field_activity">You offer</string>
-    <string name="activity_both_short">Both</string>
     <string name="field_species">Species</string>
-    <string name="field_species_help">Pick what you offer first.</string>
+    <string name="field_species_help">Pick hunting or fishing on the first step.</string>
     <string name="field_description">Describe the trip</string>
     <string name="field_description_help">At least %1$d characters: what\'s included, seasons, lodging, languages.</string>
     <string name="field_region">Town or region</string>
@@ -89,10 +88,6 @@
     <string name="offer_delete_title">Delete this offer?</string>
     <string name="offer_delete_body">It will be deleted. This can\'t be undone.</string>
     <string name="offer_delete_live_body">It comes off the map and is deleted. This can\'t be undone.</string>
-    <plurals name="species_chosen">
-        <item quantity="one">%d chosen</item>
-        <item quantity="other">%d chosen</item>
-    </plurals>
     <string name="step_what">The trip</string>
     <string name="step_species">Species</string>
     <string name="step_where">Where</string>
@@ -126,4 +121,5 @@
         <item quantity="one">%1$d date, from %2$s</item>
         <item quantity="other">%1$d dates, from %2$s</item>
     </plurals>
+    <string name="field_activity_help">One type per offer: if you offer both, add a hunting offer and a fishing offer.</string>
 </resources>

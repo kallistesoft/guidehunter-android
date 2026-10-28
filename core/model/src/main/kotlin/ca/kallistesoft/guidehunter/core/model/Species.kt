@@ -3,7 +3,10 @@ package ca.kallistesoft.guidehunter.core.model
 /** Hunting or fishing: what a species is pursued for, and what a search can be narrowed to. */
 enum class Discipline { HUNTING, FISHING }
 
-/** What a guide offers: hunting trips, fishing trips, or both. */
+/**
+ * What an offer is: a hunting trip or a fishing trip. [BOTH] only comes from older offers (they still show on the map);
+ * a new or edited offer is one or the other ([forOffers]).
+ */
 enum class GuideActivity(val disciplines: Set<Discipline>) {
     HUNT(setOf(Discipline.HUNTING)),
     FISH(setOf(Discipline.FISHING)),
@@ -11,6 +14,11 @@ enum class GuideActivity(val disciplines: Set<Discipline>) {
     ;
 
     fun covers(discipline: Discipline): Boolean = discipline in disciplines
+
+    companion object {
+        /** What a guide can choose for an offer: one type each. */
+        val forOffers = listOf(HUNT, FISH)
+    }
 }
 
 /**
