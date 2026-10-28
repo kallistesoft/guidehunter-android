@@ -51,11 +51,13 @@ service cloud.firestore {
         && shortText(data.businessName, 1, 200)
         && shortText(data.description, 30, 2000)
         && data.activity in ['HUNT', 'FISH', 'BOTH']
-        && data.species is list && data.species.size() >= 1 && data.species.size() <= 16
+        && data.species is list && data.species.size() >= 1 && data.species.size() <= 29
         && data.species.hasOnly([
-          'BLACK_BEAR', 'MOOSE', 'WHITE_TAILED_DEER', 'CARIBOU', 'WILD_TURKEY', 'WATERFOWL', 'UPLAND_BIRDS', 'PREDATORS',
-          'WALLEYE', 'NORTHERN_PIKE', 'BROOK_TROUT', 'LAKE_TROUT', 'ATLANTIC_SALMON', 'SMALLMOUTH_BASS', 'MUSKELLUNGE',
-          'ICE_FISHING']) // keep in sync with core/model Species
+          'BLACK_BEAR', 'MOOSE', 'WHITE_TAILED_DEER', 'MULE_DEER', 'ELK', 'CARIBOU', 'PRONGHORN', 'BIGHORN_SHEEP',
+          'MOUNTAIN_GOAT', 'WILD_TURKEY', 'WATERFOWL', 'UPLAND_BIRDS', 'SHARP_TAILED_GROUSE', 'PHEASANT',
+          'PREDATORS', 'WALLEYE', 'YELLOW_PERCH', 'NORTHERN_PIKE', 'BROOK_TROUT', 'RAINBOW_TROUT', 'LAKE_TROUT',
+          'ARCTIC_CHAR', 'ATLANTIC_SALMON', 'PACIFIC_SALMON', 'SMALLMOUTH_BASS', 'LARGEMOUTH_BASS', 'MUSKELLUNGE',
+          'STURGEON', 'ICE_FISHING']) // keep in sync with core/model Species
         && shortText(data.region, 1, 200)
         && data.lat is number && data.lat >= -90 && data.lat <= 90
         && data.lng is number && data.lng >= -180 && data.lng <= 180

@@ -15,24 +15,37 @@ enum class GuideActivity(val disciplines: Set<Discipline>) {
 
 /**
  * The species a guide can offer, the list of the form's and the search's species pickers. Stored by [name] in
- * Firestore, so a constant is never renamed; labels come from the app's strings.
+ * Firestore and listed in firestore.rules, so a constant is never renamed; labels come from the app's strings.
  */
 enum class Species(val discipline: Discipline) {
     BLACK_BEAR(Discipline.HUNTING),
     MOOSE(Discipline.HUNTING),
     WHITE_TAILED_DEER(Discipline.HUNTING),
+    MULE_DEER(Discipline.HUNTING),
+    ELK(Discipline.HUNTING),
     CARIBOU(Discipline.HUNTING),
+    PRONGHORN(Discipline.HUNTING),
+    BIGHORN_SHEEP(Discipline.HUNTING),
+    MOUNTAIN_GOAT(Discipline.HUNTING),
     WILD_TURKEY(Discipline.HUNTING),
     WATERFOWL(Discipline.HUNTING),
     UPLAND_BIRDS(Discipline.HUNTING),
+    SHARP_TAILED_GROUSE(Discipline.HUNTING),
+    PHEASANT(Discipline.HUNTING),
     PREDATORS(Discipline.HUNTING),
     WALLEYE(Discipline.FISHING),
+    YELLOW_PERCH(Discipline.FISHING),
     NORTHERN_PIKE(Discipline.FISHING),
     BROOK_TROUT(Discipline.FISHING),
+    RAINBOW_TROUT(Discipline.FISHING),
     LAKE_TROUT(Discipline.FISHING),
+    ARCTIC_CHAR(Discipline.FISHING),
     ATLANTIC_SALMON(Discipline.FISHING),
+    PACIFIC_SALMON(Discipline.FISHING),
     SMALLMOUTH_BASS(Discipline.FISHING),
+    LARGEMOUTH_BASS(Discipline.FISHING),
     MUSKELLUNGE(Discipline.FISHING),
+    STURGEON(Discipline.FISHING),
     ICE_FISHING(Discipline.FISHING),
     ;
 
