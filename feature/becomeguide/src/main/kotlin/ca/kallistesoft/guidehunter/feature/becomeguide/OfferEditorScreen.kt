@@ -6,12 +6,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,10 +42,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.content.ContextCompat
@@ -61,8 +64,9 @@ import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferField
 import ca.kallistesoft.guidehunter.core.model.Species
-import ca.kallistesoft.guidehunter.core.ui.label
 import ca.kallistesoft.guidehunter.core.ui.R as UiR
+import ca.kallistesoft.guidehunter.core.ui.label
+import ca.kallistesoft.guidehunter.core.ui.speciesByDiscipline
 
 /**
  * A guide's offer, new ([offerId] null) or sent before: the form that puts it on the map once we've reviewed it.
@@ -253,14 +257,22 @@ private fun Form(
         if (activity == null) {
             Text(stringResource(R.string.field_species_help), color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                Species.forActivity(activity).forEach { species ->
-                    FilterChip(
-                        selected = species in form.species,
-                        onClick = { actions.species(species) },
-                        label = { Text(stringResource(species.label)) },
-                        modifier = Modifier.testTag("species-${species.name}"),
-                    )
+            val context = LocalContext.current
+            val groups = remember(activity, LocalConfiguration.current) { context.speciesByDiscipline(Species.forActivity(activity)) }
+            groups.forEach { (discipline, species) ->
+                // A guide offering both sees the hunting and the fishing species apart.
+                if (groups.size > 1) {
+                    Text(stringResource(discipline.label), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+                }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                    species.forEach { choice ->
+                        FilterChip(
+                            selected = choice in form.species,
+                            onClick = { actions.species(choice) },
+                            label = { Text(stringResource(choice.label)) },
+                            modifier = Modifier.testTag("species-${choice.name}"),
+                        )
+                    }
                 }
             }
         }

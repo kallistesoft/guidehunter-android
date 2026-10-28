@@ -10,6 +10,8 @@ import android.net.Uri
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,10 +25,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Shield
@@ -49,14 +49,18 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -71,6 +75,7 @@ import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.ui.label
+import ca.kallistesoft.guidehunter.core.ui.speciesByDiscipline
 
 /**
  * What the map draws: the guides to pin and the user's location; what it reports: the area on screen once the camera
@@ -267,15 +272,28 @@ private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
                 },
                 modifier = Modifier.testTag("species-any"),
             )
-            filter.speciesChoices.forEach { species ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(species.label)) },
-                    onClick = {
-                        expanded = false
-                        onSpecies(species)
-                    },
-                    modifier = Modifier.testTag("species-${species.name}"),
-                )
+            val context = LocalContext.current
+            val groups = remember(filter.speciesChoices, LocalConfiguration.current) { context.speciesByDiscipline(filter.speciesChoices) }
+            groups.forEach { (discipline, species) ->
+                // With both disciplines in the menu, each list gets its heading.
+                if (groups.size > 1) {
+                    Text(
+                        stringResource(discipline.label).uppercase(),
+                        style = GhTextStyles.overline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = Spacing.m, end = Spacing.m, top = Spacing.m, bottom = Spacing.xs).semantics { heading() },
+                    )
+                }
+                species.forEach { choice ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(choice.label)) },
+                        onClick = {
+                            expanded = false
+                            onSpecies(choice)
+                        },
+                        modifier = Modifier.testTag("species-${choice.name}"),
+                    )
+                }
             }
         }
     }
