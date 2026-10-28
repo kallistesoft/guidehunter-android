@@ -9,6 +9,7 @@ import ca.kallistesoft.guidehunter.core.ads.AdConsent
 import ca.kallistesoft.guidehunter.core.ads.AdsConfig
 import ca.kallistesoft.guidehunter.core.ads.AdsManager
 import ca.kallistesoft.guidehunter.core.ads.GoogleAdsSdk
+import ca.kallistesoft.guidehunter.core.ads.NativeAds
 import ca.kallistesoft.guidehunter.core.ads.ResumedActivity
 import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import ca.kallistesoft.guidehunter.core.ads.UmpConsent
@@ -23,7 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
 
-/** AdMob behind [RewardedAds] and [AdConsent]; the app provides [AdsConfig] (the ad unit of its build type). */
+/** AdMob behind [RewardedAds], [NativeAds] and [AdConsent]; the app provides [AdsConfig] (the ad unit of its build type). */
 @Module
 @InstallIn(SingletonComponent::class)
 internal object AdsModule {
@@ -53,6 +54,9 @@ internal object AdsModule {
 
     @Provides
     fun rewardedAds(manager: AdsManager): RewardedAds = manager
+
+    @Provides
+    fun nativeAds(manager: AdsManager): NativeAds = manager
 
     @Provides
     fun adConsent(manager: AdsManager): AdConsent = manager

@@ -3,6 +3,7 @@ package ca.kallistesoft.guidehunter.feature.becomeguide
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeNativeAds
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
@@ -23,7 +24,7 @@ class MyOffersViewModelTest {
     private val account = FakeGuideAccountRepository()
     private val offer = GuideOffer("o1", TestGuides.offer)
 
-    private fun viewModel() = MyOffersViewModel(auth, account, { TestGuides.today })
+    private fun viewModel() = MyOffersViewModel(auth, account, { TestGuides.today }, FakeNativeAds())
 
     private val MyOffersViewModel.state get() = uiState.value
 

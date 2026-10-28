@@ -40,7 +40,7 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 | `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `AppSettings` (`AppMode`), `GeoPoint.distanceKm` |
 | `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), `SettingsRepository` (onboarding done, mode, the species the map shows; Preferences DataStore), sample guides when Firebase isn't set up |
 | `:core:auth` | Google sign-in (Credential Manager) and `AccountSession` (sign in, sign out, delete the account), shared by the welcome and the settings |
-| `:core:ads` | The rewarded ad and the consent form (AdMob, UMP), from BetterHunter |
+| `:core:ads` | The rewarded ad and the consent form (AdMob, UMP), from BetterHunter; native ads and their `NativeAdCard` |
 | `:core:designsystem` | Theme (BetterHunter's palette and Barlow fonts for now), spacing, sizes, buttons |
 | `:core:ui` | Species and activity labels (EN/FR), links (dialer, mail, website) |
 | `:core:testing` | Fakes and test rules |
@@ -123,9 +123,17 @@ grey; with a key whose restriction doesn't match the build's SHA-1, they stay gr
 
 ### AdMob
 
-Debug builds always use Google's test ads. For release, create the AdMob app and a rewarded ad unit, then set
-`ADMOB_APP_ID` and `ADMOB_REWARDED_ID` (`local.properties`, or CI variables). Until then, release builds show test
-ads too.
+Debug builds always use Google's test ads. For release, create the AdMob app, a rewarded ad unit and a native ad
+unit, then set `ADMOB_APP_ID`, `ADMOB_REWARDED_ID` and `ADMOB_NATIVE_ID` (`local.properties`, or CI variables). Until
+then, release builds show test ads too (each missing ID falls back to Google's test one, with a build warning).
+
+Two kinds of ads, both behind the consent form and off under tests (`AdsConfig.enabled`):
+
+- **Rewarded**: the user chooses to watch one to see a guide's contact.
+- **Native**: one card in a list (today the guide's home, below their offers; never on the map or a guide's offer),
+  styled like the offer cards and labelled "Ad" / "Annonce". `NativeAdCard(nativeAds)` loads its ad when it enters
+  the screen, destroys it when it leaves, and draws nothing without one (ads off, no consent, no fill). The screen's
+  ViewModel injects `NativeAds` and hands it to the card; tests use `FakeNativeAds` from `:core:testing`.
 
 ### Baseline profile
 

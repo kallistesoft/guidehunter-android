@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The label on a native ad card, as AdMob's policy requires. -->
+    <string name="ad_label">Ad</string>
+</resources>

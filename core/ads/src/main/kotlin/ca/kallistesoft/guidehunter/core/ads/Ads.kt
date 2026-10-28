@@ -1,6 +1,7 @@
 package ca.kallistesoft.guidehunter.core.ads
 
 import android.app.Activity
+import androidx.compose.ui.graphics.ImageBitmap
 import kotlinx.coroutines.flow.StateFlow
 
 /** What came of asking for a rewarded ad. */
@@ -40,7 +41,31 @@ interface AdConsent {
 }
 
 /**
- * The rewarded ad unit; the build type chooses it (Google's test unit in debug, see app/build.gradle.kts). [enabled]
- * false turns ads off entirely, consent request included (instrumented tests): every reward is then given.
+ * Native ads, shown as a card in the app's lists ([NativeAdCard]); never on the map or a guide's offer. They never
+ * block anything: no ad simply means no card.
  */
-data class AdsConfig(val rewardedUnitId: String, val enabled: Boolean = true)
+interface NativeAds {
+    /**
+     * A native ad, or null when ads are off ([AdsConfig.enabled], no native unit), consent doesn't allow requesting
+     * ads, or none could be loaded (no fill, offline). The caller [destroys][NativeAdHandle.destroy] it once off screen.
+     */
+    suspend fun load(): NativeAdHandle?
+}
+
+/** A loaded native ad: the assets the card shows. */
+interface NativeAdHandle {
+    val headline: String
+    val body: String?
+    val callToAction: String?
+    val icon: ImageBitmap?
+
+    /** Frees the ad: called when its card leaves the screen. */
+    fun destroy()
+}
+
+/**
+ * The ad units; the build type chooses them (Google's test units in debug, see app/build.gradle.kts). [enabled]
+ * false turns ads off entirely, consent request included (instrumented tests): every reward is then given, and no
+ * native ad shows. A blank [nativeUnitId] turns native ads off.
+ */
+data class AdsConfig(val rewardedUnitId: String, val nativeUnitId: String = "", val enabled: Boolean = true)

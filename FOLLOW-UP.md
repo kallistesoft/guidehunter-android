@@ -19,8 +19,9 @@ What the MVP leaves for later, most urgent first.
    user id), collected. Plus the Advertising ID declaration, and Play's **account deletion** answers: in the app
    (Delete my account), and a web page or email address for guides who uninstalled it (Play requires one).
 5. **Ad policy check**: a rewarded ad must be optional and say what it gives ("Watch an ad to see the contact" does).
-6. **AdMob IDs set** for the release build (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`): without them the build only warns
-   and serves Google's test ads.
+6. **AdMob IDs set** for the release build (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`, `ADMOB_NATIVE_ID`): without them
+   the build only warns and serves Google's test ads. Create the **native ad unit** in GuideHunter's AdMob app (for
+   the ad cards in the lists) and set `ADMOB_NATIVE_ID` as a CI variable and in `local.properties`.
 7. Test the release build on the emulator (`.claude/skills/testing-on-emulator`): the rewarded ad, the map, and a
    relaunch after process death ("Become a guide" open) for the Navigation 3 keys under R8.
 

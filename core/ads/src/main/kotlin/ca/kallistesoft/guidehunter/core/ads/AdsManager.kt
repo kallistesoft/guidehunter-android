@@ -15,6 +15,7 @@ import kotlinx.coroutines.withTimeoutOrNull
  * The ad rules, on top of the SDKs ([consent], [sdk]):
  * - nothing is initialised, loaded or shown until consent allows ads to be requested;
  * - a loaded ad older than [AD_LIFETIME_MILLIS] is dropped (AdMob doesn't serve stale ones) and loaded again;
+ * - a native ad is only requested once consent allows it, and is simply missing otherwise;
  * - a rewarded ad is never skipped by going offline: no network means no reward. It's given without an ad only when
  *   the user can't cause it: ads turned off by us ([AdsConfig.enabled]), or no ad available while online.
  *
@@ -28,7 +29,7 @@ internal class AdsManager(
     private val scope: CoroutineScope,
     private val clock: () -> Long,
     private val isOnline: () -> Boolean,
-) : RewardedAds, AdConsent {
+) : RewardedAds, NativeAds, AdConsent {
     private val privacyRequired = MutableStateFlow(false)
     override val privacyOptionsRequired: StateFlow<Boolean> = privacyRequired.asStateFlow()
 
@@ -71,6 +72,12 @@ internal class AdsManager(
             isOnline() -> RewardOutcome.NO_ADS
             else -> RewardOutcome.OFFLINE
         }.also { preload() }
+    }
+
+    override suspend fun load(): NativeAdHandle? {
+        if (!config.enabled || config.nativeUnitId.isBlank() || !consent.canRequestAds()) return null
+        initialize()
+        return sdk.loadNative(config.nativeUnitId)
     }
 
     /** The load in progress, the loaded rewarded ad (under [AD_LIFETIME_MILLIS] old), or a new load. */

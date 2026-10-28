@@ -11,6 +11,8 @@ import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeNativeAd
+import ca.kallistesoft.guidehunter.core.testing.FakeNativeAds
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -32,11 +34,12 @@ class MyOffersScreenTest {
     private val auth = FakeAuthRepository(TestGuides.user)
     private val account = FakeGuideAccountRepository()
     private val opened = mutableListOf<String>()
+    private val nativeAds = FakeNativeAds(FakeNativeAd(headline = "Rangefinders"))
 
     private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
 
     private fun launch() {
-        val viewModel = MyOffersViewModel(auth, account, { TestGuides.today })
+        val viewModel = MyOffersViewModel(auth, account, { TestGuides.today }, nativeAds)
         compose.setContent {
             GuideHunterTheme {
                 MyOffersScreen(
@@ -48,6 +51,28 @@ class MyOffersScreenTest {
                 )
             }
         }
+    }
+
+    @Test
+    fun `an ad card shows below the offers`() {
+        account.give(uid, GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true))
+        launch()
+        compose.onNodeWithTag("native-ad").performScrollTo()
+        compose.onNodeWithText("Rangefinders").assertExists()
+    }
+
+    @Test
+    fun `no ad card without an ad, nor while the guide has no offers`() {
+        launch()
+        compose.onNodeWithTag("no-offers").assertExists()
+        compose.onNodeWithTag("native-ad").assertDoesNotExist()
+        assertEquals("not even requested", 0, nativeAds.loads)
+
+        account.give(uid, GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true))
+        nativeAds.ad = null
+        compose.onNodeWithTag("offer-live").performScrollTo()
+        compose.onNodeWithTag("native-ad").assertDoesNotExist()
+        assertEquals(1, nativeAds.loads)
     }
 
     @Test

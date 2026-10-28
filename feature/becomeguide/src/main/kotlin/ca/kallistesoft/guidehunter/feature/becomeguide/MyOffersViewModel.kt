@@ -2,6 +2,7 @@ package ca.kallistesoft.guidehunter.feature.becomeguide
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import ca.kallistesoft.guidehunter.core.ads.NativeAds
 import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
@@ -33,7 +34,7 @@ data class MyOffersUiState(
 
 /**
  * The guide's home: their profile and offers, live (Pattern A of .claude/skills/viewmodel-state). Signing in and out
- * is in the settings.
+ * is in the settings. [nativeAds] serves the ad card below the offers.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -41,6 +42,7 @@ class MyOffersViewModel @Inject constructor(
     auth: AuthRepository,
     private val account: GuideAccountRepository,
     private val today: Today,
+    val nativeAds: NativeAds,
 ) : ViewModel() {
     val uiState: StateFlow<MyOffersUiState> = auth.user.flatMapLatest { user ->
         if (user == null) {

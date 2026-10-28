@@ -2,11 +2,16 @@ package ca.kallistesoft.guidehunter.core.ads
 
 import android.app.Activity
 import android.content.Context
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import com.google.android.ump.ConsentInformation
@@ -37,6 +42,9 @@ internal interface AdsSdk {
 
     /** A loaded rewarded ad, or null when none could be loaded (no fill, offline). */
     suspend fun loadRewarded(unitId: String): Rewarded?
+
+    /** A loaded native ad, or null when none could be loaded (no fill, offline). */
+    suspend fun loadNative(unitId: String): NativeAdHandle?
 }
 
 internal fun interface Rewarded {
@@ -86,6 +94,29 @@ internal class GoogleAdsSdk(
             },
         )
     }
+
+    /** An ad that arrives after the card left (the load was cancelled) is destroyed at once. */
+    override suspend fun loadNative(unitId: String): NativeAdHandle? = suspendCancellableCoroutine { done ->
+        AdLoader.Builder(context, unitId)
+            .forNativeAd { ad -> done.resume(GoogleNativeAd(ad)) { _, _, _ -> ad.destroy() } }
+            .withAdListener(
+                object : AdListener() {
+                    override fun onAdFailedToLoad(error: LoadAdError) = done.resume(null)
+                },
+            )
+            .build()
+            .loadAd(AdRequest.Builder().build())
+    }
+}
+
+/** An AdMob native ad; [NativeAdCard] binds [ad] to AdMob's view, which tracks its impressions and clicks. */
+internal class GoogleNativeAd(val ad: NativeAd) : NativeAdHandle {
+    override val headline: String get() = ad.headline.orEmpty()
+    override val body: String? get() = ad.body
+    override val callToAction: String? get() = ad.callToAction
+    override val icon by lazy { ad.icon?.drawable?.toBitmap()?.asImageBitmap() }
+
+    override fun destroy() = ad.destroy()
 }
 
 internal class GoogleRewarded(private val ad: RewardedAd) : Rewarded {
