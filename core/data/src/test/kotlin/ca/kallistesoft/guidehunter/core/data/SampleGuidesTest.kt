@@ -36,6 +36,7 @@ class SampleGuidesTest {
             { account.saveProfile("u", TestGuides.profile) },
             { account.saveOffer("u", null, TestGuides.offer, TestGuides.profile) },
             { account.deleteOffer("u", offer) },
+            { account.boost("u", "o") },
             { account.deleteAll("u") },
         ).forEach { call ->
             assertTrue(runCatching { call() }.exceptionOrNull() is BackendNotConfiguredException)

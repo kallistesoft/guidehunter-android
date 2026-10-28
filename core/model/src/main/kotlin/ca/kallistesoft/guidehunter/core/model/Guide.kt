@@ -1,5 +1,6 @@
 package ca.kallistesoft.guidehunter.core.model
 
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 
 /**
@@ -21,7 +22,12 @@ data class Guide(
     val currency: String = "CAD",
     /** How long a trip lasts and when they leave; no departures: "dates on request". */
     val schedule: Schedule = Schedule(),
-)
+    /** Until when its guide boosted it ([Boost]); null if never. */
+    val boostedUntil: Instant? = null,
+) {
+    /** Boosted and not over: it may be featured on the map. */
+    fun isBoosted(now: Instant): Boolean = boostedUntil != null && boostedUntil > now
+}
 
 /** The guide's name and contact details, unlocked by a rewarded ad. Blank fields aren't shown. */
 data class GuideContact(

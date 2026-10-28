@@ -5,14 +5,22 @@ import androidx.compose.ui.unit.dp
 /** Component sizes: the only place, with [Spacing], where sizes are given in dp. */
 object Sizes {
     // Icons
+    /** The star in a "Featured" badge. */
+    val iconXs = 12.dp
     val iconS = 16.dp
     val iconM = 18.dp
     val iconL = 20.dp
+
+    /** The star of the boost's explanation. */
+    val iconXl = 28.dp
     val iconHero = 72.dp
 
     // Borders
     val border = 1.dp
     val borderEmphasis = 1.5.dp
+
+    /** A featured (boosted) offer's gold border, on the guide's home. */
+    val borderFeatured = 2.dp
 
     // Touch and buttons
     /** Smallest touch target (round icon buttons), Android's minimum. */

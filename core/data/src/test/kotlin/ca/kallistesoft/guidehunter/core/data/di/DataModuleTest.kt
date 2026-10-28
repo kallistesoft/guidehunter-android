@@ -17,7 +17,11 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.unmockkAll
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +35,7 @@ import org.robolectric.annotation.Config
 class DataModuleTest {
     private val app: Application = RuntimeEnvironment.getApplication()
     private val config = DataConfig("owner@example.com")
+    private val now = TimeModule.now()
 
     @After
     fun tearDown() {
@@ -42,9 +47,17 @@ class DataModuleTest {
     fun `without Firebase the app shows sample guides and guides can't sign in`() {
         assertTrue(DataModule.guideRepository(app) is SampleGuideRepository)
         assertTrue(DataModule.authRepository(app) is UnconfiguredAuthRepository)
-        assertTrue(DataModule.guideAccountRepository(app, config) is UnconfiguredGuideAccountRepository)
+        assertTrue(DataModule.guideAccountRepository(app, config, now) is UnconfiguredGuideAccountRepository)
         assertTrue(DataModule.locationRepository(app) is FusedLocationRepository)
         assertTrue(DataModule.settingsRepository(app) is DataStoreSettingsRepository)
+    }
+
+    @Test
+    fun `the time is the device's`() {
+        val before = Clock.System.now()
+        val now = TimeModule.now()()
+        assertTrue(now >= before && now <= Clock.System.now())
+        assertEquals(Clock.System.todayIn(TimeZone.currentSystemDefault()), TimeModule.today()())
     }
 
     @Test
@@ -58,6 +71,6 @@ class DataModuleTest {
         every { FirebaseAuth.getInstance() } returns mockk()
         assertTrue(DataModule.guideRepository(app) is FirestoreGuideRepository)
         assertTrue(DataModule.authRepository(app) is FirebaseAuthRepository)
-        assertTrue(DataModule.guideAccountRepository(app, config) is FirestoreGuideAccountRepository)
+        assertTrue(DataModule.guideAccountRepository(app, config, now) is FirestoreGuideAccountRepository)
     }
 }

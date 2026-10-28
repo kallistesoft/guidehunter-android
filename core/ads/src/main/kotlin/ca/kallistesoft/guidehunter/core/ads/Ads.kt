@@ -2,6 +2,7 @@ package ca.kallistesoft.guidehunter.core.ads
 
 import android.app.Activity
 import androidx.compose.ui.graphics.ImageBitmap
+import javax.inject.Qualifier
 import kotlinx.coroutines.flow.StateFlow
 
 /** What came of asking for a rewarded ad. */
@@ -19,7 +20,7 @@ enum class RewardOutcome {
     NO_ADS,
 }
 
-/** A rewarded ad the user chooses to watch to see a guide's name and contact details. */
+/** A rewarded ad the user chooses to watch: to see a guide's name and contact details, or to boost an offer. */
 interface RewardedAds {
     /** Starts loading one ahead of time (a guide's offer opens), so it shows without waiting. */
     fun preload()
@@ -66,6 +67,17 @@ interface NativeAdHandle {
 /**
  * The ad units; the build type chooses them (Google's test units in debug, see app/build.gradle.kts). [enabled]
  * false turns ads off entirely, consent request included (instrumented tests): every reward is then given, and no
- * native ad shows. A blank [nativeUnitId] turns native ads off.
+ * native ad shows. A blank [nativeUnitId] turns native ads off. [boostUnitId] is the boost's rewarded unit, apart so
+ * its revenue is reported on its own (the contact's [rewardedUnitId] when blank).
  */
-data class AdsConfig(val rewardedUnitId: String, val nativeUnitId: String = "", val enabled: Boolean = true)
+data class AdsConfig(
+    val rewardedUnitId: String,
+    val nativeUnitId: String = "",
+    val enabled: Boolean = true,
+    val boostUnitId: String = "",
+)
+
+/** The rewarded ad a guide watches to boost an offer ([AdsConfig.boostUnitId]), injected as `@BoostAds RewardedAds`. */
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class BoostAds

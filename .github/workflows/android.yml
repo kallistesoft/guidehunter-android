@@ -74,6 +74,7 @@ jobs:
           ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
           ADMOB_REWARDED_ID: ${{ vars.ADMOB_REWARDED_ID }}
           ADMOB_NATIVE_ID: ${{ vars.ADMOB_NATIVE_ID }}
+          ADMOB_BOOST_ID: ${{ vars.ADMOB_BOOST_ID }}
           APPLICATIONS_EMAIL: ${{ vars.APPLICATIONS_EMAIL }}
         run: ./gradlew :app:assembleDebug :app:assembleRelease :app:bundleRelease -PversionCode=${{ github.run_number }}
 

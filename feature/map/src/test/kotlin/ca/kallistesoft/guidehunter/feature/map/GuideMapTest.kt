@@ -62,6 +62,7 @@ class GuideMapTest {
     private val added = mutableListOf<MarkerOptions>()
     private val markers = mutableMapOf<String, Marker>()
     private val clicks = slot<GoogleMap.OnMarkerClickListener>()
+    private val density = org.robolectric.RuntimeEnvironment.getApplication().resources.displayMetrics.density
 
     @After
     fun tearDown() = unmockkAll()
@@ -73,9 +74,15 @@ class GuideMapTest {
         every { CameraUpdateFactory.newCameraPosition(any()) } returns mockk()
         // The icon's fill, read at the pin's body (below its hole).
         val fills = mutableMapOf<BitmapDescriptor, Int>()
+        val widths = mutableMapOf<BitmapDescriptor, Int>()
         every { BitmapDescriptorFactory.fromBitmap(any()) } answers {
             val bitmap = firstArg<android.graphics.Bitmap>()
-            mockk<BitmapDescriptor>().also { fills[it] = bitmap.getPixel(bitmap.width / 2, bitmap.height * 26 / 38) }
+            // The body is 12 dp above the tip, at the bottom of the plain and the featured icons alike.
+            val bodyY = bitmap.height - (12 * density).toInt()
+            mockk<BitmapDescriptor>().also {
+                fills[it] = bitmap.getPixel(bitmap.width / 2, bodyY)
+                widths[it] = bitmap.width
+            }
         }
         every { map.addMarker(any()) } answers {
             val options = firstArg<MarkerOptions>()
@@ -93,7 +100,7 @@ class GuideMapTest {
 
         compose.setContent {
             GuideHunterTheme {
-                GuideMap(MapContent(TestGuides.all.map { GuideItem(it) }, TestGuides.quebecCity, { areas += it }) { selected += it })
+                GuideMap(MapContent(TestGuides.all.map { GuideItem(it) }, TestGuides.quebecCity, { areas += it }, featured = setOf("moose")) { selected += it })
             }
         }
         compose.waitForIdle()
@@ -106,6 +113,8 @@ class GuideMapTest {
             listOf(LightPinColors.hunt, LightPinColors.fish, LightPinColors.both).map { it.toArgb() },
             added.map { fills.getValue(it.icon!!) },
         )
+        assertEquals("the featured pin is on top", listOf(0f, 0f, 1f), added.map { it.zIndex })
+        assertEquals("in its own, wider icon", listOf(false, false, true), added.map { widths.getValue(it.icon!!) > 28 * density })
         assertTrue("the sheet shows the offer, not an info window", clicks.captured.onMarkerClick(markers.getValue(TestGuides.salmon.title)))
         assertEquals(listOf("salmon"), selected)
         assertEquals("once the map is ready", listOf(GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -64.0))), areas)

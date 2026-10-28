@@ -14,12 +14,34 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * The map's pins (design/README.md): orange for hunting, teal for fishing, gold for both. They differ in lightness
- * too, not only in hue, and are outlined in the background colour so they stand out on the map.
+ * too, not only in hue, and are outlined in the background colour so they stand out on the map. A featured pin has
+ * a ring and a star in [featured.ring][FeaturedColors.ring].
  */
-data class PinColors(val hunt: Color, val fish: Color, val both: Color, val outline: Color)
+data class PinColors(val hunt: Color, val fish: Color, val both: Color, val outline: Color, val featured: FeaturedColors)
 
-val LightPinColors = PinColors(hunt = Color(0xFFE8691E), fish = Color(0xFF1F7A6A), both = Color(0xFFC99A12), outline = Color(0xFFFFFFFF))
-val DarkPinColors = PinColors(hunt = Color(0xFFF27B2B), fish = Color(0xFF4FB3A0), both = Color(0xFFE9C25A), outline = Color(0xFF0E1611))
+/**
+ * A featured (boosted) offer's gold (design/mockup/Main.dc.html): its pin's [ring] and star, the [tint] behind its
+ * badge and the badge's [text].
+ */
+data class FeaturedColors(val ring: Color, val tint: Color, val text: Color)
+
+val LightFeaturedColors = FeaturedColors(ring = Color(0xFFB08200), tint = Color(0x2EC99A12), text = Color(0xFF6E5100))
+val DarkFeaturedColors = FeaturedColors(ring = Color(0xFFE9C25A), tint = Color(0x38E9C25A), text = Color(0xFFF2D58A))
+
+val LightPinColors = PinColors(
+    hunt = Color(0xFFE8691E),
+    fish = Color(0xFF1F7A6A),
+    both = Color(0xFFC99A12),
+    outline = Color(0xFFFFFFFF),
+    featured = LightFeaturedColors,
+)
+val DarkPinColors = PinColors(
+    hunt = Color(0xFFF27B2B),
+    fish = Color(0xFF4FB3A0),
+    both = Color(0xFFE9C25A),
+    outline = Color(0xFF0E1611),
+    featured = DarkFeaturedColors,
+)
 
 /** The "Ad" label on a native ad card (design/mockup): gold with dark text, in both themes. */
 val AdLabelColor = Color(0xFFE9C25A)

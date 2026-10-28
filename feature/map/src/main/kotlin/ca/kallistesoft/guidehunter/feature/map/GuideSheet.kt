@@ -53,6 +53,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.testTag
+import ca.kallistesoft.guidehunter.core.designsystem.component.FeaturedBadge
 import ca.kallistesoft.guidehunter.core.designsystem.component.LinkButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
@@ -64,6 +65,7 @@ import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.Trip
 import ca.kallistesoft.guidehunter.core.ui.LinkOpener
+import ca.kallistesoft.guidehunter.core.ui.R as UiR
 import ca.kallistesoft.guidehunter.core.ui.label
 import ca.kallistesoft.guidehunter.core.ui.rememberLinkOpener
 import ca.kallistesoft.guidehunter.core.ui.tripDates
@@ -117,7 +119,7 @@ internal fun GuideDetail(
             .testTag("guide-detail"),
         verticalArrangement = Arrangement.spacedBy(Spacing.m),
     ) {
-        Text(stringResource(guide.activity.label).uppercase(), style = GhTextStyles.overline, color = MaterialTheme.colorScheme.tertiary)
+        ActivityLabel(guide, selected.featured)
         Text(guide.title, style = MaterialTheme.typography.headlineSmall)
         Text(selected.item.subtitle(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(guide.price(), style = MaterialTheme.typography.titleSmall, modifier = Modifier.testTag("price"))
@@ -135,6 +137,15 @@ internal fun GuideDetail(
 
         Section(stringResource(R.string.section_contact))
         ContactCard(selected.contact, onUnlock, links, guide.title, selected.trip)
+    }
+}
+
+/** The offer's activity ("HUNTING"), and the "Featured" badge of a boosted one: on its card and in its sheet. */
+@Composable
+internal fun ActivityLabel(guide: Guide, featured: Boolean) {
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s), verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(guide.activity.label).uppercase(), style = GhTextStyles.overline, color = MaterialTheme.colorScheme.tertiary)
+        if (featured) FeaturedBadge(stringResource(UiR.string.featured), Modifier.testTag("featured-${guide.id}"))
     }
 }
 

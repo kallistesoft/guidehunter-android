@@ -32,6 +32,7 @@ class AdsModuleTest {
         assertSame(manager, AdsModule.nativeAds(manager))
         assertNull("ads off: no native ad", manager.load())
         assertSame(manager, AdsModule.adConsent(manager))
+        assertSame(manager.boost, AdsModule.boostAds(manager))
         assertEquals("ads off: given at once", RewardOutcome.NO_ADS, manager.showForReward())
     }
 

@@ -107,4 +107,19 @@
         <item quantity="other">%1$d dates, dès le %2$s</item>
     </plurals>
     <string name="field_activity_help">Un type par offre : si vous offrez les deux, ajoutez une offre de chasse et une offre de pêche.</string>
+
+    <string name="boost_pitch">Affichez-la en premier sur la carte</string>
+    <string name="boost">Mettre en vedette</string>
+    <string name="boost_again">Remettre en vedette</string>
+    <string name="boost_until">En vedette jusqu\'au %1$s</string>
+    <string name="boost_ended">Vedette terminée le %1$s</string>
+    <string name="boost_title">Mettre « %1$s » en vedette pendant 3 jours</string>
+    <string name="boost_point_pin">Son repère ressort sur la carte, par-dessus les autres, avec un badge « En vedette ».</string>
+    <string name="boost_point_turns">Jusqu\'à 3 offres en vedette s\'affichent à la fois; s\'il y en a plus à l\'écran, elles alternent.</string>
+    <string name="boost_point_ad">Regardez une courte publicité pour commencer. Revenez la remettre en vedette quand c\'est terminé.</string>
+    <string name="boost_watch_ad">Regarder une publicité</string>
+    <string name="boost_not_now">Pas maintenant</string>
+    <string name="boost_error_not_earned">La publicité a été fermée avant la fin : l\'offre n\'est pas en vedette.</string>
+    <string name="boost_error_offline">Pas de connexion : connectez-vous à Internet et réessayez.</string>
+    <string name="boost_error_failed">La mise en vedette n\'a pas pu être enregistrée. Réessayez.</string>
 </resources>

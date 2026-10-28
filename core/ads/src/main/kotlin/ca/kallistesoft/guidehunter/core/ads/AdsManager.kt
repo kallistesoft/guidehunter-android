@@ -34,9 +34,6 @@ internal class AdsManager(
     override val privacyOptionsRequired: StateFlow<Boolean> = privacyRequired.asStateFlow()
 
     private var initialized = false
-    private var rewardedLoading: Deferred<Rewarded?>? = null
-    private var rewarded: Rewarded? = null
-    private var rewardedLoadedAt = 0L
 
     override fun gatherConsent(activity: Activity) {
         if (!config.enabled) return
@@ -54,43 +51,20 @@ internal class AdsManager(
         }
     }
 
-    override fun preload() {
-        scope.launch { if (adsOn() && consent.canRequestAds()) loadRewarded() }
-    }
+    /** The contact's rewarded ad ([AdsConfig.rewardedUnitId]). */
+    private val contact = RewardedUnit(config.rewardedUnitId)
 
-    override suspend fun showForReward(): RewardOutcome {
-        if (!adsOn()) return RewardOutcome.NO_ADS
-        if (!isOnline()) return RewardOutcome.OFFLINE
-        val activity = currentActivity() ?: return RewardOutcome.NOT_EARNED
-        // Consent not settled yet (the launch request failed offline): ask now rather than skip the ad.
-        if (!consent.canRequestAds()) consent.update(activity)
-        if (!consent.canRequestAds()) return RewardOutcome.NO_ADS
-        val ad = withTimeoutOrNull(REWARDED_WAIT_MILLIS) { loadRewarded().await() }
-        rewarded = null
-        return when {
-            ad != null -> if (ad.show(activity)) RewardOutcome.EARNED else RewardOutcome.NOT_EARNED
-            isOnline() -> RewardOutcome.NO_ADS
-            else -> RewardOutcome.OFFLINE
-        }.also { preload() }
-    }
+    /** The boost's rewarded ad, on its own ad unit so its revenue is reported apart ([AdsConfig.boostUnitId]). */
+    val boost: RewardedAds = RewardedUnit(config.boostUnitId.ifBlank { config.rewardedUnitId })
+
+    override fun preload() = contact.preload()
+
+    override suspend fun showForReward(): RewardOutcome = contact.showForReward()
 
     override suspend fun load(): NativeAdHandle? {
         if (!config.enabled || config.nativeUnitId.isBlank() || !consent.canRequestAds()) return null
         initialize()
         return sdk.loadNative(config.nativeUnitId)
-    }
-
-    /** The load in progress, the loaded rewarded ad (under [AD_LIFETIME_MILLIS] old), or a new load. */
-    private fun loadRewarded(): Deferred<Rewarded?> {
-        rewardedLoading?.takeIf { it.isActive }?.let { return it }
-        rewarded?.takeIf { clock() - rewardedLoadedAt < AD_LIFETIME_MILLIS }?.let { return CompletableDeferred(it) }
-        return scope.async {
-            initialize()
-            sdk.loadRewarded(config.rewardedUnitId).also {
-                rewarded = it
-                rewardedLoadedAt = clock()
-            }
-        }.also { rewardedLoading = it }
     }
 
     private suspend fun initialize() {
@@ -100,7 +74,47 @@ internal class AdsManager(
         }
     }
 
-    private fun adsOn(): Boolean = config.enabled && config.rewardedUnitId.isNotBlank()
+    /** The rewarded ads of one ad unit, each loaded ahead and dropped when stale. */
+    private inner class RewardedUnit(private val unitId: String) : RewardedAds {
+        private var loading: Deferred<Rewarded?>? = null
+        private var loaded: Rewarded? = null
+        private var loadedAt = 0L
+
+        override fun preload() {
+            scope.launch { if (adsOn() && consent.canRequestAds()) load() }
+        }
+
+        override suspend fun showForReward(): RewardOutcome {
+            if (!adsOn()) return RewardOutcome.NO_ADS
+            if (!isOnline()) return RewardOutcome.OFFLINE
+            val activity = currentActivity() ?: return RewardOutcome.NOT_EARNED
+            // Consent not settled yet (the launch request failed offline): ask now rather than skip the ad.
+            if (!consent.canRequestAds()) consent.update(activity)
+            if (!consent.canRequestAds()) return RewardOutcome.NO_ADS
+            val ad = withTimeoutOrNull(REWARDED_WAIT_MILLIS) { load().await() }
+            loaded = null
+            return when {
+                ad != null -> if (ad.show(activity)) RewardOutcome.EARNED else RewardOutcome.NOT_EARNED
+                isOnline() -> RewardOutcome.NO_ADS
+                else -> RewardOutcome.OFFLINE
+            }.also { preload() }
+        }
+
+        /** The load in progress, the loaded rewarded ad (under [AD_LIFETIME_MILLIS] old), or a new load. */
+        private fun load(): Deferred<Rewarded?> {
+            loading?.takeIf { it.isActive }?.let { return it }
+            loaded?.takeIf { clock() - loadedAt < AD_LIFETIME_MILLIS }?.let { return CompletableDeferred(it) }
+            return scope.async {
+                initialize()
+                sdk.loadRewarded(unitId).also {
+                    loaded = it
+                    loadedAt = clock()
+                }
+            }.also { loading = it }
+        }
+
+        private fun adsOn(): Boolean = config.enabled && unitId.isNotBlank()
+    }
 }
 
 /** A loaded ad is shown within the hour, or dropped. */

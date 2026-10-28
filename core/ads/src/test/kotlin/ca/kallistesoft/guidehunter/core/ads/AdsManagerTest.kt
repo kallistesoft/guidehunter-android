@@ -196,6 +196,29 @@ class AdsManagerTest {
         assertEquals("a fresh one is kept", 2, sdk.rewardedLoads)
     }
 
+    @Test
+    fun `the boost's ad comes from its own unit, loaded apart from the contact's`() = runTest {
+        val ads = manager(AdsConfig("rewarded-1", boostUnitId = "boost-1"))
+        ads.preload()
+        runCurrent()
+        assertEquals(RewardOutcome.EARNED, ads.boost.showForReward())
+        assertEquals("the contact's preloaded ad isn't used", listOf("rewarded-1", "boost-1"), sdk.rewardedUnitIds.take(2))
+        runCurrent()
+        assertEquals("the next boost ad preloads", listOf("rewarded-1", "boost-1", "boost-1"), sdk.rewardedUnitIds)
+        ads.boost.preload()
+        runCurrent()
+        assertEquals("already loaded", 3, sdk.rewardedLoads)
+        assertEquals("the contact's is still there", RewardOutcome.EARNED, ads.showForReward())
+        assertEquals("initialised once", 1, sdk.initialized)
+    }
+
+    @Test
+    fun `without a boost unit the boost uses the contact's`() = runTest {
+        assertEquals(RewardOutcome.EARNED, manager().boost.showForReward())
+        assertEquals(listOf("rewarded-1"), sdk.rewardedUnitIds.distinct())
+        assertEquals(RewardOutcome.NO_ADS, manager(AdsConfig("rewarded-1", boostUnitId = "boost-1", enabled = false)).boost.showForReward())
+    }
+
     private class FakeConsent : ConsentGateway {
         var canRequest = true
         var privacyRequired = false

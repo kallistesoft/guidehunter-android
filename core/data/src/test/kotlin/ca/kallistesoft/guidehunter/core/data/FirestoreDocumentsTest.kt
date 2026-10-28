@@ -16,6 +16,7 @@ import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -48,6 +49,16 @@ class FirestoreDocumentsTest {
     fun `optional fields have defaults`() {
         val guide = guideFrom("g1", mapOf("title" to "T", "activity" to "FISH", "lat" to 1.0, "lng" to 2.0))
         assertEquals(Guide("g1", "T", "", GuideActivity.FISH, emptyList(), "", GeoPoint(1.0, 2.0)), guide)
+    }
+
+    @Test
+    fun `a guide document carries its boost, and a boost writes only that field`() {
+        val until = Instant.parse("2026-10-31T12:00:00.5Z")
+        val boost = boostUpdate(until)
+        assertEquals(mapOf("boostedUntil" to Timestamp(until.epochSeconds, 500_000_000)), boost)
+        assertEquals(until, guideFrom("g1", document + boost)!!.boostedUntil)
+        assertNull(guideFrom("g1", document + ("boostedUntil" to "soon"))!!.boostedUntil)
+        assertEquals(mapOf("a" to until), boostsFrom(listOf("a" to document + boost, "b" to document)))
     }
 
     @Test

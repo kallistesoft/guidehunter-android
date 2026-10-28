@@ -6,11 +6,18 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Published offers: anyone reads them. Written by approval (scripts/approve-offer.py); the guide who owns one
-    // can only take it off the map.
+    // can take it off the map, or boost it: set `boostedUntil`, and nothing else, to at most 3 days from now (the
+    // 10 minutes cover a phone's clock slightly off). The ad watched for it is only checked in the app for now
+    // (FOLLOW-UP.md): a guide could renew without the ad, but never more than 3 days ahead.
     match /guides/{guideId} {
       allow read: if true;
       allow delete: if owns(resource.data);
-      allow create, update: if false;
+      allow update: if owns(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['boostedUntil'])
+        && request.resource.data.boostedUntil is timestamp
+        && request.resource.data.boostedUntil > request.time
+        && request.resource.data.boostedUntil <= request.time + duration.value(3, 'd') + duration.value(10, 'm');
+      allow create: if false;
     }
 
     // A guide's name and contact, read one at a time after a rewarded ad. No listing, so the whole collection can't

@@ -31,4 +31,16 @@ class MapPinsTest {
         assertEquals("hole", DarkPinColors.outline.toArgb(), pin.getPixel(28, 28))
         assertEquals("corner", 0, pin.getPixel(1, 74))
     }
+
+    @Test
+    fun `a featured pin is the pin in a gold ring, with a gold star, its tip at the bottom centre`() {
+        val pin = featuredPinBitmap(LightPinColors.hunt, LightPinColors.outline, LightPinColors.featured, density = 1f)
+        assertEquals(FEATURED_PIN_WIDTH to FEATURED_PIN_HEIGHT, pin.width to pin.height)
+        assertEquals("body", LightPinColors.hunt.toArgb(), pin.getPixel(26, 38))
+        assertEquals("hole", LightPinColors.outline.toArgb(), pin.getPixel(26, 26))
+        assertEquals("ring", LightPinColors.featured.ring.toArgb(), pin.getPixel(26 - 18, 26))
+        assertEquals("star badge", LightPinColors.featured.ring.toArgb(), pin.getPixel(49, 9))
+        assertEquals("star", LightPinColors.outline.toArgb(), pin.getPixel(43, 9))
+        assertEquals("corner", 0, pin.getPixel(1, 49))
+    }
 }

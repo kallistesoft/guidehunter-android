@@ -5,6 +5,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.dp
 
 // 10 dp chips and icon tiles, 14 dp buttons and fields, 16 dp cards, 22 dp sheets.
@@ -22,10 +24,21 @@ private val AppShapes = Shapes(
  */
 @Composable
 fun GuideHunterTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) DarkColors else LightColors,
-        typography = AppTypography,
-        shapes = AppShapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalFeaturedColors provides if (darkTheme) DarkFeaturedColors else LightFeaturedColors) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) DarkColors else LightColors,
+            typography = AppTypography,
+            shapes = AppShapes,
+            content = content,
+        )
+    }
+}
+
+private val LocalFeaturedColors = staticCompositionLocalOf { LightFeaturedColors }
+
+/** The colours Material's scheme has no role for. */
+object GhColors {
+    /** A featured (boosted) offer's gold, in the theme's mode. */
+    val featured: FeaturedColors
+        @Composable get() = LocalFeaturedColors.current
 }

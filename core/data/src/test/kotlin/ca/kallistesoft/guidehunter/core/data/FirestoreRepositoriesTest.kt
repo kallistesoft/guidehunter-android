@@ -26,6 +26,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Instant
 
 /** The Firestore adapters, on a mocked Firestore: what is read and written where. */
 class FirestoreRepositoriesTest {
@@ -79,6 +81,8 @@ class FirestoreRepositoriesTest {
     private val contacts = mockk<CollectionReference>()
     private val mails = mockk<CollectionReference>()
     private val mine = mockk<Query>()
+    private val published = mockk<Query>()
+    private val now = Instant.parse("2026-10-28T12:00:00Z")
     private val batch = mockk<WriteBatch>(relaxed = true)
     private val refs = mutableMapOf<String, DocumentReference>()
 
@@ -107,7 +111,8 @@ class FirestoreRepositoriesTest {
         every { mails.document() } returns ref("mail/m")
         every { firestore.batch() } returns batch
         every { batch.commit() } returns Tasks.forResult(null)
-        return FirestoreGuideAccountRepository(firestore, "owner@example.com")
+        every { guides.whereEqualTo("ownerUid", "u1") } returns published
+        return FirestoreGuideAccountRepository(firestore, "owner@example.com") { now }
     }
 
     @Test
@@ -135,15 +140,51 @@ class FirestoreRepositoriesTest {
         val listener = slot<EventListener<QuerySnapshot>>()
         val registration = mockk<ListenerRegistration>(relaxed = true)
         every { mine.addSnapshotListener(capture(listener)) } returns registration
+        val boosts = slot<EventListener<QuerySnapshot>>()
+        val boostsRegistration = mockk<ListenerRegistration>(relaxed = true)
+        every { published.addSnapshotListener(capture(boosts)) } returns boostsRegistration
         val received = mutableListOf<List<String>>()
         val job = launch(UnconfinedTestDispatcher(testScheduler)) { repository.offers("u1").collect { received += it.map(GuideOffer::id) } }
         val pending = document("pending", pendingDoc)
         val snapshot = mockk<QuerySnapshot> { every { documents } returns listOf(pending) }
         listener.captured.onEvent(snapshot, null)
+        boosts.captured.onEvent(null, mockk()) // offline with nothing cached: the offers show without their boosts
         listener.captured.onEvent(null, mockk())
+        boosts.captured.onEvent(null, mockk())
         job.cancel()
         assertEquals(listOf(listOf("pending")), received)
         verify { registration.remove() }
+        verify { boostsRegistration.remove() }
+    }
+
+    @Test
+    fun `the offers on the map carry their boost, read from their published copy`() = runTest {
+        val repository = account()
+        val listener = slot<EventListener<QuerySnapshot>>()
+        every { mine.addSnapshotListener(capture(listener)) } returns mockk(relaxed = true)
+        val boosts = slot<EventListener<QuerySnapshot>>()
+        every { published.addSnapshotListener(capture(boosts)) } returns mockk(relaxed = true)
+        val received = mutableListOf<Map<String, Instant?>>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            repository.offers("u1").collect { offers -> received += offers.associate { it.id to it.boostedUntil } }
+        }
+        listener.captured.onEvent(mockk { every { documents } returns listOf(document("live", liveDoc), document("pending", pendingDoc)) }, null)
+        val until = now + 3.days
+        val boosted = document("live", mapOf("title" to "T") + boostUpdate(until))
+        // A published copy left behind by a deleted offer is no offer's boost.
+        val stale = document("pending", boostUpdate(until))
+        boosts.captured.onEvent(mockk { every { documents } returns listOf(boosted, stale) }, null)
+        boosts.captured.onEvent(null, mockk()) // a later error keeps the boosts
+        job.cancel()
+        assertEquals(listOf(mapOf("live" to until, "pending" to null)), received)
+    }
+
+    @Test
+    fun `a boost sets only the published offer's end, 3 days from now`() = runTest {
+        val repository = account()
+        every { ref("guides/live").update(any<Map<String, Any>>()) } returns Tasks.forResult(null)
+        repository.boost("u1", "live")
+        verify { ref("guides/live").update(boostUpdate(now + 3.days)) }
     }
 
     @Test

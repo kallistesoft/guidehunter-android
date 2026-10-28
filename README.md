@@ -28,6 +28,12 @@ changes. Native Android first; iOS later (see FOLLOW-UP.md).
   step). Each new offer and each edit is **emailed to us** for review; `scripts/approve-offer.py` puts it on the map.
   An edit leaves the reviewed version on the map until it's approved. Guides can delete an offer (it leaves the map)
   or their whole account.
+- **Offer boost**: on the guide's home, an offer on the map has **Boost**: after a short explanation and a rewarded
+  ad (its own AdMob unit), it's featured for 3 days ("Featured until Oct 31"). Boosts don't stack: "Boost again" shows
+  once less than a day is left or the boost has ended, and restarts the 3 days. On the map, among the guides that
+  match the filters and are in view, at most 3 boosted ones are featured (picked at random when more are, the same
+  pick while the map pans): a gold ring and star on their pin, drawn on top, their cards first with a "Featured"
+  badge, and the badge in their sheet.
 
 ## Architecture
 
@@ -37,10 +43,10 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 | Module | What's in it |
 |---|---|
 | `:app` | `MainActivity`, navigation (`GuideHunterApp`, `navigation/NavKeys.kt`; `AppViewModel` picks the home: welcome, map or guide's offers), build-type settings (AdMob, Maps key, application email) |
-| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `AppSettings` (`AppMode`), `GeoPoint.distanceKm` |
+| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `Boost` (how long, when again, which are featured), `AppSettings` (`AppMode`), `GeoPoint.distanceKm` |
 | `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), `SettingsRepository` (onboarding done, mode, the species the map shows; Preferences DataStore), sample guides when Firebase isn't set up |
 | `:core:auth` | Google sign-in (Credential Manager) and `AccountSession` (sign in, sign out, delete the account), shared by the welcome and the settings |
-| `:core:ads` | The rewarded ad and the consent form (AdMob, UMP), from BetterHunter; native ads and their `NativeAdCard` |
+| `:core:ads` | The rewarded ads (the contact's, and the boost's on its own unit: `@BoostAds`) and the consent form (AdMob, UMP), from BetterHunter; native ads and their `NativeAdCard` |
 | `:core:designsystem` | Theme (BetterHunter's palette and Barlow fonts for now), spacing, sizes, buttons |
 | `:core:ui` | Species and activity labels (EN/FR), links (dialer, mail, website) |
 | `:core:testing` | Fakes and test rules |
@@ -52,7 +58,7 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 
 | Collection | What | Who reads / writes |
 |---|---|---|
-| `guides/{id}` | The public offer: `title`, `description`, `activity` (`HUNT`, `FISH`, `BOTH`), `species` (names from `Species`), `region`, `lat`, `lng`, `priceFrom` (optional), `currency` (optional, `CAD`), `tripLength` (`HALF_DAY` or days), `departures` (ISO dates, `2027-05-20` or `2027-05-20/AM`, `/PM` on a half day; none: dates on request), `everyYear` (bool), `ownerUid` | Everyone reads; written by approval; its guide can delete it |
+| `guides/{id}` | The public offer: `title`, `description`, `activity` (`HUNT`, `FISH`, `BOTH`), `species` (names from `Species`), `region`, `lat`, `lng`, `priceFrom` (optional), `currency` (optional, `CAD`), `tripLength` (`HALF_DAY` or days), `departures` (ISO dates, `2027-05-20` or `2027-05-20/AM`, `/PM` on a half day; none: dates on request), `everyYear` (bool), `ownerUid`, `boostedUntil` (timestamp, optional: featured until then) | Everyone reads; written by approval; its guide can delete it, or set `boostedUntil` alone, at most 3 days ahead |
 | `guideContacts/{id}` | Same id: `name`, `phone`, `email`, `website`, `ownerUid` | Read one at a time after the ad; written by approval; its guide's profile updates it |
 | `guideProfiles/{uid}` | A guide's `businessName`, `email`, `phone`, `website`, by Firebase user id | Only that guide |
 | `guideOffers/{id}` | A guide's offers as written: the offer's fields, `ownerUid`, `status` (`PENDING`, `PUBLISHED`), `live` (a reviewed version is on the map), `updatedAt` | Only their guide; the app always writes `PENDING` and can't change `live` |
@@ -60,7 +66,7 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 
 The rules are in `firestore.rules`. **To publish an offer** (new or edited), run the command its email gives:
 `scripts/approve-offer.py <project> <offerId>` copies it into `guides` and the guide's profile into `guideContacts`
-(same id), and marks it published; it shows on the map at once. `scripts/approve-offer.py <project> --list` lists the
+(same id), and marks it published; it shows on the map at once (an edit keeps the offer's `boostedUntil`). `scripts/approve-offer.py <project> --list` lists the
 offers waiting. To refuse one, reply to its email (it goes to the guide).
 
 ## Setup
@@ -123,13 +129,15 @@ grey; with a key whose restriction doesn't match the build's SHA-1, they stay gr
 
 ### AdMob
 
-Debug builds always use Google's test ads. For release, create the AdMob app, a rewarded ad unit and a native ad
-unit, then set `ADMOB_APP_ID`, `ADMOB_REWARDED_ID` and `ADMOB_NATIVE_ID` (`local.properties`, or CI variables). Until
+Debug builds always use Google's test ads. For release, create the AdMob app, two rewarded ad units (the contact's,
+and the boost's, its revenue reported apart) and a native ad unit, then set `ADMOB_APP_ID`, `ADMOB_REWARDED_ID`,
+`ADMOB_BOOST_ID` and `ADMOB_NATIVE_ID` (`local.properties`, or CI variables). Until
 then, release builds show test ads too (each missing ID falls back to Google's test one, with a build warning).
 
 Two kinds of ads, both behind the consent form and off under tests (`AdsConfig.enabled`):
 
-- **Rewarded**: the user chooses to watch one to see a guide's contact.
+- **Rewarded**: the user chooses to watch one to see a guide's contact; a guide watches one to boost an offer
+  (`@BoostAds RewardedAds`, its own unit).
 - **Native**: one card in a list (today the guide's home, below their offers; never on the map or a guide's offer),
   styled like the offer cards and labelled "Ad" / "Annonce". `NativeAdCard(nativeAds)` loads its ad when it enters
   the screen, destroys it when it leaves, and draws nothing without one (ads off, no consent, no fill). The screen's

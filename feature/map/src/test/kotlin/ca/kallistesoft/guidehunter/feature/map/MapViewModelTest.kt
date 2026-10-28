@@ -19,6 +19,8 @@ import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
 import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.hours
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +47,7 @@ class MapViewModelTest {
     private val settings = FakeSettingsRepository()
 
     private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) =
-        MapViewModel(guides, location, ads, settings, saved, { TestGuides.today })
+        MapViewModel(guides, location, ads, settings, saved, { TestGuides.today }, { TestGuides.now })
 
     /** What the species screen does: writes the chosen species to the settings. */
     private fun chooseSpecies(vararg species: Species) {
@@ -63,6 +65,71 @@ class MapViewModelTest {
         assertEquals(listOf("bear", "salmon", "moose"), vm.ids)
         assertTrue(vm.uiState.value.guides.all { it.distanceKm == null })
         assertEquals("the location is read once at start (null without the permission)", 1, location.reads)
+    }
+
+    /** [count] hunting guides boosted until [until], around Abitibi (south of 49°N), and [TestGuides.all]. */
+    private fun boosted(count: Int, until: kotlin.time.Instant = TestGuides.now + 2.days) =
+        (1..count).map { TestGuides.bear.copy(id = "boosted-$it", location = GeoPoint(48.0, -79.0 + it * 0.1), boostedUntil = until) } +
+            TestGuides.all
+
+    private val MapViewModel.featured get() = uiState.value.featured
+
+    @Test
+    fun `boosted guides are featured, their cards first, with a badge in their sheet`() = runTest {
+        guides.guides.value = boosted(2)
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertEquals(setOf("boosted-1", "boosted-2"), vm.featured)
+        assertEquals(listOf("boosted-1", "boosted-2", "bear", "salmon", "moose"), vm.uiState.value.inView.map { it.guide.id })
+        vm.select("boosted-1")
+        assertTrue(vm.uiState.value.selected!!.featured)
+        vm.select("bear")
+        assertFalse(vm.uiState.value.selected!!.featured)
+    }
+
+    @Test
+    fun `an ended boost isn't featured`() = runTest {
+        guides.guides.value = boosted(2, until = TestGuides.now - 1.hours) + TestGuides.moose.copy(id = "now", boostedUntil = TestGuides.now)
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertTrue(vm.featured.isEmpty())
+        assertEquals(listOf("boosted-1", "boosted-2"), vm.uiState.value.inView.take(2).map { it.guide.id })
+        vm.select("boosted-1")
+        assertFalse(vm.uiState.value.selected!!.featured)
+    }
+
+    @Test
+    fun `at most 3 are featured, the same ones while the map pans`() = runTest {
+        guides.guides.value = boosted(8)
+        val saved = SavedStateHandle()
+        val vm = viewModel(saved)
+        collecting(vm.uiState)
+        val picked = vm.featured
+        assertEquals(3, picked.size)
+        assertEquals("their cards first", picked, vm.uiState.value.inView.take(3).map { it.guide.id }.toSet())
+        // Pan around them: the same three stay featured.
+        vm.showArea(GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -70.0)))
+        assertEquals(picked, vm.featured)
+        vm.showArea(GeoBounds(GeoPoint(47.0, -79.5), GeoPoint(49.0, -77.0)))
+        assertEquals(picked, vm.featured)
+        // A new map after process death keeps the pick; another visit draws again (its own seed).
+        assertEquals(picked, viewModel(saved).also { collecting(it.uiState) }.featured)
+        val draws = (1..10).map { viewModel().also { other -> collecting(other.uiState) }.featured }.toSet()
+        assertTrue("other visits feature others", draws.size > 1)
+    }
+
+    @Test
+    fun `only the boosted guides in view are featured, and the filters still apply`() = runTest {
+        guides.guides.value = boosted(1) + TestGuides.salmon.copy(id = "boosted-salmon", boostedUntil = TestGuides.now + 1.days)
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertEquals(setOf("boosted-1", "boosted-salmon"), vm.featured)
+        // West of Gaspé: the salmon is out of view.
+        vm.showArea(GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -70.0)))
+        assertEquals(setOf("boosted-1"), vm.featured)
+        vm.chooseDiscipline(Discipline.FISHING)
+        assertTrue("a boost never shows a guide the filters hide", vm.featured.isEmpty())
+        assertTrue(vm.uiState.value.inView.none { it.guide.id == "boosted-1" })
     }
 
     @Test

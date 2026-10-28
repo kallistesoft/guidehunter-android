@@ -46,7 +46,7 @@ interface GuideAccountRepository {
     /** Saves the profile, and updates the contact shown with each of the guide's offers on the map. */
     suspend fun saveProfile(uid: String, profile: GuideProfile)
 
-    /** The guide's offers, live, the latest change first. */
+    /** The guide's offers, live, the latest change first, with the boost of the ones on the map. */
     fun offers(uid: String): Flow<List<GuideOffer>>
 
     /** One of the guide's offers, or null if it's gone. */
@@ -57,6 +57,12 @@ interface GuideAccountRepository {
 
     /** Deletes the offer, and takes it off the map if it's there. */
     suspend fun deleteOffer(uid: String, offer: GuideOffer)
+
+    /**
+     * Boosts the guide's offer on the map ([GuideOffer.live]) for [ca.kallistesoft.guidehunter.core.model.Boost.DURATION]
+     * from now, after they watched an ad; a boost still running starts again from now.
+     */
+    suspend fun boost(uid: String, offerId: String)
 
     /** Deletes the profile and every offer: what deleting the account removes. */
     suspend fun deleteAll(uid: String)
