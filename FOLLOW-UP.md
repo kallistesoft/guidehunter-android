@@ -28,9 +28,8 @@ What the MVP leaves for later, most urgent first.
 
 ## Requests
 
-- **Production rules**: the `userProfiles` and `requests` rules are deployed to `guidehunter-dev` only. Deploy them to
-  production (`firebase deploy --only firestore:rules`) only on the owner's OK, once the privacy policy says users'
-  name, email and phone go to the guide they ask (and the Play Data safety form declares it).
+- **Play Data safety form**: declare that users' name, email and phone are collected and shared with the guide they
+  send a request to (the privacy policy says so since 2026-10-28; the rules are in production since then).
 - **Push notifications** (FCM) for a new request (to the guide) and a status change (to the user); today each side
   sees them when they open the app.
 - An optional **email to the guide** on each new request, through Trigger Email. The `mail` rule only allows mail to
@@ -58,8 +57,6 @@ The ads are only checked in the app. Before it matters:
 
 A guide features a live offer for 3 days by watching a rewarded ad (README, "Offer boost"). For now:
 
-- **Production rules not deployed yet**: `firestore.rules` (the owner may set `boostedUntil`) is on the dev project
-  only; deploy it to `guidehunter-55e70` with your OK (`firebase deploy --only firestore:rules`), or Boost fails there.
 - **The ad is only checked in the app.** The rule bounds a boost to 3 days ahead, but a technical guide could renew
   it without watching the ad. The fix: AdMob **server-side verification (SSV)** of the boost unit calling a Cloud
   Function (the projects on Blaze, with a **$5 budget alert** first), which then writes `boostedUntil` alone; remove
