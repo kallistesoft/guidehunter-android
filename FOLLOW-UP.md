@@ -16,20 +16,24 @@ What the MVP leaves for later, most urgent first.
    Google account (its email and a Firebase user id) and how they delete it.
 4. **Play's Data safety form**, saying the same: device IDs, approximate location and interactions collected and
    shared by AdMob for advertising; personal info and a location typed in the form, collected; guides' account (email,
-   user id), collected. Plus the Advertising ID declaration, and Play's **account deletion** answers: in the app
+   user id), collected. **Since requests (2026-10-28):** every signed-in user's name, email and optional phone,
+   collected and **shared with the guide** they send a request to (and a guide's contact shared with users whose
+   request they accept). Plus the Advertising ID declaration, and Play's **account deletion** answers: in the app
    (Delete my account), and a web page or email address for guides who uninstalled it (Play requires one).
 5. **Ad policy check**: a rewarded ad must be optional and say what it gives ("Watch an ad to contact the guide" does).
-6. **AdMob IDs set** for the release build (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`, `ADMOB_NATIVE_ID`): without them
+6. **AdMob IDs set** for the release build (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`, `ADMOB_NATIVE_ID`, `ADMOB_BOOST_ID`): without them
    the build only warns and serves Google's test ads. Create the **native ad unit** in GuideHunter's AdMob app (for
    the ad cards in the lists) and set `ADMOB_NATIVE_ID` as a CI variable and in `local.properties`. Likewise a second
    rewarded unit "Boost" (so the boosts' revenue is reported apart) for `ADMOB_BOOST_ID`.
-7. Test the release build on the emulator (`.claude/skills/testing-on-emulator`): the rewarded ad, the map, and a
-   relaunch after process death ("Become a guide" open) for the Navigation 3 keys under R8.
+7. **New-offer emails need Blaze.** Both Firebase projects are on the free Spark plan (checked 2026-10-28), where
+   the Trigger Email extension can't run: offers and edits are saved, but the review email is never sent. Either move
+   the prod project to Blaze (about $0 at this volume; add a **$5 budget alert** first) and install the extension,
+   or check pending offers by hand with `scripts/approve-offer.py`.
+8. Test the release build on the emulator (`.claude/skills/testing-on-emulator`): the rewarded ad, the map, and a
+   relaunch after process death (a guide's offer open) for the Navigation 3 keys under R8.
 
 ## Requests
 
-- **Play Data safety form**: declare that users' name, email and phone are collected and shared with the guide they
-  send a request to (the privacy policy says so since 2026-10-28; the rules are in production since then).
 - **Push notifications** (FCM) for a new request (to the guide) and a status change (to the user); today each side
   sees them when they open the app.
 - An optional **email to the guide** on each new request, through Trigger Email. The `mail` rule only allows mail to
