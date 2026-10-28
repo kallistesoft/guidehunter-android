@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GhTextStyles
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
@@ -88,5 +89,6 @@ private fun ButtonContent(text: String, icon: ImageVector?, style: TextStyle = G
         Icon(icon, contentDescription = null, Modifier.size(Sizes.iconM))
         Spacer(Modifier.width(Spacing.s))
     }
-    Text(text, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis)
+    // Two lines before "…": a French label ("Envoyer pour vérification") often doesn't fit half a phone's width.
+    Text(text, style = style, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
 }

@@ -21,7 +21,8 @@ data class OfferDraft(
     fun errors(): Set<OfferField> = buildSet {
         if (title.isBlank()) add(OfferField.TITLE)
         if (description.trim().length < MIN_DESCRIPTION) add(OfferField.DESCRIPTION)
-        if (activity == null) add(OfferField.ACTIVITY)
+        // One type per offer: an older "both" has to be made hunting or fishing.
+        if (activity !in GuideActivity.forOffers) add(OfferField.ACTIVITY)
         if (species.isEmpty() || activity != null && species.any { !activity.covers(it.discipline) }) {
             add(OfferField.SPECIES)
         }

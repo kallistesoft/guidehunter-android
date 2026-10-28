@@ -178,11 +178,11 @@ class OfferEditorViewModelTest {
     fun `changing the activity drops the species it doesn't cover`() = runTest {
         val vm = viewModel()
         collecting(vm.uiState)
-        vm.setActivity(GuideActivity.BOTH)
+        vm.setActivity(GuideActivity.HUNT)
         vm.toggleSpecies(Species.MOOSE)
-        vm.toggleSpecies(Species.WALLEYE)
         vm.setActivity(GuideActivity.FISH)
-        assertEquals(setOf(Species.WALLEYE), vm.state.form.species)
+        assertTrue(vm.state.form.species.isEmpty())
+        vm.toggleSpecies(Species.WALLEYE)
         vm.toggleSpecies(Species.WALLEYE)
         assertTrue(vm.state.form.species.isEmpty())
     }

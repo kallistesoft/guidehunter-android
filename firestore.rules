@@ -99,7 +99,8 @@ service cloud.firestore {
           'live', 'updatedAt', 'tripLength', 'departures', 'everyYear'])
         && shortText(data.title, 1, 100)
         && shortText(data.description, 30, 2000)
-        && data.activity in ['HUNT', 'FISH', 'BOTH']
+        // One type per offer ('BOTH' only on older offers already on the map).
+        && data.activity in ['HUNT', 'FISH']
         && data.species is list && data.species.size() >= 1 && data.species.size() <= 29
         && data.species.hasOnly([
           'BLACK_BEAR', 'MOOSE', 'WHITE_TAILED_DEER', 'MULE_DEER', 'ELK', 'CARIBOU', 'PRONGHORN', 'BIGHORN_SHEEP',

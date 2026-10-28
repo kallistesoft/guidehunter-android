@@ -62,7 +62,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
-import ca.kallistesoft.guidehunter.core.designsystem.component.SectionToggle
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
 import ca.kallistesoft.guidehunter.core.model.Departure
@@ -326,20 +325,18 @@ private fun WhatStep(state: OfferEditorUiState, actions: FormActions) {
     )
     Field(form.title, actions.title, R.string.field_title, "field-title", errors.message(OfferField.TITLE), help = stringResource(R.string.field_title_help))
     Label(R.string.field_activity)
+    // One type per offer: a guide with both makes a hunting offer and a fishing offer.
     SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-        GuideActivity.entries.forEachIndexed { index, activity ->
+        GuideActivity.forOffers.forEachIndexed { index, activity ->
             SegmentedButton(
                 selected = form.activity == activity,
                 onClick = { actions.activity(activity) },
-                shape = SegmentedButtonDefaults.itemShape(index, GuideActivity.entries.size),
+                shape = SegmentedButtonDefaults.itemShape(index, GuideActivity.forOffers.size),
                 modifier = Modifier.testTag("activity-${activity.name}"),
-            ) {
-                // "Hunting and fishing" doesn't fit a third of a phone's width: the button says "Both".
-                val label = if (activity == GuideActivity.BOTH) R.string.activity_both_short else activity.label
-                Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
+            ) { Text(stringResource(activity.label)) }
         }
     }
+    Note(stringResource(R.string.field_activity_help))
     errors.message(OfferField.ACTIVITY)?.let { Error(it) }
     Field(
         form.description,
@@ -352,41 +349,28 @@ private fun WhatStep(state: OfferEditorUiState, actions: FormActions) {
     )
 }
 
-/** Step 2: the species, hunting and fishing apart when the guide offers both. */
+/** Step 2: the species of the offer's type, in alphabetical order. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SpeciesStep(state: OfferEditorUiState, actions: FormActions) {
     val form = state.form
-    val activity = form.activity ?: GuideActivity.BOTH
-    val context = LocalContext.current
-    val groups = remember(activity, LocalConfiguration.current) { context.speciesByDiscipline(Species.forActivity(activity)) }
-    // A list that holds a chosen species starts open.
-    var open by rememberSaveable { mutableStateOf(form.species.map { it.discipline.name }.toSet().joinToString(",")) }
-    groups.forEach { (discipline, species) ->
-        val shown = groups.size == 1 || discipline.name in open.split(",")
-        if (groups.size > 1) {
-            val chosen = species.count { it in form.species }
-            SectionToggle(
-                title = stringResource(discipline.label),
-                expanded = shown,
-                onToggle = {
-                    val names = open.split(",").filter { it.isNotEmpty() }.toSet()
-                    open = (if (shown) names - discipline.name else names + discipline.name).joinToString(",")
-                },
-                detail = if (chosen > 0) pluralStringResource(R.plurals.species_chosen, chosen, chosen) else null,
-                modifier = Modifier.testTag("species-group-${discipline.name}"),
-            )
+    val activity = form.activity
+    if (activity !in GuideActivity.forOffers) {
+        // An older "both" offer: its type is chosen on the first step first.
+        Text(stringResource(R.string.field_species_help), color = MaterialTheme.colorScheme.onSurfaceVariant)
+    } else {
+        val context = LocalContext.current
+        val species = remember(activity, LocalConfiguration.current) {
+            context.speciesByDiscipline(Species.forActivity(activity!!)).flatMap { it.second }
         }
-        if (shown) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                species.forEach { choice ->
-                    FilterChip(
-                        selected = choice in form.species,
-                        onClick = { actions.species(choice) },
-                        label = { Text(stringResource(choice.label)) },
-                        modifier = Modifier.testTag("species-${choice.name}"),
-                    )
-                }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+            species.forEach { choice ->
+                FilterChip(
+                    selected = choice in form.species,
+                    onClick = { actions.species(choice) },
+                    label = { Text(stringResource(choice.label)) },
+                    modifier = Modifier.testTag("species-${choice.name}"),
+                )
             }
         }
     }

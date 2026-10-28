@@ -79,7 +79,13 @@ class GuideOfferTest {
     @Test
     fun `a species outside the activity is an error`() {
         assertEquals(setOf(OfferField.SPECIES), valid.copy(species = setOf(Species.WALLEYE)).errors())
-        assertTrue(valid.copy(activity = GuideActivity.BOTH, species = setOf(Species.WALLEYE)).errors().isEmpty())
+        assertTrue(valid.copy(activity = GuideActivity.FISH, species = setOf(Species.WALLEYE)).errors().isEmpty())
+    }
+
+    @Test
+    fun `one type per offer, an older both has to choose`() {
+        assertEquals(setOf(OfferField.ACTIVITY), valid.copy(activity = GuideActivity.BOTH).errors())
+        assertEquals(listOf(GuideActivity.HUNT, GuideActivity.FISH), GuideActivity.forOffers)
     }
 
     @Test
