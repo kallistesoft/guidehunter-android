@@ -2,20 +2,19 @@ package ca.kallistesoft.guidehunter.core.data
 
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
-import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.GuideUser
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import kotlinx.coroutines.flow.Flow
 
 /** The guides on the map. */
 interface GuideRepository {
     /** Every published guide's public offer, updated live. Empty while offline with nothing cached. */
     val guides: Flow<List<Guide>>
-
-    /** The guide's name and contact details, read only once the user has earned them; null if it has none. */
-    suspend fun contact(guideId: String): GuideContact?
 }
 
 /** The guide signed in with Google (Firebase Auth). Every call throws when it fails (offline, not configured). */
@@ -55,7 +54,7 @@ interface GuideAccountRepository {
     /** Creates ([id] null) or edits an offer, back to waiting for review, and emails it to us; returns its id. */
     suspend fun saveOffer(uid: String, id: String?, draft: OfferDraft, profile: GuideProfile): String
 
-    /** Deletes the offer, and takes it off the map if it's there. */
+    /** Deletes the offer, takes it off the map if it's there, and closes its open requests ("Offer removed"). */
     suspend fun deleteOffer(uid: String, offer: GuideOffer)
 
     /**
@@ -64,8 +63,55 @@ interface GuideAccountRepository {
      */
     suspend fun boost(uid: String, offerId: String)
 
-    /** Deletes the profile and every offer: what deleting the account removes. */
+    /** Deletes the profile and every offer, closing their open requests: what deleting the account removes. */
     suspend fun deleteAll(uid: String)
+}
+
+/** What a user shares with guides (name, email, phone). Every write throws when it fails (offline, not configured). */
+interface UserAccountRepository {
+    /** The user's saved contact, live; null before they first save one. */
+    fun contact(uid: String): Flow<UserContact?>
+
+    suspend fun saveContact(uid: String, contact: UserContact)
+
+    /** Deletes the saved contact: part of deleting the account. */
+    suspend fun deleteAll(uid: String)
+}
+
+/**
+ * Users' requests to guides ("I'm interested"), one per offer and user, seen by both. Lists are live, newest change
+ * first. Every write throws when it fails (offline, not configured, or refused by firestore.rules).
+ */
+interface RequestRepository {
+    /** The requests [uid] sent, as a user. */
+    fun sent(uid: String): Flow<List<InterestRequest>>
+
+    /** The requests [uid] received, as a guide. */
+    fun received(uid: String): Flow<List<InterestRequest>>
+
+    /** [uid]'s request for one offer, or null if they never sent one. */
+    fun request(offerId: String, uid: String): Flow<InterestRequest?>
+
+    /** Sends [uid]'s request for [guide]'s offer, about [trip], with a copy of [contact]: pending. */
+    suspend fun send(uid: String, guide: Guide, trip: Trip?, contact: UserContact)
+
+    /** The user cancels their pending or accepted request. */
+    suspend fun cancel(id: String)
+
+    /** The user sends a cancelled request again, with their [contact] and [trip] as they are now: pending again. */
+    suspend fun resend(id: String, trip: Trip?, contact: UserContact)
+
+    /** The guide accepts a pending request, giving the user their [profile]'s contact. */
+    suspend fun approve(id: String, profile: GuideProfile)
+
+    /** The guide declines a pending request. */
+    suspend fun reject(id: String)
+
+    /** Closes [guideUid]'s open requests for one offer ([offerId]), or for all their offers (null). */
+    suspend fun markOfferRemoved(guideUid: String, offerId: String?)
+
+    /** Deletes the requests [uid] sent: part of deleting the account. */
+    suspend fun deleteSent(uid: String)
 }
 
 /** The user's location, to show how far a guide is. */

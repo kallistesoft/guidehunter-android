@@ -4,7 +4,7 @@ import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
-import ca.kallistesoft.guidehunter.core.model.GuideContact
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.GuideUser
@@ -12,19 +12,19 @@ import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.Schedule
 import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.Trip
 import ca.kallistesoft.guidehunter.core.model.TripLength
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.LocalDate
 
 /**
- * Made-up guides for a build without Firebase (a fresh clone, pull requests), so the map, the rewarded ad and the
- * contact details can be tried. Never shown once Firebase is configured.
+ * Made-up guides for a build without Firebase (a fresh clone, pull requests), so the map and the rewarded ad can be
+ * tried. Never shown once Firebase is configured.
  */
 internal class SampleGuideRepository : GuideRepository {
     override val guides: Flow<List<Guide>> = flowOf(SAMPLE_GUIDES)
-
-    override suspend fun contact(guideId: String): GuideContact? = SAMPLE_CONTACTS[guideId]
 }
 
 /** Without Firebase no one can sign in: the guide's screen says so. */
@@ -58,6 +58,38 @@ internal class UnconfiguredGuideAccountRepository : GuideAccountRepository {
     override suspend fun boost(uid: String, offerId: String) = throw BackendNotConfiguredException()
 
     override suspend fun deleteAll(uid: String) = throw BackendNotConfiguredException()
+}
+
+/** Without Firebase no one signs in, so there's no contact to keep. */
+internal class UnconfiguredUserAccountRepository : UserAccountRepository {
+    override fun contact(uid: String): Flow<UserContact?> = flowOf(null)
+
+    override suspend fun saveContact(uid: String, contact: UserContact) = throw BackendNotConfiguredException()
+
+    override suspend fun deleteAll(uid: String) = throw BackendNotConfiguredException()
+}
+
+/** Without Firebase there are no requests to read, and none can be sent. */
+internal class UnconfiguredRequestRepository : RequestRepository {
+    override fun sent(uid: String): Flow<List<InterestRequest>> = flowOf(emptyList())
+
+    override fun received(uid: String): Flow<List<InterestRequest>> = flowOf(emptyList())
+
+    override fun request(offerId: String, uid: String): Flow<InterestRequest?> = flowOf(null)
+
+    override suspend fun send(uid: String, guide: Guide, trip: Trip?, contact: UserContact) = throw BackendNotConfiguredException()
+
+    override suspend fun cancel(id: String) = throw BackendNotConfiguredException()
+
+    override suspend fun resend(id: String, trip: Trip?, contact: UserContact) = throw BackendNotConfiguredException()
+
+    override suspend fun approve(id: String, profile: GuideProfile) = throw BackendNotConfiguredException()
+
+    override suspend fun reject(id: String) = throw BackendNotConfiguredException()
+
+    override suspend fun markOfferRemoved(guideUid: String, offerId: String?) = throw BackendNotConfiguredException()
+
+    override suspend fun deleteSent(uid: String) = throw BackendNotConfiguredException()
 }
 
 internal val SAMPLE_GUIDES = listOf(
@@ -102,10 +134,4 @@ internal val SAMPLE_GUIDES = listOf(
             everyYear = true,
         ),
     ),
-)
-
-private val SAMPLE_CONTACTS = mapOf(
-    "sample-bear" to GuideContact("Pourvoirie Exemple", phone = "+1 819 555 0100", email = "bear@example.com"),
-    "sample-moose" to GuideContact("Exemple Outfitters", phone = "+1 819 555 0101", website = "example.com"),
-    "sample-salmon" to GuideContact("Gaspé Fly Example", email = "salmon@example.com", website = "example.com/salmon"),
 )

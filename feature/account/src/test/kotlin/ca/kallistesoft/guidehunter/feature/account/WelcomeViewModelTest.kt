@@ -8,6 +8,8 @@ import ca.kallistesoft.guidehunter.core.model.AppSettings
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
@@ -29,7 +31,7 @@ class WelcomeViewModelTest {
     private val auth = FakeAuthRepository()
     private val google = FakeGoogleSignIn()
     private val settings = FakeSettingsRepository()
-    private val session = AccountSession(auth, google, FakeGuideAccountRepository(), settings)
+    private val session = AccountSession(auth, google, FakeGuideAccountRepository(), FakeUserAccountRepository(), FakeRequestRepository(), settings)
     private var signedIn = 0
 
     private fun viewModel() = WelcomeViewModel(session, settings)

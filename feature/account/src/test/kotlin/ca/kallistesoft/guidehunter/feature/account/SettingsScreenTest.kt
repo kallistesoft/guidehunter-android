@@ -16,6 +16,8 @@ import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import org.junit.Assert.assertEquals
@@ -43,15 +45,26 @@ class SettingsScreenTest {
     private var backs = 0
     private var profiles = 0
     private var speciesFilters = 0
+    private val opened = mutableListOf<String>()
+    private val users = FakeUserAccountRepository()
+    private val requests = FakeRequestRepository()
 
     private fun str(id: Int) = app.getString(id)
 
     private fun launch() {
-        val session = AccountSession(auth, google, FakeGuideAccountRepository(), settings)
-        val viewModel = SettingsViewModel(session, settings, consent)
+        val session = AccountSession(auth, google, FakeGuideAccountRepository(), users, requests, settings)
+        val viewModel = SettingsViewModel(session, settings, consent, users, requests)
         compose.setContent {
             GuideHunterTheme {
-                SettingsScreen(onBack = { backs++ }, onGuideProfile = { profiles++ }, onSpeciesFilter = { speciesFilters++ }, viewModel = viewModel)
+                SettingsScreen(
+                    onBack = { backs++ },
+                    onGuideProfile = { profiles++ },
+                    onSpeciesFilter = { speciesFilters++ },
+                    onMyContact = { opened += "contact" },
+                    onMyRequests = { opened += "requests" },
+                    onRequestsReceived = { opened += "received" },
+                    viewModel = viewModel,
+                )
             }
         }
     }
@@ -189,8 +202,41 @@ class SettingsScreenTest {
 
     @Test
     fun `loading shows a spinner, not the settings`() {
-        val actions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {})
+        val actions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         compose.setContent { GuideHunterTheme { SettingsContent(SettingsUiState(), actions) } }
         compose.onNodeWithTag("settings-screen").assertDoesNotExist()
+    }
+
+    @Test
+    fun `signed in, user mode lists the contact and the requests, which open`() {
+        auth.user.value = TestGuides.user
+        users.contacts.value = mapOf(TestGuides.user.uid to TestGuides.userContact)
+        requests.give(TestGuides.request)
+        launch()
+        compose.onNodeWithText("${TestGuides.userContact.name} · ${TestGuides.userContact.phone}").assertExists()
+        compose.onNodeWithText(app.resources.getQuantityString(R.plurals.requests_pending, 1, 1)).assertExists()
+        click("my-contact")
+        click("my-requests")
+        assertEquals(listOf("contact", "requests"), opened)
+    }
+
+    @Test
+    fun `no contact saved yet says so, signed out there's no contact or requests row`() {
+        launch()
+        compose.onNodeWithTag("my-contact").assertDoesNotExist()
+        compose.onNodeWithTag("my-requests").assertDoesNotExist()
+        auth.user.value = TestGuides.user
+        compose.onNodeWithText(str(R.string.my_contact_missing)).assertExists()
+    }
+
+    @Test
+    fun `guide mode lists the requests received, with a badge while some wait`() {
+        signedInGuide()
+        requests.give(TestGuides.request.copy(guideUid = TestGuides.user.uid, userUid = "u2"))
+        launch()
+        compose.onNodeWithTag("requests-received-badge", useUnmergedTree = true).assertExists()
+        compose.onNodeWithText(app.resources.getQuantityString(R.plurals.requests_waiting, 1, 1)).assertExists()
+        click("requests-received")
+        assertEquals(listOf("received"), opened)
     }
 }

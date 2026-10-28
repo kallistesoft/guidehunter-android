@@ -122,4 +122,22 @@
     <string name="boost_error_not_earned">La publicité a été fermée avant la fin : l\'offre n\'est pas en vedette.</string>
     <string name="boost_error_offline">Pas de connexion : connectez-vous à Internet et réessayez.</string>
     <string name="boost_error_failed">La mise en vedette n\'a pas pu être enregistrée. Réessayez.</string>
+    <string name="requests_waiting_header">En attente de votre réponse · %1$d</string>
+    <string name="requests_answered">Répondues</string>
+    <string name="request_received_on">Reçue le %1$s</string>
+    <string name="accept">Accepter</string>
+    <string name="decline">Refuser</string>
+    <string name="decline_title">Refuser la demande de %1$s?</string>
+    <string name="decline_body">La personne la verra comme refusée dans ses demandes. C’est irréversible.</string>
+    <string name="no_requests_received">Aucune demande pour l’instant. Elles s’affichent ici quand quelqu’un touche « Je suis intéressé » sur une de vos offres.</string>
+    <string name="requests_needs_profile">Remplissez d’abord votre profil de guide : ce sont les coordonnées transmises quand vous acceptez.</string>
+    <string name="requests_change_failed">La modification n’a pas abouti. Vérifiez votre connexion Internet et réessayez.</string>
+    <plurals name="offer_delete_requests">
+        <item quantity="one">%d demande en attente sera fermée : la personne verra « Offre retirée ».</item>
+        <item quantity="other">%d demandes en attente seront fermées : ces personnes verront « Offre retirée ».</item>
+    </plurals>
+    <plurals name="requests_badge">
+        <item quantity="one">Demandes reçues, %d en attente</item>
+        <item quantity="other">Demandes reçues, %d en attente</item>
+    </plurals>
 </resources>

@@ -56,4 +56,29 @@
     <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_clear">Clear</string>
+
+    <string name="contact_call">Call %1$s</string>
+    <string name="contact_email">Email %1$s</string>
+    <string name="contact_website">Website %1$s</string>
+    <string name="your_trip">Your trip: %1$s</string>
+    <string name="dates_on_request">Dates on request</string>
+    <string name="status_pending">Pending</string>
+    <string name="status_approved">Accepted</string>
+    <string name="status_rejected">Declined</string>
+    <string name="status_cancelled">Cancelled</string>
+    <string name="status_offer_removed">Offer removed</string>
+    <string name="confirm_title">Send your request?</string>
+    <string name="confirm_shared">Shared with the guide</string>
+    <string name="confirm_edit">Edit</string>
+    <string name="confirm_note">The guide sees these details and contacts you. You can cancel in My requests.</string>
+    <string name="confirm_send">Send request</string>
+    <string name="confirm_not_now">Not now</string>
+
+    <string name="contact_email_subject">Trip found on GuideHunter</string>
+    <string name="contact_email_body">Hello, I found your offer “%1$s” on GuideHunter. I’m interested in the trip on %2$s.</string>
+    <string name="my_requests">My requests</string>
+    <string name="my_contact">My contact info</string>
+    <string name="requests_received">Requests received</string>
+    <string name="cancel_request">Cancel request</string>
+    <string name="send_again">Send again</string>
 </resources>

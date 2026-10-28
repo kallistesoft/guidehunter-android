@@ -34,10 +34,6 @@ object Sizes {
     val guideCardWidth = 240.dp
     val guideCardsInset = 120.dp
 
-    /** The grey bars where a guide's hidden name and contact will be. */
-    val placeholderLine = 14.dp
-    val placeholderLineSmall = 10.dp
-
     /** The advertiser's icon on a native ad card. */
     val adIcon = 52.dp
 

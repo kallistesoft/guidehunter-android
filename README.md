@@ -18,9 +18,16 @@ changes. Native Android first; iOS later (see FOLLOW-UP.md).
   user can go: guides with a trip that fits them), and how far each guide is once the user shares their location.
   Offers whose dates are all over leave the map.
 - **A guide's offer**: what, where, species, price, description, how long a trip lasts and its departures (the next
-  one shown, the others under "Other dates"; the one the user picks goes into the email to the guide). The guide's
-  **name and contact are hidden until the user watches a rewarded ad**. Then they get the phone, email and website,
-  each one tap away.
+  one shown, the others under "Other dates"; the one the user picks goes with their request). The guide's contact is
+  never shown there: after a **rewarded ad**, the user taps **"I'm interested"** (signing in, and filling in their
+  contact if needed), confirms what's shared, and the guide gets a **request** with their name, email and optional
+  phone. An offer already asked about shows the request's status instead, with no ad; the account's own offer says so.
+- **Requests**: one per offer and user. The user follows them in **My requests** (Settings): pending (cancel),
+  accepted (the guide's phone, email and website, each one tap away), declined, cancelled (send again) or offer
+  removed. **My contact info** keeps their name and phone (the email is the Google account's); each request keeps a
+  copy as sent. The guide answers in **Requests received** (a badge on their home and in Settings): call or email the
+  user, accept (giving their profile's contact) or decline. Deleting an offer, or the account, closes its open
+  requests ("Offer removed"). Requests show when a screen opens (no push yet, see FOLLOW-UP.md).
 - **Guide mode**: a signed-in guide fills in a **profile** (business name, email, phone, website,
   shared by all their offers) and adds **offers**, as many as they like, in five steps: the trip (title,
   hunting/fishing/both, description), species, where (town or region, a pin on the map), when (half day to weeks,
@@ -43,25 +50,27 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 | Module | What's in it |
 |---|---|
 | `:app` | `MainActivity`, navigation (`GuideHunterApp`, `navigation/NavKeys.kt`; `AppViewModel` picks the home: welcome, map or guide's offers), build-type settings (AdMob, Maps key, application email) |
-| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `Boost` (how long, when again, which are featured), `AppSettings` (`AppMode`), `GeoPoint.distanceKm` |
-| `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), `SettingsRepository` (onboarding done, mode, the species the map shows; Preferences DataStore), sample guides when Firebase isn't set up |
+| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `Boost` (how long, when again, which are featured), `AppSettings` (`AppMode`), `UserContact`, `InterestRequest` and `RequestStatus`, `GeoPoint.distanceKm` |
+| `:core:data` | `GuideRepository`, `GuideAccountRepository`, `UserAccountRepository` and `RequestRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), `SettingsRepository` (onboarding done, mode, the species the map shows; Preferences DataStore), sample guides when Firebase isn't set up |
 | `:core:auth` | Google sign-in (Credential Manager) and `AccountSession` (sign in, sign out, delete the account), shared by the welcome and the settings |
 | `:core:ads` | The rewarded ads (the contact's, and the boost's on its own unit: `@BoostAds`) and the consent form (AdMob, UMP), from BetterHunter; native ads and their `NativeAdCard` |
 | `:core:designsystem` | Theme (BetterHunter's palette and Barlow fonts for now), spacing, sizes, buttons |
 | `:core:ui` | Species and activity labels (EN/FR), links (dialer, mail, website) |
 | `:core:testing` | Fakes and test rules |
-| `:feature:map` | The map, filters, guide cards, the guide's sheet and the unlock |
-| `:feature:account` | The welcome (sign in or later), user or guide, the settings of both modes, and the species the map shows |
-| `:feature:becomeguide` | Guide mode: their offers (the guide's home), profile and offer form |
+| `:feature:map` | The map, filters, guide cards, the guide's sheet, the ad and "I'm interested" |
+| `:feature:account` | The welcome (sign in or later), user or guide, the settings of both modes, the species the map shows, my contact info and my requests |
+| `:feature:becomeguide` | Guide mode: their offers (the guide's home), profile, offer form and requests received |
 
 ### Firestore
 
 | Collection | What | Who reads / writes |
 |---|---|---|
 | `guides/{id}` | The public offer: `title`, `description`, `activity` (`HUNT`, `FISH`, `BOTH`), `species` (names from `Species`), `region`, `lat`, `lng`, `priceFrom` (optional), `currency` (optional, `CAD`), `tripLength` (`HALF_DAY` or days), `departures` (ISO dates, `2027-05-20` or `2027-05-20/AM`, `/PM` on a half day; none: dates on request), `everyYear` (bool), `ownerUid`, `boostedUntil` (timestamp, optional: featured until then) | Everyone reads; written by approval; its guide can delete it, or set `boostedUntil` alone, at most 3 days ahead |
-| `guideContacts/{id}` | Same id: `name`, `phone`, `email`, `website`, `ownerUid` | Read one at a time after the ad; written by approval; its guide's profile updates it |
+| `guideContacts/{id}` | Same id: `name`, `phone`, `email`, `website`, `ownerUid` | Written by approval, kept for later; the app no longer reads it (only its guide can); its guide's profile updates it |
 | `guideProfiles/{uid}` | A guide's `businessName`, `email`, `phone`, `website`, by Firebase user id | Only that guide |
 | `guideOffers/{id}` | A guide's offers as written: the offer's fields, `ownerUid`, `status` (`PENDING`, `PUBLISHED`), `live` (a reviewed version is on the map), `updatedAt` | Only their guide; the app always writes `PENDING` and can't change `live` |
+| `userProfiles/{uid}` | A user's `name`, `email` (their Google account's), `phone` | Only that user |
+| `requests/{offerId_userUid}` | "I'm interested": `offerId`, `offerTitle`, `tripStart`, `tripEnd` (ISO dates, or null: dates on request), `tripSlot` (`AM`, `PM`), `guideUid`, `userUid`, `userName`, `userEmail`, `userPhone`, `status` (`PENDING`, `APPROVED`, `REJECTED`, `CANCELLED`, `OFFER_REMOVED`), `guideName`, `guideEmail`, `guidePhone`, `guideWebsite` (on approval), `createdAt`, `updatedAt` | The user and the guide read it. The user creates it (pending, their account's email, the published offer's guide and title, never their own offer), cancels it, sends a cancelled one again, and deletes it with their account; the guide accepts or declines a pending one, and closes open ones when the offer goes |
 | `mail/{id}` | The email of each new or edited offer, sent by the Trigger Email extension | Signed-in guides only create them, to your address only |
 
 The rules are in `firestore.rules`. **To publish an offer** (new or edited), run the command its email gives:

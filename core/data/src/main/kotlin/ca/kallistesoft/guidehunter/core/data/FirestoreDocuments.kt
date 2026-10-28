@@ -13,6 +13,10 @@ import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
 import kotlin.time.Instant
@@ -35,6 +39,12 @@ internal object Collections {
 
     /** Emails sent by the "Trigger Email from Firestore" extension. */
     const val MAIL = "mail"
+
+    /** Users' contact (name, email, phone), by Firebase user id: only their user reads and writes them. */
+    const val USER_PROFILES = "userProfiles"
+
+    /** Users' requests to guides, by `offerId_userUid`: read by both. */
+    const val REQUESTS = "requests"
 }
 
 /** A `guides` document, or null when a required field is missing or unknown (the app never shows half a guide). */
@@ -56,6 +66,7 @@ internal fun guideFrom(id: String, data: Map<String, Any?>): Guide? {
         currency = data["currency"] as? String ?: "CAD",
         schedule = scheduleFrom(data),
         boostedUntil = boostedUntilFrom(data),
+        ownerUid = data["ownerUid"] as? String ?: "",
     )
 }
 
@@ -116,18 +127,6 @@ private fun departureFrom(text: String): Departure? {
 }
 
 private const val HALF_DAY = "HALF_DAY"
-
-/** A `guideContacts` document, or null without a name. */
-internal fun contactFrom(data: Map<String, Any?>): GuideContact? {
-    val name = data["name"] as? String
-    if (name.isNullOrBlank()) return null
-    return GuideContact(
-        name = name,
-        phone = data["phone"] as? String ?: "",
-        email = data["email"] as? String ?: "",
-        website = data["website"] as? String ?: "",
-    )
-}
 
 /** A `guideProfiles` document: the profile, trimmed. */
 internal fun GuideProfile.toDocument(): Map<String, Any?> = trimmed().run {
@@ -236,3 +235,105 @@ internal fun offerMail(to: String, id: String, uid: String, draft: OfferDraft, p
 
 /** firestore.rules caps the subject; a long title and business name are cut. */
 private const val MAX_SUBJECT = 300
+
+/** A `userProfiles` document: the contact, trimmed. */
+internal fun UserContact.toDocument(): Map<String, Any?> = trimmed().run {
+    mapOf("name" to name, "email" to email, "phone" to phone)
+}
+
+/** A `userProfiles` document, or null when there is none yet. */
+internal fun userContactFrom(data: Map<String, Any?>?): UserContact? = data?.let {
+    UserContact(name = it["name"] as? String ?: "", email = it["email"] as? String ?: "", phone = it["phone"] as? String ?: "")
+}
+
+/**
+ * A new `requests` document: pending, with a copy of the user's contact and the offer's title and guide, which
+ * firestore.rules checks against the published offer.
+ */
+internal fun requestDocument(uid: String, guide: Guide, trip: Trip?, contact: UserContact): Map<String, Any?> = mapOf(
+    "offerId" to guide.id,
+    "offerTitle" to guide.title,
+    "guideUid" to guide.ownerUid,
+    "userUid" to uid,
+    "status" to RequestStatus.PENDING.name,
+    "createdAt" to FieldValue.serverTimestamp(),
+) + resendFields(trip, contact)
+
+/** What sending a request again refreshes: the trip, the user's contact as it is now, pending again. */
+internal fun resendFields(trip: Trip?, contact: UserContact): Map<String, Any?> = contact.trimmed().let { user ->
+    mapOf(
+        "tripStart" to trip?.start?.toString(),
+        "tripEnd" to trip?.end?.toString(),
+        "tripSlot" to trip?.slot?.let(::slotText),
+        "userName" to user.name,
+        "userEmail" to user.email,
+        "userPhone" to user.phone,
+    ) + statusFields(RequestStatus.PENDING)
+}
+
+/** A request's new status (the only change besides the contacts firestore.rules allows). */
+internal fun statusFields(status: RequestStatus): Map<String, Any?> =
+    mapOf("status" to status.name, "updatedAt" to FieldValue.serverTimestamp())
+
+/** The guide accepts: their profile's contact goes to the user. */
+internal fun approveFields(profile: GuideProfile): Map<String, Any?> = profile.trimmed().let {
+    mapOf("guideName" to it.businessName, "guideEmail" to it.email, "guidePhone" to it.phone, "guideWebsite" to it.website)
+} + statusFields(RequestStatus.APPROVED)
+
+/**
+ * A `requests` document, or null without its ids or with an unknown status. The guide's contact is read only once
+ * accepted; a time not back from the server yet reads as now.
+ */
+internal fun requestFrom(id: String, data: Map<String, Any?>, now: Long = System.currentTimeMillis()): InterestRequest? {
+    val offerId = data["offerId"] as? String
+    val guideUid = data["guideUid"] as? String
+    val userUid = data["userUid"] as? String
+    val status = RequestStatus.entries.find { it.name == data["status"] }
+    if (offerId == null || guideUid == null || userUid == null || status == null) return null
+    val start = (data["tripStart"] as? String)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+    val end = (data["tripEnd"] as? String)?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: start
+    val guideName = data["guideName"] as? String
+    return InterestRequest(
+        id = id,
+        offerId = offerId,
+        offerTitle = data["offerTitle"] as? String ?: "",
+        trip = start?.let { Trip(it, end ?: it, slotFrom(data["tripSlot"] as? String)) },
+        guideUid = guideUid,
+        userUid = userUid,
+        user = UserContact(
+            name = data["userName"] as? String ?: "",
+            email = data["userEmail"] as? String ?: "",
+            phone = data["userPhone"] as? String ?: "",
+        ),
+        status = status,
+        guideContact = if (status == RequestStatus.APPROVED && !guideName.isNullOrBlank()) {
+            GuideContact(
+                name = guideName,
+                phone = data["guidePhone"] as? String ?: "",
+                email = data["guideEmail"] as? String ?: "",
+                website = data["guideWebsite"] as? String ?: "",
+            )
+        } else {
+            null
+        },
+        createdAt = millis(data["createdAt"], now),
+        updatedAt = millis(data["updatedAt"], now),
+    )
+}
+
+/** Requests, the latest change first; unreadable ones are left out. */
+internal fun requestsFrom(documents: List<Pair<String, Map<String, Any?>>>): List<InterestRequest> =
+    documents.mapNotNull { (id, data) -> requestFrom(id, data) }.sortedByDescending { it.updatedAt }
+
+private fun millis(value: Any?, now: Long): Long = (value as? Timestamp)?.toDate()?.time ?: now
+
+private fun slotText(slot: Slot) = when (slot) {
+    Slot.MORNING -> "AM"
+    Slot.AFTERNOON -> "PM"
+}
+
+private fun slotFrom(text: String?) = when (text) {
+    "AM" -> Slot.MORNING
+    "PM" -> Slot.AFTERNOON
+    else -> null
+}

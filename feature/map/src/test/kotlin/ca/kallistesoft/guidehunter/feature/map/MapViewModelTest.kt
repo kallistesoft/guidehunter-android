@@ -1,6 +1,21 @@
 package ca.kallistesoft.guidehunter.feature.map
 
+import android.content.Context
 import androidx.lifecycle.SavedStateHandle
+import ca.kallistesoft.guidehunter.core.auth.AccountSession
+import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.UserContact
+import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
+import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
+import io.mockk.mockk
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.test.TestScope
 import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.Discipline
@@ -25,8 +40,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
@@ -45,9 +58,17 @@ class MapViewModelTest {
     private val location = FakeLocationRepository()
     private val ads = FakeRewardedAds()
     private val settings = FakeSettingsRepository()
+    private val auth = FakeAuthRepository()
+    private val google = FakeGoogleSignIn()
+    private val users = FakeUserAccountRepository()
+    private val requests = FakeRequestRepository()
+    private val session = AccountSession(auth, google, FakeGuideAccountRepository(requests), users, requests, settings)
+    private val activity = mockk<Context>()
 
     private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) =
-        MapViewModel(guides, location, ads, settings, saved, { TestGuides.today }, { TestGuides.now })
+        MapViewModel(guides, location, ads, settings, session, users, requests, saved, { TestGuides.today }, { TestGuides.now })
+
+    private val me = TestGuides.user.uid
 
     /** What the species screen does: writes the chosen species to the settings. */
     private fun chooseSpecies(vararg species: Species) {
@@ -220,41 +241,25 @@ class MapViewModelTest {
         assertEquals(TestGuides.bear, vm.uiState.value.selected?.item?.guide)
         assertEquals(ContactState.Locked, vm.contact)
         assertEquals(1, ads.preloads)
-        assertTrue("nothing read before the ad", guides.contactsRead.isEmpty())
         vm.dismiss()
         assertNull(vm.uiState.value.selected)
     }
 
     @Test
-    fun `an ad watched to the end shows the contact, and the guide stays unlocked`() = runTest {
+    fun `an ad watched to the end offers "I'm interested", and the guide stays unlocked`() = runTest {
         val vm = viewModel()
         collecting(vm.uiState)
         vm.select("bear")
         vm.unlock()
-        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
+        assertEquals(ContactState.Unlocked, vm.contact)
         assertEquals(1, ads.shown)
 
         vm.dismiss()
         vm.select("bear")
-        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
-        assertEquals("no second ad", 1, ads.shown)
-        assertEquals("no second read either", listOf("bear"), guides.contactsRead)
-        assertEquals("no preload for an unlocked guide", 1, ads.preloads)
-    }
-
-    @Test
-    fun `reopening a guide whose contact is on its way doesn't read it twice`() = runTest {
-        guides.onContact = CompletableDeferred()
-        val vm = viewModel()
-        collecting(vm.uiState)
-        vm.select("bear")
+        assertEquals(ContactState.Unlocked, vm.contact)
         vm.unlock()
-        vm.dismiss()
-        vm.select("bear")
-        assertEquals(ContactState.Unlocking, vm.contact)
-        guides.onContact?.complete(Unit)
-        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
-        assertEquals(listOf("bear"), guides.contactsRead)
+        assertEquals("no second ad", 1, ads.shown)
+        assertEquals("no preload for an unlocked guide", 1, ads.preloads)
     }
 
     @Test
@@ -264,11 +269,11 @@ class MapViewModelTest {
         collecting(vm.uiState)
         vm.select("moose")
         vm.unlock()
-        assertEquals(ContactState.Unlocked(TestGuides.contacts.getValue("moose")), vm.contact)
+        assertEquals(ContactState.Unlocked, vm.contact)
     }
 
     @Test
-    fun `an ad closed early or offline leaves the contact hidden`() = runTest {
+    fun `an ad closed early or offline keeps the guide locked`() = runTest {
         val vm = viewModel()
         collecting(vm.uiState)
         vm.select("bear")
@@ -278,57 +283,9 @@ class MapViewModelTest {
         ads.outcome = RewardOutcome.OFFLINE
         vm.unlock()
         assertEquals(ContactState.Failed(UnlockError.OFFLINE), vm.contact)
-        assertTrue(guides.contactsRead.isEmpty())
         ads.outcome = RewardOutcome.EARNED
         vm.unlock()
-        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
-    }
-
-    @Test
-    fun `a guide without contact details says so`() = runTest {
-        val vm = viewModel()
-        collecting(vm.uiState)
-        vm.select("salmon")
-        vm.unlock()
-        assertEquals(ContactState.Missing, vm.contact)
-    }
-
-    @Test
-    fun `a contact that fails to load is tried again without another ad`() = runTest {
-        guides.failure = IllegalStateException("offline")
-        val vm = viewModel()
-        collecting(vm.uiState)
-        vm.select("bear")
-        vm.unlock()
-        assertEquals(ContactState.Failed(UnlockError.LOAD_FAILED), vm.contact)
-        guides.failure = null
-        vm.unlock()
-        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
-        assertEquals(1, ads.shown)
-    }
-
-    @Test
-    fun `reopening a guide whose contact failed to load tries again, without an ad`() = runTest {
-        guides.failure = IllegalStateException("offline")
-        val vm = viewModel()
-        collecting(vm.uiState)
-        vm.select("bear")
-        vm.unlock()
-        vm.dismiss()
-        guides.failure = null
-        vm.select("bear")
-        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
-        assertEquals(1, ads.shown)
-    }
-
-    @Test
-    fun `a cancelled load isn't reported as a failure`() = runTest {
-        guides.failure = CancellationException()
-        val vm = viewModel()
-        collecting(vm.uiState)
-        vm.select("bear")
-        vm.unlock()
-        assertEquals(ContactState.Unlocking, vm.contact)
+        assertEquals(ContactState.Unlocked, vm.contact)
     }
 
     @Test
@@ -344,7 +301,7 @@ class MapViewModelTest {
         vm.unlock()
         assertEquals(1, ads.shown)
         ads.onShow?.complete(Unit)
-        assertEquals(ContactState.Unlocked(TestGuides.bearContact), vm.contact)
+        assertEquals(ContactState.Unlocked, vm.contact)
     }
 
     @Test
@@ -357,38 +314,200 @@ class MapViewModelTest {
         val restored = viewModel(saved)
         collecting(restored.uiState)
         assertEquals("bear", restored.uiState.value.selected?.item?.guide?.id)
-        assertEquals("reloaded without an ad", ContactState.Unlocked(TestGuides.bearContact), restored.contact)
+        assertEquals("without another ad", ContactState.Unlocked, restored.contact)
         assertEquals(1, ads.shown)
     }
 
-    @Test
-    fun `the restored contact is reloaded once, not on every return to the screen`() = runTest {
-        val saved = SavedStateHandle()
-        viewModel(saved).apply {
-            select("bear")
-            unlock()
-        }
-        val restored = viewModel(saved)
-        val first = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { restored.uiState.collect {} }
-        assertEquals(listOf("bear", "bear"), guides.contactsRead)
-        first.cancel()
-        advanceTimeBy(10_000) // sharing stops, and starts again on the next collection
-        collecting(restored.uiState)
-        assertEquals("not read again", listOf("bear", "bear"), guides.contactsRead)
+    // "I'm interested"
+
+    /** Signed in, the ad watched for [id]. */
+    private fun TestScope.unlocked(id: String = "bear", signedIn: Boolean = true): MapViewModel {
+        if (signedIn) auth.user.value = TestGuides.user
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.select(id)
+        vm.unlock()
+        return vm
     }
 
     @Test
-    fun `a restored contact that fails to load says so, still without an ad`() = runTest {
+    fun `interested, signed in with a complete contact, confirms what's sent, then sends it`() = runTest {
+        users.contacts.value = mapOf(me to TestGuides.userContact.copy(email = "old@example.com"))
+        val vm = unlocked()
+        val trip = vm.uiState.value.selected!!.trips[1]
+        vm.chooseTrip(trip)
+        assertNull(vm.uiState.value.confirm)
+        vm.interested(activity)
+        assertEquals("no sign-in needed", 0, google.shown)
+        assertEquals(
+            "the account's email, always",
+            RequestConfirmation("Bear hunt", trip, TestGuides.userContact.copy(email = TestGuides.user.email)),
+            vm.uiState.value.confirm,
+        )
+        vm.sendRequest()
+        val sent = requests.requests.value.getValue("bear_$me")
+        assertEquals(RequestStatus.PENDING, sent.status)
+        assertEquals(trip, sent.trip)
+        assertEquals(TestGuides.OWNER, sent.guideUid)
+        assertNull(vm.uiState.value.confirm)
+        assertTrue(vm.uiState.value.sent)
+        assertEquals(ContactState.Requested(sent), vm.contact)
+        vm.sentShown()
+        assertFalse(vm.uiState.value.sent)
+    }
+
+    @Test
+    fun `signed out, interested signs in first, closing Google's sheet keeps the ad watched`() = runTest {
+        val vm = unlocked(signedIn = false)
+        google.token = null
+        vm.interested(activity)
+        assertEquals(1, google.shown)
+        assertEquals(ContactState.Unlocked, vm.contact)
+        assertNull(vm.uiState.value.confirm)
+
+        google.token = FakeAuthRepository.TOKEN
+        vm.interested(activity)
+        assertEquals(TestGuides.user, auth.user.value)
+        assertEquals("the Google name until the user saves a contact", TestGuides.user.name, vm.uiState.value.confirm?.contact?.name)
+    }
+
+    @Test
+    fun `a failed sign-in says so, and the next try clears it`() = runTest {
+        val vm = unlocked(signedIn = false)
+        google.failure = IllegalStateException("offline")
+        vm.interested(activity)
+        assertEquals(RequestError.SIGN_IN_FAILED, vm.uiState.value.selected?.error)
+        assertEquals(ContactState.Unlocked, vm.contact)
+        google.failure = BackendNotConfiguredException()
+        vm.interested(activity)
+        assertEquals(RequestError.NOT_CONFIGURED, vm.uiState.value.selected?.error)
+    }
+
+    @Test
+    fun `an incomplete contact opens the contact form once, then the confirmation once it's filled in`() = runTest {
+        auth.user.value = TestGuides.user.copy(name = "")
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.select("bear")
+        vm.unlock()
+        vm.interested(activity)
+        assertTrue(vm.uiState.value.askContact)
+        assertNull(vm.uiState.value.confirm)
+        vm.contactAsked()
+        assertFalse("not asked again", vm.uiState.value.askContact)
+        users.saveContact(me, UserContact("Jo", "x", ""))
+        assertEquals(UserContact("Jo", TestGuides.user.email, ""), vm.uiState.value.confirm?.contact)
+        vm.dismissConfirm()
+        assertNull(vm.uiState.value.confirm)
+    }
+
+    @Test
+    fun `a request that fails to send says so and can be sent again, a second tap while it goes does nothing`() = runTest {
+        val vm = unlocked()
+        vm.interested(activity)
+        requests.failure = IllegalStateException("offline")
+        vm.sendRequest()
+        assertEquals(RequestError.SEND_FAILED, vm.uiState.value.selected?.error)
+        assertTrue("still confirming", vm.uiState.value.confirm != null)
+        requests.failure = null
+        requests.onWrite = CompletableDeferred()
+        vm.sendRequest()
+        assertTrue(vm.uiState.value.selected!!.busy)
+        vm.sendRequest()
+        vm.cancelRequest()
+        requests.onWrite?.complete(Unit)
+        assertEquals(RequestStatus.PENDING, (vm.contact as ContactState.Requested).request.status)
+        assertNull(vm.uiState.value.selected?.error)
+    }
+
+    @Test
+    fun `an offer already asked about shows its request with no ad, even after a relaunch`() = runTest {
+        requests.give(TestGuides.request)
+        auth.user.value = TestGuides.user
         val saved = SavedStateHandle()
         viewModel(saved).apply {
+            collecting(uiState)
             select("bear")
-            unlock()
+            assertEquals(ContactState.Requested(TestGuides.request), uiState.value.selected?.contact)
         }
-        guides.failure = IllegalStateException("offline")
-        val restored = viewModel(saved)
-        collecting(restored.uiState)
-        assertEquals(ContactState.Failed(UnlockError.LOAD_FAILED), restored.contact)
-        assertEquals(1, ads.shown)
+        val relaunched = viewModel(saved)
+        collecting(relaunched.uiState)
+        assertEquals(ContactState.Requested(TestGuides.request), relaunched.contact)
+        assertEquals(0, ads.shown)
+    }
+
+    @Test
+    fun `the request is read before anything shows`() = runTest {
+        auth.user.value = TestGuides.user
+        val reading = MutableSharedFlow<InterestRequest?>()
+        val slow = object : RequestRepository by requests {
+            override fun request(offerId: String, uid: String) = reading
+        }
+        val vm = MapViewModel(guides, location, ads, settings, session, users, slow, SavedStateHandle(), { TestGuides.today }, { TestGuides.now })
+        collecting(vm.uiState)
+        vm.select("bear")
+        assertEquals(ContactState.Loading, vm.contact)
+        reading.emit(null)
+        assertEquals(ContactState.Locked, vm.contact)
+    }
+
+    @Test
+    fun `a pending request can be cancelled, then sent again with the contact as it is now`() = runTest {
+        requests.give(TestGuides.request)
+        users.contacts.value = mapOf(me to TestGuides.userContact.copy(phone = ""))
+        auth.user.value = TestGuides.user
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.select("bear")
+        vm.cancelRequest()
+        assertEquals(RequestStatus.CANCELLED, requests.requests.value.getValue(TestGuides.request.id).status)
+        vm.interested(activity)
+        assertEquals("", vm.uiState.value.confirm?.contact?.phone)
+        vm.sendRequest()
+        val again = requests.requests.value.getValue(TestGuides.request.id)
+        assertEquals(RequestStatus.PENDING, again.status)
+        assertEquals("", again.user.phone)
+        assertEquals(0, ads.shown)
+    }
+
+    @Test
+    fun `a failed cancel says so, without a request there's nothing to cancel or send`() = runTest {
+        requests.give(TestGuides.request)
+        auth.user.value = TestGuides.user
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.sendRequest()
+        vm.interested(activity)
+        vm.select("bear")
+        requests.failure = IllegalStateException("offline")
+        vm.cancelRequest()
+        assertEquals(RequestError.SEND_FAILED, vm.uiState.value.selected?.error)
+        vm.select("moose")
+        assertNull("another offer starts afresh", vm.uiState.value.selected?.error)
+        vm.cancelRequest()
+        vm.sendRequest()
+        assertEquals(1, requests.requests.value.size)
+    }
+
+    @Test
+    fun `a pending or accepted request can't be confirmed again`() = runTest {
+        requests.give(TestGuides.request)
+        auth.user.value = TestGuides.user
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.select("bear")
+        vm.interested(activity)
+        assertNull(vm.uiState.value.confirm)
+        assertFalse(vm.uiState.value.askContact)
+    }
+
+    @Test
+    fun `the account's own offer has no ad and no request`() = runTest {
+        auth.user.value = TestGuides.user.copy(uid = TestGuides.OWNER)
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.select("bear")
+        assertEquals(ContactState.Own, vm.contact)
     }
 
     @Test

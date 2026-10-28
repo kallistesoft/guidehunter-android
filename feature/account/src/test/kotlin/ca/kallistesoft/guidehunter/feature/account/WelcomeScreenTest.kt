@@ -15,6 +15,8 @@ import ca.kallistesoft.guidehunter.core.model.AppSettings
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import kotlinx.coroutines.CompletableDeferred
@@ -41,7 +43,7 @@ class WelcomeScreenTest {
     private fun str(id: Int) = app.getString(id)
 
     private fun launch() {
-        val viewModel = WelcomeViewModel(AccountSession(auth, google, FakeGuideAccountRepository(), settings), settings)
+        val viewModel = WelcomeViewModel(AccountSession(auth, google, FakeGuideAccountRepository(), FakeUserAccountRepository(), FakeRequestRepository(), settings), settings)
         compose.setContent { GuideHunterTheme { WelcomeScreen(onSignedIn = { signedIn++ }, viewModel = viewModel) } }
     }
 

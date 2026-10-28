@@ -8,6 +8,7 @@ import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeNativeAds
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
 import kotlin.time.Duration.Companion.days
@@ -32,7 +33,9 @@ class MyOffersViewModelTest {
     private val ads = FakeRewardedAds()
     private val live = GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true)
 
-    private fun viewModel() = MyOffersViewModel(auth, account, ads, { TestGuides.today }, { TestGuides.now }, FakeNativeAds())
+    private val requests = FakeRequestRepository()
+
+    private fun viewModel() = MyOffersViewModel(auth, account, ads, requests, { TestGuides.today }, { TestGuides.now }, FakeNativeAds())
 
     private val MyOffersViewModel.state get() = uiState.value
 

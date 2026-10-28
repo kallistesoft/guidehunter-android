@@ -5,7 +5,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import ca.kallistesoft.guidehunter.core.ads.AdConsent
 import ca.kallistesoft.guidehunter.core.auth.AccountSession
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
 import ca.kallistesoft.guidehunter.core.data.SettingsRepository
+import ca.kallistesoft.guidehunter.core.data.UserAccountRepository
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.UserContact
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.GuideUser
 import ca.kallistesoft.guidehunter.core.model.Species
@@ -30,29 +37,51 @@ data class SettingsUiState(
     val error: AccountError? = null,
     /** The species the map shows (none: any species), in user mode. */
     val speciesFilter: Set<Species> = emptySet(),
+    /** The contact the user saved (signed in), null before they save one. */
+    val contact: UserContact? = null,
+    /** The user's requests still waiting for the guide's answer. */
+    val pendingSent: Int = 0,
+    /** The requests waiting for the guide's answer, in guide mode. */
+    val pendingReceived: Int = 0,
 )
 
 /**
- * The settings of both modes: the species the map shows (user mode), switch between user and guide, the account (sign in or out, delete), and the ad
+ * The settings of both modes: the species the map shows, the user's contact and requests (user mode), the requests
+ * received (guide mode), switch between user and guide, the account (sign in or out, delete), and the ad
  * privacy options (Pattern A of .claude/skills/viewmodel-state). Google's sheet shows over [Context], the activity
  * the screen passes.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val session: AccountSession,
     private val settings: SettingsRepository,
     private val adConsent: AdConsent,
+    private val userAccount: UserAccountRepository,
+    private val requests: RequestRepository,
 ) : ViewModel() {
     private val work = AccountWork(viewModelScope)
 
-    val uiState: StateFlow<SettingsUiState> = combine(
-        session.user,
-        settings.settings,
-        adConsent.privacyOptionsRequired,
-        work.busy,
-        work.error,
-    ) { user, settings, privacyRequired, busy, error ->
+    /** The account's contact and pending requests, both ways (nothing signed out). */
+    private data class Requests(val contact: UserContact? = null, val pendingSent: Int = 0, val pendingReceived: Int = 0)
+
+    private val requestSummary = session.user.flatMapLatest { user ->
+        if (user == null) {
+            flowOf(Requests())
+        } else {
+            combine(userAccount.contact(user.uid), requests.sent(user.uid), requests.received(user.uid)) { contact, sent, received ->
+                Requests(contact, sent.count { it.status == RequestStatus.PENDING }, received.count { it.status == RequestStatus.PENDING })
+            }
+        }
+    }
+
+    private val account = combine(session.user, settings.settings, adConsent.privacyOptionsRequired, work.busy, work.error) {
+            user, settings, privacyRequired, busy, error ->
         SettingsUiState(false, user, settings.mode, privacyRequired, busy, error, settings.speciesFilter)
+    }
+
+    val uiState: StateFlow<SettingsUiState> = combine(account, requestSummary) { state, requests ->
+        state.copy(contact = requests.contact, pendingSent = requests.pendingSent, pendingReceived = requests.pendingReceived)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     /** The other mode; guide mode needs an account, so signed out it signs in first (closing the sheet stays). */

@@ -10,7 +10,10 @@ import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
@@ -32,11 +35,14 @@ class SettingsViewModelTest {
     private val uid = TestGuides.user.uid
     private val auth = FakeAuthRepository()
     private val google = FakeGoogleSignIn()
-    private val account = FakeGuideAccountRepository()
+    private val requests = FakeRequestRepository()
+    private val account = FakeGuideAccountRepository(requests)
+    private val users = FakeUserAccountRepository()
     private val settings = FakeSettingsRepository(AppSettings(onboarded = true))
     private val consent = FakeAdConsent()
 
-    private fun viewModel() = SettingsViewModel(AccountSession(auth, google, account, settings), settings, consent)
+    private fun viewModel() =
+        SettingsViewModel(AccountSession(auth, google, account, users, requests, settings), settings, consent, users, requests)
 
     private val SettingsViewModel.state get() = uiState.value
 
@@ -51,6 +57,25 @@ class SettingsViewModelTest {
         assertEquals(SettingsUiState(false, TestGuides.user, AppMode.GUIDE, privacyOptionsRequired = true), vm.state)
         settings.setSpeciesFilter(setOf(Species.MOOSE))
         assertEquals("the species the map shows", setOf(Species.MOOSE), vm.state.speciesFilter)
+    }
+
+    @Test
+    fun `the contact and the pending requests, sent and received`() = runTest {
+        auth.user.value = TestGuides.user
+        users.contacts.value = mapOf(uid to TestGuides.userContact)
+        requests.give(
+            TestGuides.request,
+            TestGuides.request.copy(id = "salmon_$uid", offerId = "salmon", status = RequestStatus.APPROVED),
+            TestGuides.request.copy(id = "o1_u2", offerId = "o1", guideUid = uid, userUid = "u2"),
+        )
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertEquals(TestGuides.userContact, vm.state.contact)
+        assertEquals(1, vm.state.pendingSent)
+        assertEquals(1, vm.state.pendingReceived)
+        auth.user.value = null
+        assertNull(vm.state.contact)
+        assertEquals(0, vm.state.pendingSent)
     }
 
     @Test

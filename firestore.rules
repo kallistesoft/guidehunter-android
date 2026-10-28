@@ -20,11 +20,11 @@ service cloud.firestore {
       allow create: if false;
     }
 
-    // A guide's name and contact, read one at a time after a rewarded ad. No listing, so the whole collection can't
-    // be downloaded in one query. The ad itself is only checked in the app for now (FOLLOW-UP.md). The owner's
-    // profile changes reach it (contact fields only), and the owner can delete it with the offer.
+    // A guide's name and contact, by offer: written by approval, kept for later. The app no longer reads it (users get
+    // a guide's contact once their request is accepted), so only its guide can. The owner's profile changes reach it
+    // (contact fields only), and the owner can delete it with the offer.
     match /guideContacts/{guideId} {
-      allow get: if true;
+      allow get: if owns(resource.data);
       allow list, create: if false;
       allow update: if owns(resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'phone', 'website'])
@@ -48,6 +48,32 @@ service cloud.firestore {
         && request.resource.data.live == false;
       allow update: if owns(resource.data) && owns(request.resource.data) && validOffer(request.resource.data)
         && request.resource.data.live == resource.data.live;
+    }
+
+    // A user's contact (what they share with a guide), by Firebase user id: only they read and write it. The email is
+    // their Google account's.
+    match /userProfiles/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'email', 'phone'])
+        && shortText(request.resource.data.name, 1, 200)
+        && request.resource.data.email == request.auth.token.email
+        && phone(request.resource.data.phone);
+    }
+
+    // "I'm interested": a user's request for an offer, one per offer and user (id `offerId_userUid`). The user and the
+    // guide read it; each side makes only its own changes. The ad before it is only checked in the app (FOLLOW-UP.md).
+    match /requests/{requestId} {
+      // A request not sent yet reads as missing (the offer's sheet listens for it).
+      allow get: if signedIn() && (resource == null || party(resource.data));
+      // Only the user's or the guide's own: the app's queries filter on userUid or guideUid.
+      allow list: if party(resource.data);
+      allow create: if signedIn()
+        && requestId == request.resource.data.offerId + '_' + request.auth.uid
+        && newRequest(request.resource.data);
+      allow update: if userChange() || guideChange();
+      // With the user's account.
+      allow delete: if signedIn() && resource.data.userUid == request.auth.uid;
     }
 
     // Emails sent by the "Trigger Email from Firestore" extension. Signed-in guides can only send the offer email,
@@ -98,6 +124,76 @@ service cloud.firestore {
 
     function validContact(data) {
       return shortText(data.name, 1, 200) && email(data.email) && phone(data.phone) && website(data.website);
+    }
+
+    // The user or the guide of a request.
+    function party(data) {
+      return signedIn() && (data.userUid == request.auth.uid || data.guideUid == request.auth.uid);
+    }
+
+    // What the user shares in a request: a name, their Google account's email, an optional phone.
+    function validRequester(data) {
+      return shortText(data.userName, 1, 200)
+        && data.userEmail == request.auth.token.email
+        && phone(data.userPhone);
+    }
+
+    // The trip the user chose: ISO dates (or none: dates on request), 'AM' or 'PM' on a half day.
+    function validTrip(data) {
+      return (data.tripStart == null || (data.tripStart is string && data.tripStart.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')))
+        && (data.tripEnd == null || (data.tripEnd is string && data.tripEnd.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')))
+        && data.tripSlot in [null, 'AM', 'PM'];
+    }
+
+    // A new request: the user's own, pending, to the guide and with the title of the published offer (so neither can
+    // be made up), never to their own offer.
+    function newRequest(data) {
+      let offer = get(/databases/$(database)/documents/guides/$(data.offerId)).data;
+      return data.keys().hasOnly([
+          'offerId', 'offerTitle', 'tripStart', 'tripEnd', 'tripSlot', 'guideUid', 'userUid', 'userName', 'userEmail',
+          'userPhone', 'status', 'createdAt', 'updatedAt'])
+        && data.userUid == request.auth.uid
+        && data.status == 'PENDING'
+        && validRequester(data)
+        && validTrip(data)
+        && data.guideUid == offer.ownerUid
+        && data.offerTitle == offer.title
+        && data.guideUid != data.userUid
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    // The fields a request update changes.
+    function changed() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    function statusChange(from, to) {
+      return resource.data.status in from && request.resource.data.status == to
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    // The user cancels a pending or accepted request, or sends a cancelled one again with their contact and trip as
+    // they are now.
+    function userChange() {
+      return signedIn() && resource.data.userUid == request.auth.uid
+        && ((statusChange(['PENDING', 'APPROVED'], 'CANCELLED') && changed().hasOnly(['status', 'updatedAt']))
+          || (statusChange(['CANCELLED'], 'PENDING')
+            && changed().hasOnly(['status', 'updatedAt', 'userName', 'userEmail', 'userPhone', 'tripStart', 'tripEnd', 'tripSlot'])
+            && validRequester(request.resource.data)
+            && validTrip(request.resource.data)));
+    }
+
+    // The guide accepts a pending request (giving their contact) or declines it, and closes the open ones when the
+    // offer or their account is deleted.
+    function guideChange() {
+      let data = request.resource.data;
+      return signedIn() && resource.data.guideUid == request.auth.uid
+        && ((statusChange(['PENDING'], 'APPROVED')
+            && changed().hasOnly(['status', 'updatedAt', 'guideName', 'guideEmail', 'guidePhone', 'guideWebsite'])
+            && shortText(data.guideName, 1, 200) && email(data.guideEmail) && phone(data.guidePhone) && website(data.guideWebsite))
+          || (statusChange(['PENDING'], 'REJECTED') && changed().hasOnly(['status', 'updatedAt']))
+          || (statusChange(['PENDING', 'APPROVED'], 'OFFER_REMOVED') && changed().hasOnly(['status', 'updatedAt'])));
     }
 
     function validOffer(data) {

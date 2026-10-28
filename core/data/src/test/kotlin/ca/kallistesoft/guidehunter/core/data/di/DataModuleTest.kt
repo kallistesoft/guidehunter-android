@@ -9,6 +9,10 @@ import ca.kallistesoft.guidehunter.core.data.FusedLocationRepository
 import ca.kallistesoft.guidehunter.core.data.SampleGuideRepository
 import ca.kallistesoft.guidehunter.core.data.UnconfiguredAuthRepository
 import ca.kallistesoft.guidehunter.core.data.UnconfiguredGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.data.FirestoreRequestRepository
+import ca.kallistesoft.guidehunter.core.data.FirestoreUserAccountRepository
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredRequestRepository
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredUserAccountRepository
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -48,6 +52,8 @@ class DataModuleTest {
         assertTrue(DataModule.guideRepository(app) is SampleGuideRepository)
         assertTrue(DataModule.authRepository(app) is UnconfiguredAuthRepository)
         assertTrue(DataModule.guideAccountRepository(app, config, now) is UnconfiguredGuideAccountRepository)
+        assertTrue(DataModule.userAccountRepository(app) is UnconfiguredUserAccountRepository)
+        assertTrue(DataModule.requestRepository(app) is UnconfiguredRequestRepository)
         assertTrue(DataModule.locationRepository(app) is FusedLocationRepository)
         assertTrue(DataModule.settingsRepository(app) is DataStoreSettingsRepository)
     }
@@ -72,5 +78,7 @@ class DataModuleTest {
         assertTrue(DataModule.guideRepository(app) is FirestoreGuideRepository)
         assertTrue(DataModule.authRepository(app) is FirebaseAuthRepository)
         assertTrue(DataModule.guideAccountRepository(app, config, now) is FirestoreGuideAccountRepository)
+        assertTrue(DataModule.userAccountRepository(app) is FirestoreUserAccountRepository)
+        assertTrue(DataModule.requestRepository(app) is FirestoreRequestRepository)
     }
 }

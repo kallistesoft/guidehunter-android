@@ -123,4 +123,22 @@
     <string name="boost_error_not_earned">The ad was closed before the end: the offer isn\'t boosted.</string>
     <string name="boost_error_offline">No connection: connect to the internet and try again.</string>
     <string name="boost_error_failed">The boost couldn\'t be saved. Try again.</string>
+    <string name="requests_waiting_header">Waiting for your answer · %1$d</string>
+    <string name="requests_answered">Answered</string>
+    <string name="request_received_on">Received %1$s</string>
+    <string name="accept">Accept</string>
+    <string name="decline">Decline</string>
+    <string name="decline_title">Decline %1$s’s request?</string>
+    <string name="decline_body">They’ll see it as declined in their requests. You can’t undo it.</string>
+    <string name="no_requests_received">No requests yet. They show here when someone taps I’m interested on one of your offers.</string>
+    <string name="requests_needs_profile">Fill in your guide profile first: it’s the contact people get when you accept.</string>
+    <string name="requests_change_failed">That didn’t go through. Check your connection and try again.</string>
+    <plurals name="offer_delete_requests">
+        <item quantity="one">%d pending request will be closed: that person sees “Offer removed”.</item>
+        <item quantity="other">%d pending requests will be closed: those people see “Offer removed”.</item>
+    </plurals>
+    <plurals name="requests_badge">
+        <item quantity="one">Requests received, %d waiting</item>
+        <item quantity="other">Requests received, %d waiting</item>
+    </plurals>
 </resources>

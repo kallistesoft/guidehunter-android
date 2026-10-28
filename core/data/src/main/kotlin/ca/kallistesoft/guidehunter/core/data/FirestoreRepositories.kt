@@ -2,11 +2,17 @@ package ca.kallistesoft.guidehunter.core.data
 
 import ca.kallistesoft.guidehunter.core.model.Boost
 import ca.kallistesoft.guidehunter.core.model.Guide
-import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.Now
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.model.UserContact
+import com.google.firebase.firestore.DocumentReference
+import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.WriteBatch
@@ -39,11 +45,6 @@ internal class FirestoreGuideRepository(
         // Firestore calls back on the main thread; the parsing of every guide happens off it.
         .map { documents -> documents.mapNotNull { guideFrom(it.id, it.data.orEmpty()) } }
         .flowOn(background)
-
-    override suspend fun contact(guideId: String): GuideContact? {
-        val document = firestore.collection(Collections.CONTACTS).document(guideId).get().await()
-        return contactFrom(document.data.orEmpty())
-    }
 }
 
 /**
@@ -121,8 +122,10 @@ internal class FirestoreGuideAccountRepository(
     }
 
     override suspend fun deleteOffer(uid: String, offer: GuideOffer) {
+        val requests = openRequests(firestore, uid, offer.id)
         val batch = firestore.batch()
         delete(batch, offer)
+        requests.forEach { batch.update(it, statusFields(RequestStatus.OFFER_REMOVED)) }
         batch.commit().await()
     }
 
@@ -131,8 +134,10 @@ internal class FirestoreGuideAccountRepository(
     }
 
     override suspend fun deleteAll(uid: String) {
+        val requests = openRequests(firestore, uid, offerId = null)
         val batch = firestore.batch()
         mine(uid).forEach { delete(batch, it) }
+        requests.forEach { batch.update(it, statusFields(RequestStatus.OFFER_REMOVED)) }
         batch.delete(firestore.collection(Collections.PROFILES).document(uid))
         batch.commit().await()
     }
@@ -153,3 +158,98 @@ internal class FirestoreGuideAccountRepository(
         const val OWNER = "ownerUid"
     }
 }
+
+/** The user's contact in Firestore (`userProfiles/{uid}`: firestore.rules lets only them reach it). */
+internal class FirestoreUserAccountRepository(private val firestore: FirebaseFirestore) : UserAccountRepository {
+    private fun document(uid: String) = firestore.collection(Collections.USER_PROFILES).document(uid)
+
+    override fun contact(uid: String): Flow<UserContact?> = callbackFlow {
+        val registration = document(uid).addSnapshotListener { snapshot, _ ->
+            if (snapshot != null) trySend(userContactFrom(snapshot.data))
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun saveContact(uid: String, contact: UserContact) {
+        document(uid).set(contact.toDocument()).await()
+    }
+
+    override suspend fun deleteAll(uid: String) {
+        document(uid).delete().await()
+    }
+}
+
+/**
+ * Requests in Firestore (`requests/{offerId_userUid}`). firestore.rules lets the user and the guide read them, and
+ * each side make only its own status changes.
+ */
+internal class FirestoreRequestRepository(private val firestore: FirebaseFirestore) : RequestRepository {
+    private val requests get() = firestore.collection(Collections.REQUESTS)
+
+    override fun sent(uid: String): Flow<List<InterestRequest>> = list(requests.whereEqualTo(USER, uid))
+
+    override fun received(uid: String): Flow<List<InterestRequest>> = list(requests.whereEqualTo(GUIDE, uid))
+
+    override fun request(offerId: String, uid: String): Flow<InterestRequest?> = callbackFlow {
+        val id = InterestRequest.requestId(offerId, uid)
+        val registration = requests.document(id).addSnapshotListener { snapshot, _ ->
+            if (snapshot != null) trySend(snapshot.data?.let { requestFrom(id, it) })
+        }
+        awaitClose { registration.remove() }
+    }
+
+    override suspend fun send(uid: String, guide: Guide, trip: Trip?, contact: UserContact) {
+        requests.document(InterestRequest.requestId(guide.id, uid)).set(requestDocument(uid, guide, trip, contact)).await()
+    }
+
+    override suspend fun cancel(id: String) = update(id, statusFields(RequestStatus.CANCELLED))
+
+    override suspend fun resend(id: String, trip: Trip?, contact: UserContact) = update(id, resendFields(trip, contact))
+
+    override suspend fun approve(id: String, profile: GuideProfile) = update(id, approveFields(profile))
+
+    override suspend fun reject(id: String) = update(id, statusFields(RequestStatus.REJECTED))
+
+    override suspend fun markOfferRemoved(guideUid: String, offerId: String?) {
+        val open = openRequests(firestore, guideUid, offerId)
+        if (open.isEmpty()) return
+        val batch = firestore.batch()
+        open.forEach { batch.update(it, statusFields(RequestStatus.OFFER_REMOVED)) }
+        batch.commit().await()
+    }
+
+    override suspend fun deleteSent(uid: String) {
+        val sent = requests.whereEqualTo(USER, uid).get().await().documents
+        if (sent.isEmpty()) return
+        val batch = firestore.batch()
+        sent.forEach { batch.delete(it.reference) }
+        batch.commit().await()
+    }
+
+    private suspend fun update(id: String, fields: Map<String, Any?>) {
+        requests.document(id).set(fields, SetOptions.merge()).await()
+    }
+
+    private fun list(query: Query): Flow<List<InterestRequest>> = callbackFlow {
+        val registration = query.addSnapshotListener { snapshot, _ ->
+            if (snapshot != null) trySend(requestsFrom(snapshot.documents.map { it.id to it.data.orEmpty() }))
+        }
+        awaitClose { registration.remove() }
+    }
+}
+
+private const val USER = "userUid"
+private const val GUIDE = "guideUid"
+
+/**
+ * [guideUid]'s pending and accepted requests, for one offer or all of them: what deleting it closes. One equality
+ * filter (no composite index); the rest is filtered here.
+ */
+private suspend fun openRequests(firestore: FirebaseFirestore, guideUid: String, offerId: String?): List<DocumentReference> =
+    firestore.collection(Collections.REQUESTS).whereEqualTo(GUIDE, guideUid).get().await().documents
+        .filter { document ->
+            val data = document.data.orEmpty()
+            (offerId == null || data["offerId"] == offerId) &&
+                RequestStatus.entries.find { it.name == data["status"] }?.open == true
+        }
+        .map { it.reference }

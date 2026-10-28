@@ -31,7 +31,6 @@
     <string name="sign_out">Sign out</string>
     <string name="delete_account">Delete my account</string>
     <string name="delete_account_title">Delete your account?</string>
-    <string name="delete_account_body">Your offers come off the map, and your offers, profile and account are deleted. Google asks you to confirm your account first. This can\'t be undone.</string>
     <string name="cancel">Cancel</string>
     <string name="dismiss">OK</string>
 
@@ -45,4 +44,34 @@
     <string name="species_filter_note">Only these species show on the map. Kept for next time, and also in Settings.</string>
     <string name="species_filter_any">Any species</string>
     <string name="species_filter_done">Show on the map</string>
+
+    <string name="delete_account_body">Your offers come off the map, and your offers, profile, contact info, requests and account are deleted. Google asks you to confirm your account first. This can’t be undone.</string>
+    <string name="my_contact_intro">Sent to a guide only when you tap I’m interested, so they can reach you.</string>
+    <string name="field_name">Name</string>
+    <string name="field_email">Email</string>
+    <string name="field_phone">Phone (optional)</string>
+    <string name="email_from_google">From your Google account. It can’t be changed here.</string>
+    <string name="error_name">Enter your name.</string>
+    <string name="error_phone">Enter a phone number with at least 7 digits, or leave it empty.</string>
+    <string name="my_contact_copy_note">Requests you already sent keep the details you had then.</string>
+    <string name="save">Save</string>
+    <string name="saving">Saving…</string>
+    <string name="save_failed">Your contact info couldn’t be saved. Check your connection and try again.</string>
+    <string name="save_not_configured">You can’t save your contact info from this version of the app yet.</string>
+    <string name="my_contact_missing">Not filled in yet</string>
+    <plurals name="requests_pending">
+        <item quantity="one">%d pending</item>
+        <item quantity="other">%d pending</item>
+    </plurals>
+    <plurals name="requests_waiting">
+        <item quantity="one">%d waiting for your answer</item>
+        <item quantity="other">%d waiting for your answer</item>
+    </plurals>
+    <string name="no_requests_sent">No requests yet. Open an offer on the map and tap I’m interested.</string>
+    <string name="request_change_failed">That didn’t go through. Check your connection and try again.</string>
+    <string name="request_sent_on">Sent %1$s</string>
+    <string name="request_accepted_on">Accepted %1$s</string>
+    <string name="request_cancelled_on">Cancelled %1$s</string>
+    <string name="request_rejected_note">The guide can’t take this request.</string>
+    <string name="request_removed_note">The guide took this offer off the map.</string>
 </resources>

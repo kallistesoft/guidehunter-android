@@ -8,6 +8,8 @@ import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.GuideUser
@@ -42,6 +44,8 @@ data class MyOffersUiState(
     val now: Instant = Instant.fromEpochSeconds(0),
     /** A boost under way (the ad showing) or that failed; null otherwise. */
     val boost: BoostAttempt? = null,
+    /** Requests waiting for the guide's answer: the badge on "Requests received". */
+    val pendingRequests: Int = 0,
 )
 
 /** The guide boosting [offerId]: the ad is showing or the boost saving, or it failed with [error]. */
@@ -59,7 +63,7 @@ enum class BoostError {
 }
 
 /**
- * The guide's home: their profile and offers, live (Pattern A of .claude/skills/viewmodel-state), and the boost of an
+ * The guide's home: their profile, offers and pending requests, live (Pattern A of .claude/skills/viewmodel-state), and the boost of an
  * offer on the map: a rewarded ad ([BoostAds]), then [GuideAccountRepository.boost]. Signing in and out is in the
  * settings. [nativeAds] serves the ad card below the offers.
  */
@@ -69,6 +73,7 @@ class MyOffersViewModel @Inject constructor(
     auth: AuthRepository,
     private val account: GuideAccountRepository,
     @param:BoostAds private val ads: RewardedAds,
+    private val requests: RequestRepository,
     private val today: Today,
     private val now: Now,
     val nativeAds: NativeAds,
@@ -79,7 +84,7 @@ class MyOffersViewModel @Inject constructor(
         if (user == null) {
             flowOf(MyOffersUiState())
         } else {
-            combine(account.profile(user.uid), account.offers(user.uid), boost) { profile, offers, boost ->
+            combine(account.profile(user.uid), account.offers(user.uid), boost, requests.received(user.uid)) { profile, offers, boost, received ->
                 MyOffersUiState(
                     loading = false,
                     user = user,
@@ -88,6 +93,7 @@ class MyOffersViewModel @Inject constructor(
                     today = today(),
                     now = now(),
                     boost = boost,
+                    pendingRequests = received.count { it.status == RequestStatus.PENDING },
                 )
             }
         }

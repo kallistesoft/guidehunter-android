@@ -11,6 +11,8 @@ import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
+import ca.kallistesoft.guidehunter.core.data.UserAccountRepository
 import ca.kallistesoft.guidehunter.core.data.SettingsRepository
 import ca.kallistesoft.guidehunter.core.data.di.DataModule
 import ca.kallistesoft.guidehunter.core.model.AppMode
@@ -20,6 +22,8 @@ import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import dagger.hilt.android.testing.BindValue
@@ -74,6 +78,12 @@ class ModesNavigationTest {
 
     @BindValue @JvmField
     val location: LocationRepository = FakeLocationRepository()
+
+    @BindValue @JvmField
+    val users: UserAccountRepository = FakeUserAccountRepository()
+
+    @BindValue @JvmField
+    val requests: RequestRepository = FakeRequestRepository()
 
     @Before
     fun setUp() = hilt.inject()
