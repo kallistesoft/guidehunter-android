@@ -59,13 +59,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ca.kallistesoft.guidehunter.core.designsystem.component.SectionToggle
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GhTextStyles
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
@@ -274,25 +273,30 @@ private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
             )
             val context = LocalContext.current
             val groups = remember(filter.speciesChoices, LocalConfiguration.current) { context.speciesByDiscipline(filter.speciesChoices) }
+            // With both disciplines, each list opens under its heading; the chosen species' list starts open.
+            var open by remember(expanded) { mutableStateOf(setOfNotNull(filter.species?.discipline)) }
             groups.forEach { (discipline, species) ->
-                // With both disciplines in the menu, each list gets its heading.
+                val shown = groups.size == 1 || discipline in open
                 if (groups.size > 1) {
-                    Text(
-                        stringResource(discipline.label).uppercase(),
-                        style = GhTextStyles.overline,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = Spacing.m, end = Spacing.m, top = Spacing.m, bottom = Spacing.xs).semantics { heading() },
+                    SectionToggle(
+                        title = stringResource(discipline.label),
+                        expanded = shown,
+                        onToggle = { open = if (shown) open - discipline else open + discipline },
+                        detail = species.size.toString(),
+                        modifier = Modifier.padding(horizontal = Spacing.m).testTag("species-group-${discipline.name}"),
                     )
                 }
-                species.forEach { choice ->
-                    DropdownMenuItem(
-                        text = { Text(stringResource(choice.label)) },
-                        onClick = {
-                            expanded = false
-                            onSpecies(choice)
-                        },
-                        modifier = Modifier.testTag("species-${choice.name}"),
-                    )
+                if (shown) {
+                    species.forEach { choice ->
+                        DropdownMenuItem(
+                            text = { Text(stringResource(choice.label)) },
+                            onClick = {
+                                expanded = false
+                                onSpecies(choice)
+                            },
+                            modifier = Modifier.testTag("species-${choice.name}"),
+                        )
+                    }
                 }
             }
         }

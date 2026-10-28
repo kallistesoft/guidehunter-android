@@ -47,9 +47,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.content.ContextCompat
@@ -57,6 +56,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
+import ca.kallistesoft.guidehunter.core.designsystem.component.SectionToggle
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
@@ -259,19 +259,34 @@ private fun Form(
         } else {
             val context = LocalContext.current
             val groups = remember(activity, LocalConfiguration.current) { context.speciesByDiscipline(Species.forActivity(activity)) }
+            // A guide offering both sees the hunting and the fishing species apart, each list opening under its
+            // heading; a list that holds a chosen species starts open.
+            var open by rememberSaveable { mutableStateOf(form.species.map { it.discipline.name }.toSet().joinToString(",")) }
             groups.forEach { (discipline, species) ->
-                // A guide offering both sees the hunting and the fishing species apart.
+                val shown = groups.size == 1 || discipline.name in open.split(",")
                 if (groups.size > 1) {
-                    Text(stringResource(discipline.label), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
+                    val chosen = species.count { it in form.species }
+                    SectionToggle(
+                        title = stringResource(discipline.label),
+                        expanded = shown,
+                        onToggle = {
+                            val names = open.split(",").filter { it.isNotEmpty() }.toSet()
+                            open = (if (shown) names - discipline.name else names + discipline.name).joinToString(",")
+                        },
+                        detail = if (chosen > 0) pluralStringResource(R.plurals.species_chosen, chosen, chosen) else null,
+                        modifier = Modifier.testTag("species-group-${discipline.name}"),
+                    )
                 }
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                    species.forEach { choice ->
-                        FilterChip(
-                            selected = choice in form.species,
-                            onClick = { actions.species(choice) },
-                            label = { Text(stringResource(choice.label)) },
-                            modifier = Modifier.testTag("species-${choice.name}"),
-                        )
+                if (shown) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                        species.forEach { choice ->
+                            FilterChip(
+                                selected = choice in form.species,
+                                onClick = { actions.species(choice) },
+                                label = { Text(stringResource(choice.label)) },
+                                modifier = Modifier.testTag("species-${choice.name}"),
+                            )
+                        }
                     }
                 }
             }

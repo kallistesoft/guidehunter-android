@@ -125,6 +125,24 @@ class MapScreenTest {
     }
 
     @Test
+    fun `with all disciplines, each species list opens under its heading`() {
+        launch()
+        compose.onNodeWithTag("species-picker").performClick()
+        compose.onNodeWithTag("species-WALLEYE").assertDoesNotExist()
+        compose.onNodeWithTag("species-group-FISHING").performClick()
+        compose.onNodeWithTag("species-WALLEYE").assertExists()
+        compose.onNodeWithTag("species-BLACK_BEAR").assertDoesNotExist()
+        compose.onNodeWithTag("species-group-FISHING").performClick()
+        compose.onNodeWithTag("species-WALLEYE").assertDoesNotExist()
+        compose.onNodeWithTag("species-group-FISHING").performClick()
+        compose.onNodeWithTag("species-WALLEYE").performClick()
+        compose.onNodeWithText(count(1)).assertIsDisplayed()
+        // The chosen species' list is open the next time.
+        compose.onNodeWithTag("species-picker").performClick()
+        compose.onNodeWithTag("species-WALLEYE").assertExists()
+    }
+
+    @Test
     fun `the cards follow the part of the map on screen`() {
         launch()
         compose.onNodeWithTag("pan-west").performClick()

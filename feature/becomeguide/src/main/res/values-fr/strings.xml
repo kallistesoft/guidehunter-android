@@ -89,4 +89,8 @@
     <string name="offer_delete_title">Supprimer cette offre?</string>
     <string name="offer_delete_body">Elle sera supprimée. C\'est définitif.</string>
     <string name="offer_delete_live_body">Elle est retirée de la carte et supprimée. C\'est définitif.</string>
+    <plurals name="species_chosen">
+        <item quantity="one">%d choisie</item>
+        <item quantity="other">%d choisies</item>
+    </plurals>
 </resources>
