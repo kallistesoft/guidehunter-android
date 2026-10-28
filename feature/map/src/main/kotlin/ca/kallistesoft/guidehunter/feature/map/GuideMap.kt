@@ -36,7 +36,8 @@ import kotlinx.coroutines.flow.filterNotNull
 /**
  * Google Maps with a pin per guide, the mockup's: orange for hunting, teal for fishing, gold for both; a featured one
  * in a gold ring with a star, on top. It opens on southern
- * Quebec and moves to the user once their location is known (once: not again after a rotation, nor over a pan). The
+ * Quebec and moves to the user once their location is known (once: not again after a rotation, nor over a pan), and
+ * again on each tap on "my location". The
  * API key comes from the build (README, "Google Maps").
  */
 @Composable
@@ -60,6 +61,16 @@ internal fun GuideMap(content: MapContent, modifier: Modifier = Modifier) {
             .filterNotNull()
             .distinctUntilChanged()
             .collect { onVisibleArea(GeoBounds(it.southwest.toGeoPoint(), it.northeast.toGeoPoint())) }
+    }
+    // Each tap on "my location" moves the map there (handled once: not again after a rotation).
+    var locateHandled by rememberSaveable { mutableStateOf(0) }
+    LaunchedEffect(content.locate) {
+        val request = content.locate
+        if (request != null && request.id != locateHandled) {
+            camera.position = CameraPosition.fromLatLngZoom(request.location.toLatLng(), USER_ZOOM)
+            locateHandled = request.id
+            centredOnUser = true
+        }
     }
     LaunchedEffect(content.userLocation) {
         val location = content.userLocation

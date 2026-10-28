@@ -43,6 +43,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,6 +52,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -87,8 +90,13 @@ data class MapContent(
     val userLocation: GeoPoint?,
     val onVisibleArea: (GeoBounds) -> Unit = {},
     val featured: Set<String> = emptySet(),
+    /** A tap on "my location": the map moves to it (once per request, not again after a rotation). */
+    val locate: LocateRequest? = null,
     val onSelect: (String) -> Unit,
 )
+
+/** A tap on "my location" that found it; [id] tells two taps at the same place apart. */
+data class LocateRequest(val id: Int, val location: GeoPoint)
 
 /**
  * The home screen: a map of the guides, filters above it and the guides' cards below. A pin or a card opens the
@@ -105,13 +113,15 @@ fun MapScreen(
     map: @Composable (MapContent, Modifier) -> Unit = { content, mapModifier -> GuideMap(content, mapModifier) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val locate by viewModel.locate.collectAsStateWithLifecycle()
+    val locationMissing by viewModel.locationMissing.collectAsStateWithLifecycle()
     val context = LocalContext.current
     // The location permission, in its three states: granted (read the location), denied once (explain, then ask
     // again), denied for good (only Settings can turn it on).
     var rationale by rememberSaveable { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         when {
-            granted -> viewModel.refreshLocation()
+            granted -> viewModel.locate()
             context.findActivity()?.let { ActivityCompat.shouldShowRequestPermissionRationale(it, LOCATION_PERMISSION) } == true ->
                 rationale = true
             else -> openAppSettings(context)
@@ -129,7 +139,7 @@ fun MapScreen(
         state = state,
         onSettings = onSettings,
         onLocate = {
-            if (hasLocationPermission(context)) viewModel.refreshLocation() else permission.launch(LOCATION_PERMISSION)
+            if (hasLocationPermission(context)) viewModel.locate() else permission.launch(LOCATION_PERMISSION)
         },
         onDiscipline = viewModel::chooseDiscipline,
         onSpeciesFilter = onSpeciesFilter,
@@ -152,6 +162,9 @@ fun MapScreen(
         ),
         map = map,
         modifier = modifier,
+        locate = locate,
+        locationMissing = locationMissing,
+        onLocationMissingShown = viewModel::locationMissingShown,
     )
     if (rationale) {
         LocationRationale(
@@ -201,9 +214,22 @@ internal fun MapContent(
     contactActions: ContactActions,
     map: @Composable (MapContent, Modifier) -> Unit,
     modifier: Modifier = Modifier,
+    locate: LocateRequest? = null,
+    locationMissing: Boolean = false,
+    onLocationMissingShown: () -> Unit = {},
 ) {
+    val snackbar = remember { SnackbarHostState() }
+    val missingText = stringResource(R.string.location_unavailable)
+    LaunchedEffect(locationMissing) {
+        // Shown first, then cleared: clearing restarts this effect, which would cancel the snackbar.
+        if (locationMissing) {
+            snackbar.showSnackbar(missingText)
+            onLocationMissingShown()
+        }
+    }
     Scaffold(
         modifier = modifier,
+        snackbarHost = { SnackbarHost(snackbar, Modifier.testTag("location-unavailable")) },
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.map_title), style = GhTextStyles.brand) },
@@ -227,7 +253,7 @@ internal fun MapContent(
                 Column(Modifier.weight(1f).fillMaxHeight()) {
                     Filters(state, onDiscipline, onSpeciesFilter, onDates, onAnyDates)
                     Box(Modifier.weight(1f).fillMaxWidth()) {
-                        map(MapContent(state.guides, state.userLocation, onVisibleArea, state.featured, onSelect), Modifier.fillMaxSize())
+                        map(MapContent(state.guides, state.userLocation, onVisibleArea, state.featured, locate, onSelect), Modifier.fillMaxSize())
                         when {
                             state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
                             else -> GuideCards(state.inView, state.featured, state.guides.isEmpty(), onSelect, Modifier.align(Alignment.BottomCenter))

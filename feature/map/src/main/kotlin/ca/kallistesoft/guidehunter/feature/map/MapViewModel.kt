@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -417,6 +418,33 @@ class MapViewModel @Inject constructor(
     /** Reads the user's location (the permission was just granted, or the screen opened with it). */
     fun refreshLocation() {
         viewModelScope.launch { locationRepository.current()?.let { userLocation.value = it } }
+    }
+
+    private val _locate = MutableStateFlow<LocateRequest?>(null)
+
+    /** The last tap on "my location" that found it: the map moves there, each time. */
+    val locate: StateFlow<LocateRequest?> = _locate.asStateFlow()
+
+    private val _locationMissing = MutableStateFlow(false)
+
+    /** A tap on "my location" found none (location off): the screen says so until shown. */
+    val locationMissing: StateFlow<Boolean> = _locationMissing.asStateFlow()
+
+    /** "My location" (the permission given): reads the location, and the map moves to it. */
+    fun locate() {
+        viewModelScope.launch {
+            val location = locationRepository.current()
+            if (location == null) {
+                _locationMissing.value = true
+            } else {
+                userLocation.value = location
+                _locate.update { LocateRequest((it?.id ?: 0) + 1, location) }
+            }
+        }
+    }
+
+    fun locationMissingShown() {
+        _locationMissing.value = false
     }
 
     private fun setAd(id: String, state: ContactState) = ads.update { it + (id to state) }

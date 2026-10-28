@@ -340,6 +340,18 @@ class MapScreenTest {
     }
 
     @Test
+    fun `my location with location off says it isn't available`() {
+        shadowOf(app).grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
+        launch()
+        compose.onNodeWithTag("locate").performClick()
+        compose.onNodeWithText(str(R.string.location_unavailable)).assertExists()
+        compose.mainClock.advanceTimeBy(SNACKBAR_GONE)
+        compose.onNodeWithText(str(R.string.location_unavailable)).assertDoesNotExist()
+        compose.onNodeWithTag("locate").performClick() // and again on the next tap
+        compose.onNodeWithText(str(R.string.location_unavailable)).assertExists()
+    }
+
+    @Test
     fun `with the permission given before, distances show at once`() {
         shadowOf(app).grantPermissions(Manifest.permission.ACCESS_COARSE_LOCATION)
         location.location = TestGuides.quebecCity
@@ -381,3 +393,6 @@ private val WEST_OF_GASPE = GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -70.
 
 /** Nunavik: no test guide. */
 private val FAR_NORTH = GeoBounds(GeoPoint(55.0, -80.0), GeoPoint(62.0, -60.0))
+
+/** A short snackbar's time on screen, and its exit. */
+private const val SNACKBAR_GONE = 6_000L
