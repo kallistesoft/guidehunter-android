@@ -75,7 +75,7 @@ class MapScreenTest {
     }
 
     private fun launch() {
-        val viewModel = MapViewModel(guides, location, ads, consent, SavedStateHandle())
+        val viewModel = MapViewModel(guides, location, ads, consent, SavedStateHandle(), { TestGuides.today })
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
@@ -142,6 +142,16 @@ class MapScreenTest {
         compose.onNodeWithTag("species-BLACK_BEAR").performClick()
         compose.onNodeWithText(count(2)).assertIsDisplayed()
         compose.onNodeWithText(app.resources.getQuantityString(R.plurals.filter_species_count, 2, 2)).assertExists()
+    }
+
+    @Test
+    fun `the dates chip opens the dates picker, which clears them`() {
+        launch()
+        compose.onNodeWithTag("dates-picker").performClick()
+        compose.onNodeWithTag("date-range-picker").assertExists()
+        compose.onNodeWithTag("dates-clear").performClick()
+        compose.onNodeWithTag("date-range-picker").assertDoesNotExist()
+        compose.onNodeWithText(count(3)).assertIsDisplayed()
     }
 
     @Test

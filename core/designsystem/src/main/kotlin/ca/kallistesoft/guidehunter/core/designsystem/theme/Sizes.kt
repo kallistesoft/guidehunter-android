@@ -39,4 +39,7 @@ object Sizes {
     /** From this window width (a tablet, an unfolded foldable) a guide's offer opens beside the map, not over it. */
     val sidePaneMinWindowWidth = 840.dp
     val sidePaneWidth = 400.dp
+
+    /** The date range picker's tallest, in its dialog (unbounded, it pushes the buttons off a phone's screen). */
+    val dateRangePickerMaxHeight = 520.dp
 }

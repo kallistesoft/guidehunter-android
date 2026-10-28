@@ -17,7 +17,7 @@ import urllib.error
 import urllib.request
 
 # The fields that go on the map; the others (status, live, updatedAt) are the review's.
-PUBLIC = ["ownerUid", "title", "description", "activity", "species", "region", "lat", "lng", "priceFrom"]
+PUBLIC = ["ownerUid", "title", "description", "activity", "species", "region", "lat", "lng", "priceFrom", "tripLength", "departures", "everyYear"]
 
 
 def access_token():

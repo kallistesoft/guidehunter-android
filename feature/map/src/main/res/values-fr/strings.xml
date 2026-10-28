@@ -42,4 +42,11 @@
         <item quantity="one">%d espèce</item>
         <item quantity="other">%d espèces</item>
     </plurals>
+    <string name="section_dates">Dates</string>
+    <string name="dates_on_request">Dates sur demande</string>
+    <string name="next_departure">Prochain départ</string>
+    <string name="other_dates">Autres dates</string>
+    <string name="your_trip">Votre séjour : %1$s</string>
+    <string name="filter_dates">Dates</string>
+    <string name="contact_email_body">Bonjour, j\'ai trouvé votre offre « %1$s » sur GuideHunter. Le séjour du %2$s m\'intéresse.</string>
 </resources>

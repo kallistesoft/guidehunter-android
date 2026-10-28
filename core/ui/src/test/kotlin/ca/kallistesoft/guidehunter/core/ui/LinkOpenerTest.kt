@@ -54,6 +54,10 @@ class LinkOpenerTest {
         assertEquals("Trip found", intent.getStringExtra(Intent.EXTRA_SUBJECT))
         links.email("guide@example.com")
         assertEquals("mailto:guide@example.com", started().data.toString())
+        links.email("guide@example.com", "Trip", "May 20, 2027")
+        val withBody = started()
+        assertEquals("mailto:guide@example.com?subject=Trip&body=May%2020%2C%202027", withBody.data.toString())
+        assertEquals("May 20, 2027", withBody.getStringExtra(Intent.EXTRA_TEXT))
     }
 
     @Test

@@ -29,7 +29,7 @@ class MyOffersViewModelTest {
     private val activity = mockk<Context>()
     private val offer = GuideOffer("o1", TestGuides.offer)
 
-    private fun viewModel() = MyOffersViewModel(auth, account, google)
+    private fun viewModel() = MyOffersViewModel(auth, account, google, { TestGuides.today })
 
     private val MyOffersViewModel.state get() = uiState.value
 

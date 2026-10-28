@@ -38,4 +38,19 @@
     <string name="activity_both">Hunting and fishing</string>
 
     <string name="back">Back</string>
+
+    <string name="slot_morning_of">%1$s, morning</string>
+    <string name="slot_afternoon_of">%1$s, afternoon</string>
+    <string name="trip_half_day">Half day</string>
+    <plurals name="trip_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="trip_weeks">
+        <item quantity="one">%d week</item>
+        <item quantity="other">%d weeks</item>
+    </plurals>
+    <string name="dialog_ok">OK</string>
+    <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_clear">Clear</string>
 </resources>

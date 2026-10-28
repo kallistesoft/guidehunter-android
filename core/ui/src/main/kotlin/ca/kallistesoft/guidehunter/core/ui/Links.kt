@@ -29,11 +29,14 @@ class LinkOpener(private val context: Context) {
     }
 
     /** Opens a pre-filled email to [to], an address typed by a guide: encoded, so it can't add recipients or a body. */
-    fun email(to: String, subject: String? = null): Boolean {
+    fun email(to: String, subject: String? = null, body: String? = null): Boolean {
         // Encoded by hand: some mail apps show '+' literally for spaces.
-        val query = subject?.let { "?subject=${Uri.encode(it)}" }.orEmpty()
+        val query = listOfNotNull(subject?.let { "subject=${Uri.encode(it)}" }, body?.let { "body=${Uri.encode(it)}" })
+            .joinToString("&").let { if (it.isEmpty()) "" else "?$it" }
         val intent = Intent(Intent.ACTION_SENDTO, "mailto:${Uri.encode(to.trim(), "@")}$query".toUri())
-        subject?.let { intent.putExtra(Intent.EXTRA_SUBJECT, it) } // for the mail apps that ignore the query
+        // For the mail apps that ignore the query.
+        subject?.let { intent.putExtra(Intent.EXTRA_SUBJECT, it) }
+        body?.let { intent.putExtra(Intent.EXTRA_TEXT, it) }
         return start(intent)
     }
 

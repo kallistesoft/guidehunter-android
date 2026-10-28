@@ -8,9 +8,14 @@ import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
+import ca.kallistesoft.guidehunter.core.model.Schedule
+import ca.kallistesoft.guidehunter.core.model.Slot
+import ca.kallistesoft.guidehunter.core.model.TripLength
+import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.Species
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
+import kotlinx.datetime.LocalDate
 
 // The Firestore documents (see firestore.rules and README, "Firebase"), as plain maps so they're tested on the JVM.
 
@@ -48,8 +53,53 @@ internal fun guideFrom(id: String, data: Map<String, Any?>): Guide? {
         location = GeoPoint(lat, lng),
         priceFrom = (data["priceFrom"] as? Number)?.toInt(),
         currency = data["currency"] as? String ?: "CAD",
+        schedule = scheduleFrom(data),
     )
 }
+
+/**
+ * An offer's schedule in a `guideOffers` or `guides` document: `tripLength` ("HALF_DAY" or a number of days),
+ * `departures` (ISO dates, a half day's ending in "/AM" or "/PM": "2027-05-20/AM") and `everyYear`. Readable in the
+ * console and the review email; unreadable departures are dropped.
+ */
+internal fun Schedule.toFields(): Map<String, Any?> = mapOf(
+    "tripLength" to when (val length = length) {
+        TripLength.HalfDay -> HALF_DAY
+        is TripLength.Days -> length.count
+        null -> null
+    },
+    "departures" to departures.sorted().map(::departureText),
+    "everyYear" to everyYear,
+)
+
+internal fun scheduleFrom(data: Map<String, Any?>): Schedule = Schedule(
+    length = when (val length = data["tripLength"]) {
+        HALF_DAY -> TripLength.HalfDay
+        is Number -> TripLength.Days(length.toInt())
+        else -> null
+    },
+    departures = (data["departures"] as? List<*>).orEmpty().filterIsInstance<String>().mapNotNull(::departureFrom),
+    everyYear = data["everyYear"] == true,
+)
+
+private fun departureText(departure: Departure): String =
+    departure.date.toString() + when (departure.slot) {
+        Slot.MORNING -> "/AM"
+        Slot.AFTERNOON -> "/PM"
+        null -> ""
+    }
+
+private fun departureFrom(text: String): Departure? {
+    val slot = when (text.substringAfter('/', "")) {
+        "AM" -> Slot.MORNING
+        "PM" -> Slot.AFTERNOON
+        "" -> null
+        else -> return null
+    }
+    return runCatching { Departure(LocalDate.parse(text.substringBefore('/')), slot) }.getOrNull()
+}
+
+private const val HALF_DAY = "HALF_DAY"
 
 /** A `guideContacts` document, or null without a name. */
 internal fun contactFrom(data: Map<String, Any?>): GuideContact? {
@@ -100,7 +150,7 @@ internal fun OfferDraft.toDocument(uid: String, live: Boolean): Map<String, Any?
     "status" to OfferStatus.PENDING.name,
     "live" to live,
     "updatedAt" to FieldValue.serverTimestamp(),
-)
+) + schedule.toFields()
 
 /** A `guideOffers` document; an unknown status reads as waiting for review. */
 internal fun offerFrom(id: String, data: Map<String, Any?>): GuideOffer {
@@ -116,6 +166,7 @@ internal fun offerFrom(id: String, data: Map<String, Any?>): GuideOffer {
             region = data["region"] as? String ?: "",
             location = if (lat != null && lng != null) GeoPoint(lat, lng) else null,
             priceFrom = (data["priceFrom"] as? Number)?.toInt()?.toString().orEmpty(),
+            schedule = scheduleFrom(data),
         ),
         status = OfferStatus.entries.find { it.name == data["status"] } ?: OfferStatus.PENDING,
         live = data["live"] == true,
@@ -146,6 +197,13 @@ internal fun offerMail(to: String, id: String, uid: String, draft: OfferDraft, p
                 "Region: ${offer.region}",
                 "Location: ${offer.location?.let { "${it.latitude}, ${it.longitude}" }}",
                 "Price from: ${offer.priceFrom.ifEmpty { "on request" }}",
+                "Duration: ${when (val length = offer.schedule.length) {
+                    TripLength.HalfDay -> "half day"
+                    is TripLength.Days -> "${length.count} days"
+                    null -> "not given"
+                }}",
+                "Departures: ${offer.schedule.departures.sorted().joinToString(transform = ::departureText).ifEmpty { "on request" }}" +
+                    if (offer.schedule.everyYear) " (every year)" else "",
                 "",
                 "Business name: ${guide.businessName}",
                 "Email: ${guide.email}",

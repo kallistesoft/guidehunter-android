@@ -14,7 +14,10 @@ import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
+import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.Today
+import ca.kallistesoft.guidehunter.core.model.Trip
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +32,7 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.math.roundToInt
+import kotlinx.datetime.LocalDate
 
 /** A guide on the map, and how far it is from the user (null while the user's location is unknown). */
 data class GuideItem(val guide: Guide, val distanceKm: Int? = null)
@@ -60,7 +64,16 @@ enum class UnlockError {
     LOAD_FAILED,
 }
 
-data class SelectedGuide(val item: GuideItem, val contact: ContactState)
+/**
+ * The guide whose offer is open: its [trips] still to come (soonest first), and the [trip] the user chose, which the
+ * contact section and the email to the guide repeat.
+ */
+data class SelectedGuide(
+    val item: GuideItem,
+    val contact: ContactState,
+    val trips: List<Trip> = emptyList(),
+    val trip: Trip? = null,
+)
 
 data class MapUiState(
     val loading: Boolean = true,
@@ -74,10 +87,12 @@ data class MapUiState(
     val selected: SelectedGuide? = null,
     /** The user's region requires a way back to their ad consent choices: show "Privacy options". */
     val privacyOptionsRequired: Boolean = false,
+    /** The first day the dates picker offers. */
+    val today: LocalDate = LocalDate.fromEpochDays(0),
 )
 
 /**
- * The map of guides: filtered by discipline and species, with the distance from the user. Opening a guide shows its
+ * The map of guides: filtered by discipline, species and the dates the user can go, with the distance from the user. Opening a guide shows its
  * public offer; its name and contact details are shown once the user has watched a rewarded ad (Pattern A of
  * .claude/skills/viewmodel-state).
  */
@@ -88,14 +103,20 @@ class MapViewModel @Inject constructor(
     private val rewardedAds: RewardedAds,
     private val adConsent: AdConsent,
     private val savedState: SavedStateHandle,
+    private val today: Today,
 ) : ViewModel() {
     private val filter = MutableStateFlow(
         GuideFilter(
             discipline = savedState.get<String>(KEY_DISCIPLINE)?.let(Discipline::valueOf),
             species = Species.fromNames(savedState.get<ArrayList<String>>(KEY_SPECIES).orEmpty()).toSet(),
+            dates = savedState.get<LongArray>(KEY_DATES)?.toTrip(),
         ),
     )
-    private val selectedId = MutableStateFlow(savedState.get<String>(KEY_SELECTED))
+
+    /** The open guide, and the trip the user chose in it. */
+    private data class Selection(val id: String? = null, val trip: Trip? = null)
+
+    private val selection = MutableStateFlow(Selection(savedState.get<String>(KEY_SELECTED), savedState.get<LongArray>(KEY_TRIP)?.toTrip()))
     private val userLocation = MutableStateFlow<GeoPoint?>(null)
     private val visibleArea = MutableStateFlow<GeoBounds?>(null)
 
@@ -112,26 +133,35 @@ class MapViewModel @Inject constructor(
         val items = guides.map { guide ->
             GuideItem(guide, location?.let { guide.location.distanceKm(it).roundToInt() })
         }
-        Listing(items, items.filter { filter.matches(it.guide) }.sortedBy { it.distanceKm ?: 0 }, filter, location)
+        val day = today()
+        Listing(items, items.filter { filter.matches(it.guide, day) }.sortedBy { it.distanceKm ?: 0 }, filter, location)
     }.distinctUntilChanged()
 
     val uiState: StateFlow<MapUiState> = combine(
         listing,
         visibleArea,
-        selectedId,
+        selection,
         contacts,
         adConsent.privacyOptionsRequired,
-    ) { listing, area, selectedId, contacts, privacyRequired ->
+    ) { listing, area, selection, contacts, privacyRequired ->
         MapUiState(
             loading = false,
             guides = listing.shown,
             inView = if (area == null) listing.shown else listing.shown.filter { it.guide.location in area },
             filter = listing.filter,
             userLocation = listing.location,
-            selected = listing.all.find { it.guide.id == selectedId }?.let { item ->
-                SelectedGuide(item, contacts[item.guide.id] ?: ContactState.Locked)
+            selected = listing.all.find { it.guide.id == selection.id }?.let { item ->
+                val trips = item.guide.schedule.trips(today())
+                SelectedGuide(
+                    item = item,
+                    contact = contacts[item.guide.id] ?: ContactState.Locked,
+                    trips = trips,
+                    // Searching dates: the first trip that fits them, until the user picks another.
+                    trip = selection.trip?.takeIf { it in trips } ?: listing.filter.dates?.let { free -> trips.find { it.within(free) } },
+                )
             },
             privacyOptionsRequired = privacyRequired,
+            today = today(),
         )
     }.onStart {
         reloadRestoredContact()
@@ -151,8 +181,17 @@ class MapViewModel @Inject constructor(
 
     /** Shows the guides of [discipline] (null: both). The chosen species of the other discipline are dropped. */
     fun chooseDiscipline(discipline: Discipline?) = setFilter { current ->
-        GuideFilter(discipline, current.species.filter { discipline == null || it.discipline == discipline }.toSet())
+        current.copy(discipline = discipline, species = current.species.filter { discipline == null || it.discipline == discipline }.toSet())
     }
+
+    /** Shows the guides with a trip that fits [free], the dates the user can go. */
+    fun chooseDates(free: Trip) = setFilter { it.copy(dates = free) }
+
+    /** Any dates again. */
+    fun clearDates() = setFilter { it.copy(dates = null) }
+
+    /** Chooses one of the open guide's trips (again: unchooses it); the contact and the email repeat it. */
+    fun chooseTrip(trip: Trip) = setSelection { current -> current.copy(trip = trip.takeIf { trip != current.trip }) }
 
     /** Adds [species] to the chosen ones, or removes it: the map shows guides offering any of them. */
     fun toggleSpecies(species: Species) = setFilter { it.copy(species = if (species in it.species) it.species - species else it.species + species) }
@@ -162,8 +201,7 @@ class MapViewModel @Inject constructor(
 
     /** Opens a guide's offer, and gets a rewarded ad ready for its contact details. */
     fun select(guideId: String) {
-        selectedId.value = guideId
-        savedState[KEY_SELECTED] = guideId
+        setSelection { if (it.id == guideId) it else Selection(guideId) }
         if (guideId in unlocked.value) {
             // Unlocked before: read the contact unless it's there or already on its way (no second ad, ever).
             val contact = contacts.value[guideId]
@@ -173,14 +211,11 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    fun dismiss() {
-        selectedId.value = null
-        savedState[KEY_SELECTED] = null
-    }
+    fun dismiss() = setSelection { Selection() }
 
     /** "Watch an ad to see the contact": shows the rewarded ad, then the details if it was watched to the end. */
     fun unlock() {
-        val id = selectedId.value ?: return
+        val id = selection.value.id ?: return
         if (contacts.value[id] == ContactState.Unlocking) return
         setContact(id, ContactState.Unlocking)
         viewModelScope.launch {
@@ -204,7 +239,7 @@ class MapViewModel @Inject constructor(
 
     /** After process death: the open guide was unlocked, but its contact (not saved) has to be read again. */
     private fun reloadRestoredContact() {
-        val id = selectedId.value ?: return
+        val id = selection.value.id ?: return
         if (id in unlocked.value && id !in contacts.value) {
             setContact(id, ContactState.Unlocking)
             viewModelScope.launch { load(id) }
@@ -229,12 +264,30 @@ class MapViewModel @Inject constructor(
         val next = filter.updateAndGet(change)
         savedState[KEY_DISCIPLINE] = next.discipline?.name
         savedState[KEY_SPECIES] = ArrayList(next.species.map { it.name })
+        savedState[KEY_DATES] = next.dates?.toLongs()
     }
+
+    private fun setSelection(change: (Selection) -> Selection) {
+        val next = selection.updateAndGet(change)
+        savedState[KEY_SELECTED] = next.id
+        savedState[KEY_TRIP] = next.trip?.toLongs()
+    }
+
+    /** A trip saved as its days (and its half of the day, -1 for none). */
+    private fun Trip.toLongs() = longArrayOf(start.toEpochDays(), end.toEpochDays(), slot?.ordinal?.toLong() ?: -1)
+
+    private fun LongArray.toTrip() = Trip(
+        LocalDate.fromEpochDays(this[0]),
+        LocalDate.fromEpochDays(this[1]),
+        Slot.entries.getOrNull(this.getOrElse(2) { -1 }.toInt()),
+    )
 
     private companion object {
         const val KEY_DISCIPLINE = "discipline"
         const val KEY_SPECIES = "species"
         const val KEY_SELECTED = "selected"
         const val KEY_UNLOCKED = "unlocked"
+        const val KEY_DATES = "dates"
+        const val KEY_TRIP = "trip"
     }
 }

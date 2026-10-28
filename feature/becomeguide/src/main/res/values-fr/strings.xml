@@ -93,4 +93,37 @@
         <item quantity="one">%d choisie</item>
         <item quantity="other">%d choisies</item>
     </plurals>
+    <string name="step_what">Le séjour</string>
+    <string name="step_species">Espèces</string>
+    <string name="step_where">Où</string>
+    <string name="step_when">Quand</string>
+    <string name="step_review">Prix et envoi</string>
+    <string name="step_of">Étape %1$d sur %2$d</string>
+    <string name="step_next">Suivant</string>
+    <string name="step_back">Retour</string>
+    <string name="change">Modifier</string>
+    <string name="field_duration">Durée du séjour</string>
+    <string name="duration_other">Autre</string>
+    <string name="field_days">Nombre de jours</string>
+    <string name="field_departures">Départs</string>
+    <string name="departures_help">Facultatif : sans dates, votre offre indique « Dates sur demande ».</string>
+    <string name="half_day_slots">Demi-journées :</string>
+    <string name="slot_morning">Matin</string>
+    <string name="slot_afternoon">Après-midi</string>
+    <string name="add_date">Ajouter une date</string>
+    <string name="add_weekly">Ajouter chaque semaine</string>
+    <string name="remove_date">Retirer %1$s</string>
+    <string name="field_repeat">Répétition</string>
+    <string name="repeat_once">Ces dates seulement</string>
+    <string name="repeat_every_year">Chaque année</string>
+    <string name="repeat_once_help">L\'offre quitte la carte après sa dernière date.</string>
+    <string name="repeat_every_year_help">Les mêmes jours reviennent chaque année : l\'offre reste sur la carte.</string>
+    <string name="dates_on_request">Dates sur demande</string>
+    <string name="error_duration">Choisissez la durée d\'un séjour (1 à %1$d jours).</string>
+    <string name="error_dates">Vérifiez les dates : chacune une fois, au plus %1$d.</string>
+    <string name="status_expired">Dates passées : retirée de la carte. Modifiez-la pour ajouter des dates.</string>
+    <plurals name="departures_count">
+        <item quantity="one">%1$d date, dès le %2$s</item>
+        <item quantity="other">%1$d dates, dès le %2$s</item>
+    </plurals>
 </resources>

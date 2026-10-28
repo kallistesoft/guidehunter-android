@@ -40,7 +40,7 @@ class MyOffersScreenTest {
     private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
 
     private fun launch() {
-        val viewModel = MyOffersViewModel(auth, account, google)
+        val viewModel = MyOffersViewModel(auth, account, google, { TestGuides.today })
         compose.setContent {
             GuideHunterTheme {
                 MyOffersScreen(

@@ -9,7 +9,9 @@ import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.GuideUser
+import ca.kallistesoft.guidehunter.core.model.Today
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,7 +23,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
+import kotlinx.datetime.LocalDate
 
 /** What went wrong with the account, said on the screen until dismissed. */
 enum class AccountError { SIGN_IN_FAILED, NOT_CONFIGURED, DELETE_FAILED }
@@ -37,6 +39,8 @@ data class MyOffersUiState(
     /** Signing in or deleting the account: the buttons wait. */
     val busy: Boolean = false,
     val error: AccountError? = null,
+    /** Offers whose dates are all over show as off the map. */
+    val today: LocalDate = LocalDate.fromEpochDays(0),
 )
 
 /**
@@ -50,6 +54,7 @@ class MyOffersViewModel @Inject constructor(
     private val auth: AuthRepository,
     private val account: GuideAccountRepository,
     private val google: GoogleSignIn,
+    private val today: Today,
 ) : ViewModel() {
     private val busy = MutableStateFlow(false)
     private val error = MutableStateFlow<AccountError?>(null)
@@ -65,7 +70,7 @@ class MyOffersViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<MyOffersUiState> = combine(signedIn, busy, error) { state, busy, error ->
-        state.copy(busy = busy, error = error)
+        state.copy(busy = busy, error = error, today = today())
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), MyOffersUiState())
 
     /** Google's sheet, then Firebase; closing the sheet is no error. */

@@ -2,13 +2,17 @@ package ca.kallistesoft.guidehunter.feature.becomeguide
 
 import androidx.lifecycle.SavedStateHandle
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
+import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferField
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
+import ca.kallistesoft.guidehunter.core.model.OfferStep
+import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
@@ -18,6 +22,7 @@ import ca.kallistesoft.guidehunter.core.testing.collecting
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.runTest
+import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,7 +40,7 @@ class OfferEditorViewModelTest {
     private val live = GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true)
 
     private fun viewModel(offerId: String? = null, saved: SavedStateHandle = SavedStateHandle()) =
-        OfferEditorViewModel(offerId, auth, account, location, saved)
+        OfferEditorViewModel(offerId, auth, account, location, saved, { TestGuides.today })
 
     /** Types [offer] into the form, field by field, as the guide would. */
     private fun OfferEditorViewModel.fill(offer: OfferDraft = TestGuides.offer) {
@@ -45,6 +50,9 @@ class OfferEditorViewModelTest {
         offer.species.forEach(::toggleSpecies)
         setRegion(offer.region)
         offer.location?.let(::setLocation)
+        offer.schedule.length?.let(::setLength)
+        addDepartures(offer.schedule.departures.map { it.date }, offer.schedule.departures.mapNotNull { it.slot }.toSet())
+        setEveryYear(offer.schedule.everyYear)
         setPrice(offer.priceFrom)
     }
 
@@ -287,5 +295,124 @@ class OfferEditorViewModelTest {
         vm.submit()
         assertTrue(account.mails.isEmpty())
         assertTrue(vm.state.errors.isEmpty())
+    }
+
+    private fun day(month: Int, day: Int) = LocalDate(2027, month, day)
+
+    @Test
+    fun `a new offer goes step by step, each step checked before the next`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertEquals(OfferStep.WHAT, vm.state.step)
+        assertFalse("nothing before the first step: the screen closes", vm.back())
+        vm.next()
+        assertEquals("stays to fix", OfferStep.WHAT, vm.state.step)
+        assertEquals(setOf(OfferField.TITLE, OfferField.DESCRIPTION, OfferField.ACTIVITY), vm.state.errors)
+        vm.fill()
+        assertTrue(vm.state.errors.isEmpty())
+        listOf(OfferStep.SPECIES, OfferStep.WHERE, OfferStep.WHEN, OfferStep.REVIEW).forEach { step ->
+            vm.next()
+            assertEquals(step, vm.state.step)
+        }
+        assertTrue(vm.back())
+        assertEquals(OfferStep.WHEN, vm.state.step)
+        vm.next()
+        vm.next()
+        assertEquals("Next on the summary sends", SendState.SENT, vm.state.send)
+    }
+
+    @Test
+    fun `an edit opens on the summary, change goes to a step and back`() = runTest {
+        account.give(uid, live)
+        val vm = viewModel("live")
+        collecting(vm.uiState)
+        assertEquals(OfferStep.REVIEW, vm.state.step)
+        vm.change(OfferStep.WHERE)
+        assertEquals(OfferStep.WHERE, vm.state.step)
+        assertTrue(vm.state.returnToReview)
+        vm.next()
+        assertEquals(OfferStep.REVIEW, vm.state.step)
+        vm.change(OfferStep.WHEN)
+        assertTrue("back returns to the summary too", vm.back())
+        assertEquals(OfferStep.REVIEW, vm.state.step)
+        assertFalse("nothing before an edit's summary", vm.back())
+    }
+
+    @Test
+    fun `sending with errors goes back to the first step to fix`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.fill(TestGuides.offer.copy(region = ""))
+        vm.change(OfferStep.REVIEW)
+        vm.submit()
+        assertEquals(OfferStep.WHERE, vm.state.step)
+        assertEquals(setOf(OfferField.REGION), vm.state.errors)
+        vm.setRegion("Abitibi")
+        vm.next()
+        assertEquals(OfferStep.REVIEW, vm.state.step)
+    }
+
+    @Test
+    fun `durations, half days and their mornings`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.setLength(TripLength.Days(3))
+        vm.addDepartures(listOf(day(5, 20), day(5, 20), day(5, 1)), setOf(Slot.AFTERNOON))
+        assertEquals("sorted, once each, no half on a 3-day trip", listOf(Departure(day(5, 1)), Departure(day(5, 20))), vm.state.form.schedule.departures)
+        vm.setLength(TripLength.HalfDay)
+        assertEquals("a half day leaves in the morning", listOf(Slot.MORNING, Slot.MORNING), vm.state.form.schedule.departures.map { it.slot })
+        vm.addDepartures(listOf(day(6, 1)), setOf(Slot.AFTERNOON, Slot.MORNING))
+        assertEquals(
+            listOf(Departure(day(6, 1), Slot.MORNING), Departure(day(6, 1), Slot.AFTERNOON)),
+            vm.state.form.schedule.departures.takeLast(2),
+        )
+        vm.setLength(TripLength.Days(1))
+        assertEquals("whole days again", listOf(day(5, 1), day(5, 20), day(6, 1)), vm.state.form.schedule.departures.map { it.date })
+        vm.removeDeparture(Departure(day(5, 20)))
+        assertEquals(2, vm.state.form.schedule.departures.size)
+        vm.setDays("1 0x")
+        assertEquals(TripLength.Days(10), vm.state.form.schedule.length)
+        vm.setDays("")
+        assertEquals(setOf(OfferField.DURATION), vm.state.form.errors(OfferStep.WHEN))
+        vm.setEveryYear(true)
+        assertTrue(vm.state.form.schedule.everyYear)
+        assertEquals(TestGuides.today, vm.state.today)
+    }
+
+    @Test
+    fun `weekly dates, a season in one go`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.setLength(TripLength.Days(7))
+        vm.addWeekly(day(5, 1), day(6, 26), emptySet())
+        assertEquals(9, vm.state.form.schedule.departures.size)
+        assertEquals(day(6, 26), vm.state.form.schedule.departures.last().date)
+    }
+
+    @Test
+    fun `the step, the dates and the shown errors survive process death`() = runTest {
+        val saved = SavedStateHandle()
+        viewModel(saved = saved).apply {
+            collecting(uiState)
+            fill()
+            next(); next(); next()
+            setLength(TripLength.HalfDay)
+            addDepartures(listOf(day(6, 10)), setOf(Slot.AFTERNOON))
+            setEveryYear(true)
+            setDays("")
+            next()
+        }
+        val restored = viewModel(saved = saved)
+        assertEquals(OfferStep.WHEN, restored.state.step)
+        assertEquals(setOf(OfferField.DURATION), restored.state.errors)
+        assertEquals(
+            listOf(Departure(day(5, 1)), Departure(day(6, 10))),
+            restored.state.form.schedule.departures,
+        )
+        assertTrue(restored.state.form.schedule.everyYear)
+        assertEquals(TripLength.Days(0), restored.state.form.schedule.length)
+        restored.setLength(TripLength.HalfDay)
+        val again = viewModel(saved = saved)
+        assertEquals(TripLength.HalfDay, again.state.form.schedule.length)
     }
 }

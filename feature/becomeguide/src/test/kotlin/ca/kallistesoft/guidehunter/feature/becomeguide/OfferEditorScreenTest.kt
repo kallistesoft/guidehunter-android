@@ -6,18 +6,18 @@ import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
 import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.performTextClearance
-import org.robolectric.Shadows.shadowOf
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
@@ -26,10 +26,13 @@ import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
+import ca.kallistesoft.guidehunter.core.model.Schedule
+import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
+import ca.kallistesoft.guidehunter.core.ui.departureDate
 import kotlinx.coroutines.CompletableDeferred
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -37,6 +40,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /** The offer form with a stand-in map picker (a tap places the pin at [PICKED]); Google Maps can't draw on the JVM. */
@@ -68,7 +72,7 @@ class OfferEditorScreenTest {
     }
 
     private fun launch(offerId: String? = null) {
-        val viewModel = OfferEditorViewModel(offerId, auth, account, location, SavedStateHandle())
+        val viewModel = OfferEditorViewModel(offerId, auth, account, location, SavedStateHandle(), { TestGuides.today })
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
@@ -90,22 +94,75 @@ class OfferEditorScreenTest {
 
     private fun type(tag: String, text: String) = compose.onNodeWithTag(tag).performScrollTo().performTextInput(text)
 
+    private fun next() = compose.onNodeWithTag("next").performClick()
+
+    private fun step(title: Int) = compose.onNodeWithTag("step-title").assertTextEquals(str(title))
+
+    /** Steps 1 to 4 as the guide fills them in, up to the summary: a week, dates on request. */
     private fun fillIn() {
         type("field-title", TestGuides.offer.title)
         compose.onNodeWithTag("activity-HUNT").performScrollTo().performClick()
-        compose.onNodeWithTag("species-BLACK_BEAR").performScrollTo().performClick()
         type("field-description", TestGuides.offer.description)
+        next()
+        compose.onNodeWithTag("species-BLACK_BEAR").performScrollTo().performClick()
+        next()
         type("field-region", "Abitibi")
         compose.onNodeWithTag("location-picker").performScrollTo().performClick()
+        next()
+        compose.onNodeWithTag("length-7").performScrollTo().performClick()
+        next()
         type("field-price", "2400")
     }
+
+    /** What [fillIn] sends: the test offer without its dates. */
+    private val filled = TestGuides.offer.copy(location = PICKED, schedule = Schedule(TripLength.Days(7)))
 
     private fun sent(): OfferDraft = account.offersByUser.value.getValue(uid).single().draft
 
     @Test
+    fun `a new offer goes through five steps, then is sent for review and the screen closes`() {
+        launch()
+        step(R.string.step_what)
+        compose.onNodeWithText(str(R.string.step_of, 1, 5)).assertExists()
+        compose.onNodeWithText(str(R.string.offer_intro)).assertExists()
+        compose.onNodeWithTag("delete-offer").assertDoesNotExist()
+        compose.onNodeWithTag("step-back").assertDoesNotExist()
+        fillIn()
+        step(R.string.step_review)
+        compose.onNodeWithTag("summary-WHEN").performScrollTo()
+        compose.onNodeWithText(str(R.string.dates_on_request)).assertExists()
+        compose.onNodeWithTag("send").performClick()
+        compose.waitForIdle()
+        assertEquals(filled, sent())
+        assertEquals(1, dones)
+    }
+
+    @Test
+    fun `next stays on a step until its fields are right`() {
+        launch()
+        next()
+        step(R.string.step_what)
+        listOf(str(R.string.error_title), str(R.string.error_activity), str(R.string.error_description, OfferDraft.MIN_DESCRIPTION))
+            .forEach { compose.onNodeWithText(it).performScrollTo() }
+        compose.onNodeWithText(str(R.string.error_species)).assertDoesNotExist()
+        type("field-title", "Bear")
+        compose.onNodeWithTag("activity-HUNT").performScrollTo().performClick()
+        type("field-description", TestGuides.offer.description)
+        next()
+        step(R.string.step_species)
+        next()
+        compose.onNodeWithText(str(R.string.error_species)).performScrollTo()
+        compose.onNodeWithTag("step-back").performClick()
+        step(R.string.step_what)
+    }
+
+    @Test
     fun `offering both, hunting and fishing species open apart and count what's chosen`() {
         launch()
+        type("field-title", "Camp")
         compose.onNodeWithTag("activity-BOTH").performScrollTo().performClick()
+        type("field-description", TestGuides.offer.description)
+        next()
         compose.onNodeWithTag("species-ELK").assertDoesNotExist()
         compose.onNodeWithTag("species-group-HUNTING").performScrollTo().performClick()
         compose.onNodeWithTag("species-ELK").performScrollTo().performClick()
@@ -117,27 +174,51 @@ class OfferEditorScreenTest {
     }
 
     @Test
-    fun `a filled-in offer is sent for review, then the screen closes`() {
+    fun `when, a duration, other days, half days and the date pickers`() {
         launch()
-        compose.onNodeWithText(str(R.string.offer_new_title)).assertExists()
-        compose.onNodeWithText(str(R.string.offer_intro)).assertExists()
-        compose.onNodeWithTag("delete-offer").assertDoesNotExist()
-        compose.onNodeWithText(str(R.string.field_species_help)).performScrollTo()
         fillIn()
-        compose.onNodeWithText(str(R.string.field_location_set)).performScrollTo()
-        compose.onNodeWithTag("send").performScrollTo().performClick()
-        compose.waitForIdle()
-        assertEquals(TestGuides.offer.copy(location = PICKED), sent())
-        assertEquals(1, dones)
+        compose.onNodeWithTag("change-WHEN").performScrollTo().performClick()
+        step(R.string.step_when)
+        compose.onNodeWithTag("field-repeat").assertDoesNotExist()
+        compose.onNodeWithTag("length-other").performScrollTo().performClick()
+        next()
+        compose.onNodeWithText(str(R.string.error_duration, TripLength.MAX_DAYS)).performScrollTo()
+        type("field-days", "10")
+        compose.onNodeWithTag("length-half").performScrollTo().performClick()
+        compose.onNodeWithTag("slot-AFTERNOON").performScrollTo().performClick()
+        compose.onNodeWithTag("slot-MORNING").performScrollTo().performClick()
+        compose.onNodeWithTag("slot-AFTERNOON").performScrollTo().performClick() // the last one stays
+        compose.onNodeWithTag("add-date").performScrollTo().performClick()
+        compose.onNodeWithTag("date-picker").assertExists()
+        compose.onNodeWithText(app.getString(ca.kallistesoft.guidehunter.core.ui.R.string.dialog_cancel)).performClick()
+        compose.onNodeWithTag("add-weekly").performScrollTo().performClick()
+        compose.onNodeWithTag("date-range-picker").assertExists()
+        compose.onNodeWithText(app.getString(ca.kallistesoft.guidehunter.core.ui.R.string.dialog_cancel)).performClick()
+        next()
+        step(R.string.step_review)
+        compose.onNodeWithText(app.getString(ca.kallistesoft.guidehunter.core.ui.R.string.trip_half_day)).performScrollTo()
     }
 
     @Test
-    fun `an offer on the map opens with its text, says it stays there, and can be deleted`() {
+    fun `an offer on the map opens on its summary, its dates can be changed, and it can be deleted`() {
         account.give(uid, GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true))
         launch("live")
-        compose.onNodeWithText(str(R.string.offer_edit_title)).assertExists()
+        step(R.string.step_review)
         compose.onNodeWithText(str(R.string.offer_live_intro)).assertExists()
-        compose.onNodeWithText(TestGuides.offer.title).assertExists()
+        compose.onNodeWithText(TestGuides.offer.title).performScrollTo()
+        compose.onNodeWithTag("step-back").assertDoesNotExist()
+
+        compose.onNodeWithTag("change-WHEN").performScrollTo().performClick()
+        compose.onNodeWithTag("departure-2027-05-01").performScrollTo()
+        compose.onNodeWithTag("these-dates").performScrollTo()
+        compose.onNodeWithTag("every-year").performScrollTo().performClick()
+        compose.onNodeWithText(str(R.string.repeat_every_year_help)).performScrollTo()
+        compose.onNodeWithContentDescription(str(R.string.remove_date, app.departureDate(TestGuides.offer.schedule.departures.single())))
+            .performScrollTo().performClick()
+        compose.onNodeWithTag("departure-2027-05-01").assertDoesNotExist()
+        compose.onNodeWithTag("every-year").assertDoesNotExist()
+        next()
+        step(R.string.step_review)
 
         compose.onNodeWithTag("delete-offer").performClick()
         compose.onNodeWithText(str(R.string.offer_delete_live_body)).assertExists()
@@ -156,7 +237,6 @@ class OfferEditorScreenTest {
     fun `an offer waiting for review says deleting it is final`() {
         account.give(uid, GuideOffer("pending", TestGuides.offer))
         launch("pending")
-        compose.onNodeWithText(str(R.string.offer_intro)).assertExists()
         compose.onNodeWithTag("delete-offer").performClick()
         compose.onNodeWithText(str(R.string.offer_delete_body)).assertExists()
     }
@@ -166,33 +246,21 @@ class OfferEditorScreenTest {
         account.profiles.value = emptyMap()
         launch()
         fillIn()
-        compose.onNodeWithTag("send").performScrollTo().performClick()
+        compose.onNodeWithTag("send").performClick()
         compose.onNodeWithText(str(R.string.offer_needs_profile)).performScrollTo()
         compose.onNodeWithTag("needs-profile").performScrollTo().performClick()
         assertEquals(1, profileOpened)
     }
 
     @Test
-    fun `an empty form shows every error`() {
-        launch()
-        compose.onNodeWithTag("send").performScrollTo().performClick()
-        listOf(
-            str(R.string.error_title),
-            str(R.string.error_activity),
-            str(R.string.error_species),
-            str(R.string.error_description, OfferDraft.MIN_DESCRIPTION),
-            str(R.string.error_region),
-            str(R.string.error_location),
-            str(R.string.form_has_errors),
-        ).forEach { compose.onNodeWithText(it).performScrollTo() }
-    }
-
-    @Test
     fun `a wrong price is flagged`() {
         launch()
+        fillIn()
+        compose.onNodeWithTag("field-price").performTextClearance()
         type("field-price", "0")
-        compose.onNodeWithTag("send").performScrollTo().performClick()
+        compose.onNodeWithTag("send").performClick()
         compose.onNodeWithText(str(R.string.error_price)).performScrollTo()
+        compose.onNodeWithText(str(R.string.form_has_errors)).performScrollTo()
     }
 
     @Test
@@ -200,7 +268,7 @@ class OfferEditorScreenTest {
         account.failure = IllegalStateException()
         launch()
         fillIn()
-        compose.onNodeWithTag("send").performScrollTo().performClick()
+        compose.onNodeWithTag("send").performClick()
         compose.onNodeWithText(str(R.string.send_failed)).performScrollTo()
     }
 
@@ -209,7 +277,7 @@ class OfferEditorScreenTest {
         account.failure = BackendNotConfiguredException()
         launch()
         fillIn()
-        compose.onNodeWithTag("send").performScrollTo().performClick()
+        compose.onNodeWithTag("send").performClick()
         compose.onNodeWithText(str(R.string.send_not_configured)).performScrollTo()
     }
 
@@ -218,13 +286,24 @@ class OfferEditorScreenTest {
         account.onWrite = CompletableDeferred()
         launch()
         fillIn()
-        compose.onNodeWithTag("send").performScrollTo().performClick()
-        compose.onNodeWithText(str(R.string.sending)).performScrollTo()
+        compose.onNodeWithTag("send").performClick()
+        compose.onNodeWithText(str(R.string.sending)).assertExists()
+    }
+
+    /** Steps 1 and 2 filled in: on the Where step. */
+    private fun toWhere() {
+        type("field-title", "Bear")
+        compose.onNodeWithTag("activity-HUNT").performScrollTo().performClick()
+        type("field-description", TestGuides.offer.description)
+        next()
+        compose.onNodeWithTag("species-BLACK_BEAR").performScrollTo().performClick()
+        next()
     }
 
     @Test
     fun `use my location asks for the permission, then places the pin, or says why not`() {
         launch()
+        toWhere()
         compose.onNodeWithTag("use-my-location").performScrollTo().performClick()
         compose.onNodeWithText(str(R.string.location_denied)).performScrollTo()
         assertEquals(0, location.reads)
@@ -245,6 +324,7 @@ class OfferEditorScreenTest {
     fun `typed coordinates place the pin, once they're within the world`() {
         launch()
         fillIn() // the map tap places PICKED; the coordinates below replace it
+        compose.onNodeWithTag("change-WHERE").performScrollTo().performClick()
         compose.onNodeWithTag("type-coordinates").performScrollTo().performClick()
         // The fields start with the pin's coordinates (48.0, -79.0): valid, so "Place the pin" is enabled.
         compose.onNodeWithTag("latitude").performScrollTo().performTextClearance()
@@ -261,14 +341,21 @@ class OfferEditorScreenTest {
         compose.onNodeWithTag("type-coordinates").performScrollTo().performClick()
         compose.onNodeWithTag("coordinates-cancel").performScrollTo().performClick()
         compose.onNodeWithTag("latitude").assertDoesNotExist()
-        compose.onNodeWithTag("send").performScrollTo().performClick()
+        next() // back to the summary
+        compose.onNodeWithTag("send").performClick()
         compose.waitForIdle()
         assertEquals(GeoPoint(48.24, -79.02), sent().location)
     }
 
     @Test
-    fun `back leaves the form`() {
+    fun `back goes a step back, and leaves from the first`() {
         launch()
+        toWhere()
+        compose.onNodeWithTag("back").performClick()
+        step(R.string.step_species)
+        compose.onNodeWithTag("step-back").performClick()
+        step(R.string.step_what)
+        assertEquals(0, backs)
         compose.onNodeWithTag("back").performClick()
         assertEquals(1, backs)
     }

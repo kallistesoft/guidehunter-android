@@ -1,5 +1,6 @@
 package ca.kallistesoft.guidehunter.core.model
 
+import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -13,10 +14,12 @@ class GuideOfferTest {
         species = setOf(Species.BLACK_BEAR),
         region = "Abitibi",
         location = GeoPoint(48.0, -79.0),
+        schedule = Schedule(TripLength.Days(7)),
     )
+    private val may1 = Departure(LocalDate(2027, 5, 1))
 
     @Test
-    fun `a complete offer can be sent, the price being optional`() {
+    fun `a complete offer can be sent, the price and the dates being optional`() {
         assertTrue(valid.errors().isEmpty())
         assertTrue(valid.copy(priceFrom = "2400").errors().isEmpty())
     }
@@ -31,6 +34,7 @@ class GuideOfferTest {
                 OfferField.SPECIES,
                 OfferField.REGION,
                 OfferField.LOCATION,
+                OfferField.DURATION,
             ),
             OfferDraft().errors(),
         )
@@ -45,6 +49,31 @@ class GuideOfferTest {
         assertEquals(setOf(OfferField.LOCATION), valid.copy(location = null).errors())
         assertEquals(setOf(OfferField.PRICE), valid.copy(priceFrom = "0").errors())
         assertEquals(setOf(OfferField.PRICE), valid.copy(priceFrom = "lots").errors())
+        assertEquals(setOf(OfferField.DURATION), valid.copy(schedule = Schedule(TripLength.Days(0))).errors())
+        assertEquals(setOf(OfferField.DURATION), valid.copy(schedule = Schedule(TripLength.Days(61))).errors())
+    }
+
+    @Test
+    fun `departures have no duplicates, not too many, and a slot exactly on half days`() {
+        val week = Schedule(TripLength.Days(7), listOf(may1))
+        assertTrue(valid.copy(schedule = week).errors().isEmpty())
+        assertEquals(setOf(OfferField.DATES), valid.copy(schedule = week.copy(departures = listOf(may1, may1))).errors())
+        val many = (0..OfferDraft.MAX_DEPARTURES).map { Departure(LocalDate.fromEpochDays(20_000 + it)) }
+        assertEquals(setOf(OfferField.DATES), valid.copy(schedule = week.copy(departures = many)).errors())
+        assertEquals(setOf(OfferField.DATES), valid.copy(schedule = week.copy(departures = listOf(may1.copy(slot = Slot.MORNING)))).errors())
+        val half = Schedule(TripLength.HalfDay, listOf(may1.copy(slot = Slot.MORNING), may1.copy(slot = Slot.AFTERNOON)))
+        assertTrue(valid.copy(schedule = half).errors().isEmpty())
+        assertEquals(setOf(OfferField.DATES), valid.copy(schedule = half.copy(departures = listOf(may1))).errors())
+    }
+
+    @Test
+    fun `each step checks only its own fields`() {
+        val empty = OfferDraft()
+        assertEquals(setOf(OfferField.TITLE, OfferField.DESCRIPTION, OfferField.ACTIVITY), empty.errors(OfferStep.WHAT))
+        assertEquals(setOf(OfferField.SPECIES), empty.errors(OfferStep.SPECIES))
+        assertEquals(setOf(OfferField.REGION, OfferField.LOCATION), empty.errors(OfferStep.WHERE))
+        assertEquals(setOf(OfferField.DURATION), empty.errors(OfferStep.WHEN))
+        assertEquals(emptySet<OfferField>(), empty.errors(OfferStep.REVIEW))
     }
 
     @Test

@@ -1,5 +1,6 @@
 package ca.kallistesoft.guidehunter.core.data
 
+import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
@@ -8,9 +9,13 @@ import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.GuideUser
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
+import ca.kallistesoft.guidehunter.core.model.Schedule
+import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.TripLength
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.datetime.LocalDate
 
 /**
  * Made-up guides for a build without Firebase (a fresh clone, pull requests), so the map, the rewarded ad and the
@@ -63,6 +68,12 @@ internal val SAMPLE_GUIDES = listOf(
         region = "Abitibi-Témiscamingue, QC",
         location = GeoPoint(48.24, -79.02),
         priceFrom = 2_400,
+        // Every year, so the samples never expire: a week leaving each Saturday in May.
+        schedule = Schedule(
+            TripLength.Days(7),
+            listOf(1, 8, 15, 22, 29).map { Departure(LocalDate(2027, 5, it)) },
+            everyYear = true,
+        ),
     ),
     Guide(
         id = "sample-moose",
@@ -73,6 +84,7 @@ internal val SAMPLE_GUIDES = listOf(
         region = "La Tuque, QC",
         location = GeoPoint(47.44, -72.78),
         priceFrom = 1_800,
+        schedule = Schedule(TripLength.Days(5)),
     ),
     Guide(
         id = "sample-salmon",
@@ -82,6 +94,11 @@ internal val SAMPLE_GUIDES = listOf(
         species = listOf(Species.ATLANTIC_SALMON, Species.BROOK_TROUT),
         region = "Gaspé, QC",
         location = GeoPoint(48.83, -64.48),
+        schedule = Schedule(
+            TripLength.HalfDay,
+            listOf(Departure(LocalDate(2027, 6, 12), Slot.MORNING), Departure(LocalDate(2027, 6, 12), Slot.AFTERNOON)),
+            everyYear = true,
+        ),
     ),
 )
 

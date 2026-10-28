@@ -42,4 +42,11 @@
         <item quantity="one">%d species</item>
         <item quantity="other">%d species</item>
     </plurals>
+    <string name="section_dates">Dates</string>
+    <string name="dates_on_request">Dates on request</string>
+    <string name="next_departure">Next departure</string>
+    <string name="other_dates">Other dates</string>
+    <string name="your_trip">Your trip: %1$s</string>
+    <string name="filter_dates">Dates</string>
+    <string name="contact_email_body">Hello, I found your offer \"%1$s\" on GuideHunter. I\'m interested in the trip on %2$s.</string>
 </resources>

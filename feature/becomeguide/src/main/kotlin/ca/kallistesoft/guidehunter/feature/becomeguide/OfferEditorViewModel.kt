@@ -7,12 +7,18 @@ import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
+import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferField
+import ca.kallistesoft.guidehunter.core.model.OfferStep
+import ca.kallistesoft.guidehunter.core.model.Schedule
+import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.Today
+import ca.kallistesoft.guidehunter.core.model.TripLength
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -27,6 +33,9 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.plus
 
 data class OfferEditorUiState(
     /** The offer being edited is still being read. */
@@ -36,7 +45,13 @@ data class OfferEditorUiState(
     val editing: Boolean = false,
     /** A reviewed version is on the map: it stays there, as it is, until the edit is reviewed. */
     val live: Boolean = false,
-    /** The fields to flag: shown only after a first try to send, not while the guide is still typing. */
+    /** The step on screen: one purpose each (what, species, where, when, price and send). */
+    val step: OfferStep = OfferStep.WHAT,
+    /** Came from the summary to change a step: Next goes back to it. */
+    val returnToReview: Boolean = false,
+    /**
+     * The fields to flag: those of the steps the guide tried to leave (Next, Send), not while they're still typing.
+     */
     val errors: Set<OfferField> = emptySet(),
     val send: SendState = SendState.EDITING,
     /** Sending needs the guide's profile (their contact): it isn't filled in yet. */
@@ -45,11 +60,14 @@ data class OfferEditorUiState(
     val locationFailed: Boolean = false,
     /** Deleted, or gone (deleted on another phone): the screen closes. */
     val deleted: Boolean = false,
+    /** The first day a departure can be. */
+    val today: LocalDate = LocalDate.fromEpochDays(0),
 )
 
 /**
- * A guide's offer, new ([offerId] null) or sent before: kept as typed (and across process death), checked by
- * [OfferDraft.errors], sent to us for review (Pattern B of .claude/skills/viewmodel-state: an edit is read once).
+ * A guide's offer, new ([offerId] null) or sent before, in steps ([OfferStep]): kept as typed (and across process
+ * death), each step checked by [OfferDraft.errors] before the next, sent to us for review (Pattern B of
+ * .claude/skills/viewmodel-state: an edit is read once). A new offer starts on the first step, an edit on the summary.
  */
 @HiltViewModel(assistedFactory = OfferEditorViewModel.Factory::class)
 class OfferEditorViewModel @AssistedInject constructor(
@@ -58,6 +76,7 @@ class OfferEditorViewModel @AssistedInject constructor(
     private val account: GuideAccountRepository,
     private val locationRepository: LocationRepository,
     private val savedState: SavedStateHandle,
+    private val today: Today,
 ) : ViewModel() {
     @AssistedFactory
     interface Factory {
@@ -83,7 +102,14 @@ class OfferEditorViewModel @AssistedInject constructor(
             _uiState.update { it.copy(loading = false, deleted = true) }
             return
         }
-        _uiState.update { it.copy(loading = false, form = offer?.draft ?: OfferDraft(), live = offer?.live == true) }
+        _uiState.update {
+            it.copy(
+                loading = false,
+                form = offer?.draft ?: OfferDraft(),
+                live = offer?.live == true,
+                step = if (offer != null) OfferStep.REVIEW else OfferStep.WHAT,
+            )
+        }
         save()
     }
 
@@ -117,6 +143,80 @@ class OfferEditorViewModel @AssistedInject constructor(
 
     fun setPrice(value: String) = edit { it.copy(priceFrom = value.filter(Char::isDigit).take(MAX_PRICE_DIGITS)) }
 
+    /** How long a trip lasts. Switching to or from a half day keeps the dates: mornings, or whole days. */
+    fun setLength(length: TripLength) = edit { form ->
+        val half = length == TripLength.HalfDay
+        val departures = form.schedule.departures
+            .map { it.copy(slot = if (half) it.slot ?: Slot.MORNING else null) }
+            .distinct()
+        form.copy(schedule = form.schedule.copy(length = length, departures = departures))
+    }
+
+    /** "Other": a number of days, as typed (blank or 0 is flagged once the guide tries the next step). */
+    fun setDays(value: String) = setLength(TripLength.Days(value.filter(Char::isDigit).take(MAX_DAYS_DIGITS).toIntOrNull() ?: 0))
+
+    /** Adds departures on [dates]; on a half day, one per chosen half of the day ([slots]). */
+    fun addDepartures(dates: List<LocalDate>, slots: Set<Slot>) = edit { form ->
+        val half = form.schedule.length == TripLength.HalfDay
+        val added = dates.flatMap { date -> if (half) slots.sorted().map { Departure(date, it) } else listOf(Departure(date)) }
+        form.copy(schedule = form.schedule.copy(departures = (form.schedule.departures + added).distinct().sorted()))
+    }
+
+    /** A departure every week from [first] to [last] (a season of weekly trips in one go). */
+    fun addWeekly(first: LocalDate, last: LocalDate, slots: Set<Slot>) =
+        addDepartures(generateSequence(first) { it.plus(1, DateTimeUnit.WEEK) }.takeWhile { it <= last }.toList(), slots)
+
+    fun removeDeparture(departure: Departure) = edit { form ->
+        form.copy(schedule = form.schedule.copy(departures = form.schedule.departures - departure))
+    }
+
+    /** The same days every year, or these dates only. */
+    fun setEveryYear(everyYear: Boolean) = edit { it.copy(schedule = it.schedule.copy(everyYear = everyYear)) }
+
+    /**
+     * Next: on to the next step once this one's fields are right (back to the summary when the guide came from it);
+     * otherwise flags them. On the summary, sends.
+     */
+    fun next() {
+        val state = _uiState.value
+        if (state.loading) return
+        if (state.step == OfferStep.REVIEW) return submit()
+        if (state.form.errors(state.step).isNotEmpty()) return showErrors(setOf(state.step))
+        setStep(if (state.returnToReview) OfferStep.REVIEW else OfferStep.entries[state.step.ordinal + 1], returnToReview = false)
+    }
+
+    /**
+     * Back a step (or to the summary the guide came from); false when there's none (the first step, an edit's
+     * summary): the screen closes.
+     */
+    fun back(): Boolean {
+        val state = _uiState.value
+        when {
+            state.returnToReview -> setStep(OfferStep.REVIEW, returnToReview = false)
+            state.step == OfferStep.WHAT || state.step == OfferStep.REVIEW && state.editing -> return false
+            else -> setStep(OfferStep.entries[state.step.ordinal - 1], returnToReview = false)
+        }
+        return true
+    }
+
+    /** "Change" on the summary: opens [step]; Next comes back. */
+    fun change(step: OfferStep) = setStep(step, returnToReview = true)
+
+    private fun setStep(step: OfferStep, returnToReview: Boolean) {
+        _uiState.update { it.copy(step = step, returnToReview = returnToReview) }
+        save()
+    }
+
+    /** Flags the fields of [steps] from now on. */
+    private fun showErrors(steps: Set<OfferStep>) {
+        val shown = shownSteps() + steps
+        savedState[KEY_SHOWN] = shown.map { it.name }.toTypedArray()
+        _uiState.update { it.copy(errors = it.form.errors().filterTo(mutableSetOf()) { field -> field.step in shown }) }
+    }
+
+    private fun shownSteps(): Set<OfferStep> =
+        savedState.get<Array<String>>(KEY_SHOWN).orEmpty().mapNotNull { name -> OfferStep.entries.find { it.name == name } }.toSet()
+
     /**
      * Sends the offer for review once it's valid and the guide's profile is filled in; until then, shows what's
      * missing. A second tap while sending does nothing.
@@ -124,9 +224,12 @@ class OfferEditorViewModel @AssistedInject constructor(
     fun submit() {
         val state = _uiState.value
         if (state.loading || state.send == SendState.SENDING || state.send == SendState.SENT) return
-        if (state.form.errors().isNotEmpty()) {
-            savedState[KEY_SHOW_ERRORS] = true
-            _uiState.update { it.copy(errors = it.form.errors()) }
+        val errors = state.form.errors()
+        if (errors.isNotEmpty()) {
+            // Back to the first step to fix; Next returns to the summary.
+            showErrors(errors.map { it.step }.toSet())
+            val first = errors.minOf { it.step }
+            if (first != OfferStep.REVIEW) setStep(first, returnToReview = true)
             return
         }
         _uiState.update { it.copy(send = SendState.SENDING) }
@@ -176,7 +279,7 @@ class OfferEditorViewModel @AssistedInject constructor(
             val failed = state.send == SendState.FAILED || state.send == SendState.NOT_CONFIGURED
             state.copy(
                 form = form,
-                errors = if (savedState.get<Boolean>(KEY_SHOW_ERRORS) == true) form.errors() else emptySet(),
+                errors = shownSteps().let { shown -> form.errors().filterTo(mutableSetOf()) { it.step in shown } },
                 send = if (failed) SendState.EDITING else state.send,
             )
         }
@@ -191,11 +294,23 @@ class OfferEditorViewModel @AssistedInject constructor(
         savedState[KEY_SPECIES] = form.species.map { it.name }.toTypedArray()
         savedState[KEY_LOCATION] = form.location?.let { doubleArrayOf(it.latitude, it.longitude) }
         savedState[KEY_LIVE] = state.live
+        // Days as typed (0 included, still to fix), or a code for a half day and none.
+        savedState[KEY_LENGTH] = when (val length = form.schedule.length) {
+            TripLength.HalfDay -> HALF_DAY
+            is TripLength.Days -> length.count
+            null -> NO_LENGTH
+        }
+        savedState[KEY_DEPARTURES] = form.schedule.departures
+            .flatMap { listOf(it.date.toEpochDays(), it.slot?.ordinal?.toLong() ?: -1) }
+            .toLongArray()
+        savedState[KEY_EVERY_YEAR] = form.schedule.everyYear
+        savedState[KEY_STEP] = state.step.name
+        savedState[KEY_RETURN] = state.returnToReview
     }
 
     /** The edits process death interrupted, or the loading state when there are none. */
     private fun restore(): OfferEditorUiState {
-        val text = savedState.get<Array<String>>(KEY_TEXT) ?: return OfferEditorUiState(editing = offerId != null)
+        val text = savedState.get<Array<String>>(KEY_TEXT) ?: return OfferEditorUiState(editing = offerId != null, today = today())
         val location = savedState.get<DoubleArray>(KEY_LOCATION)
         val form = OfferDraft(
             title = text[0],
@@ -205,13 +320,27 @@ class OfferEditorViewModel @AssistedInject constructor(
             region = text[2],
             location = location?.let { GeoPoint(it[0], it[1]) },
             priceFrom = text[3],
+            schedule = Schedule(
+                length = when (val days = savedState.get<Int>(KEY_LENGTH) ?: NO_LENGTH) {
+                    NO_LENGTH -> null
+                    HALF_DAY -> TripLength.HalfDay
+                    else -> TripLength.Days(days)
+                },
+                departures = savedState.get<LongArray>(KEY_DEPARTURES)?.toList().orEmpty().chunked(2).map { (day, slot) ->
+                    Departure(LocalDate.fromEpochDays(day), Slot.entries.getOrNull(slot.toInt()))
+                },
+                everyYear = savedState[KEY_EVERY_YEAR] ?: false,
+            ),
         )
         return OfferEditorUiState(
             loading = false,
             form = form,
             editing = offerId != null,
             live = savedState[KEY_LIVE] ?: false,
-            errors = if (savedState.get<Boolean>(KEY_SHOW_ERRORS) == true) form.errors() else emptySet(),
+            step = savedState.get<String>(KEY_STEP)?.let(OfferStep::valueOf) ?: OfferStep.WHAT,
+            returnToReview = savedState[KEY_RETURN] ?: false,
+            errors = shownSteps().let { shown -> form.errors().filterTo(mutableSetOf()) { it.step in shown } },
+            today = today(),
         )
     }
 
@@ -221,7 +350,15 @@ class OfferEditorViewModel @AssistedInject constructor(
         const val KEY_SPECIES = "species"
         const val KEY_LOCATION = "location"
         const val KEY_LIVE = "live"
-        const val KEY_SHOW_ERRORS = "showErrors"
+        const val KEY_SHOWN = "shownSteps"
+        const val KEY_LENGTH = "length"
+        const val KEY_DEPARTURES = "departures"
+        const val KEY_EVERY_YEAR = "everyYear"
+        const val KEY_STEP = "step"
+        const val KEY_RETURN = "returnToReview"
         const val MAX_PRICE_DIGITS = 6
+        const val MAX_DAYS_DIGITS = 2
+        const val NO_LENGTH = -1
+        const val HALF_DAY = -2
     }
 }
