@@ -17,6 +17,12 @@ import ca.kallistesoft.guidehunter.core.data.SettingsRepository
 import ca.kallistesoft.guidehunter.core.data.UnconfiguredAuthRepository
 import ca.kallistesoft.guidehunter.core.data.UnconfiguredGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.model.Now
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredRequestRepository
+import ca.kallistesoft.guidehunter.core.data.UnconfiguredUserAccountRepository
+import ca.kallistesoft.guidehunter.core.data.UserAccountRepository
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
+import ca.kallistesoft.guidehunter.core.data.FirestoreRequestRepository
+import ca.kallistesoft.guidehunter.core.data.FirestoreUserAccountRepository
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
@@ -56,6 +62,16 @@ object DataModule {
     fun guideAccountRepository(@ApplicationContext context: Context, config: DataConfig, now: Now): GuideAccountRepository =
         firestore(context)?.let { FirestoreGuideAccountRepository(it, config.applicationsEmail, now) }
             ?: UnconfiguredGuideAccountRepository()
+
+    @Provides
+    @Singleton
+    fun userAccountRepository(@ApplicationContext context: Context): UserAccountRepository =
+        firestore(context)?.let(::FirestoreUserAccountRepository) ?: UnconfiguredUserAccountRepository()
+
+    @Provides
+    @Singleton
+    fun requestRepository(@ApplicationContext context: Context): RequestRepository =
+        firestore(context)?.let(::FirestoreRequestRepository) ?: UnconfiguredRequestRepository()
 
     @Provides
     fun locationRepository(@ApplicationContext context: Context): LocationRepository =

@@ -55,4 +55,29 @@
     <string name="dialog_ok">OK</string>
     <string name="dialog_cancel">Annuler</string>
     <string name="dialog_clear">Effacer</string>
+
+    <string name="contact_call">Appeler %1$s</string>
+    <string name="contact_email">Écrire à %1$s</string>
+    <string name="contact_website">Site Web %1$s</string>
+    <string name="your_trip">Votre séjour : %1$s</string>
+    <string name="dates_on_request">Dates sur demande</string>
+    <string name="status_pending">En attente</string>
+    <string name="status_approved">Acceptée</string>
+    <string name="status_rejected">Refusée</string>
+    <string name="status_cancelled">Annulée</string>
+    <string name="status_offer_removed">Offre retirée</string>
+    <string name="confirm_title">Envoyer votre demande?</string>
+    <string name="confirm_shared">Transmis au guide</string>
+    <string name="confirm_edit">Modifier</string>
+    <string name="confirm_note">Le guide voit ces coordonnées et vous contacte. Vous pouvez annuler dans Mes demandes.</string>
+    <string name="confirm_send">Envoyer la demande</string>
+    <string name="confirm_not_now">Pas maintenant</string>
+
+    <string name="contact_email_subject">Séjour trouvé sur GuideHunter</string>
+    <string name="contact_email_body">Bonjour, j’ai trouvé votre offre « %1$s » sur GuideHunter. Le séjour du %2$s m’intéresse.</string>
+    <string name="my_requests">Mes demandes</string>
+    <string name="my_contact">Mes coordonnées</string>
+    <string name="requests_received">Demandes reçues</string>
+    <string name="cancel_request">Annuler la demande</string>
+    <string name="send_again">Envoyer de nouveau</string>
 </resources>

@@ -47,6 +47,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -70,6 +71,7 @@ import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
 import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.ui.ConfirmRequestSheet
 import ca.kallistesoft.guidehunter.core.ui.DateRangeDialog
 import ca.kallistesoft.guidehunter.core.ui.R as UiR
 import ca.kallistesoft.guidehunter.core.ui.dateRange
@@ -96,6 +98,8 @@ data class MapContent(
 fun MapScreen(
     onSettings: () -> Unit,
     onSpeciesFilter: (Discipline?) -> Unit,
+    onMyContact: () -> Unit,
+    onMyRequests: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = hiltViewModel(),
     map: @Composable (MapContent, Modifier) -> Unit = { content, mapModifier -> GuideMap(content, mapModifier) },
@@ -114,6 +118,13 @@ fun MapScreen(
         }
     }
 
+    // "I'm interested" with an incomplete contact: the contact form first, then back here to confirm.
+    LaunchedEffect(state.askContact) {
+        if (state.askContact) {
+            viewModel.contactAsked()
+            onMyContact()
+        }
+    }
     MapContent(
         state = state,
         onSettings = onSettings,
@@ -128,7 +139,17 @@ fun MapScreen(
         onVisibleArea = viewModel::showArea,
         onSelect = viewModel::select,
         onDismiss = viewModel::dismiss,
-        onUnlock = viewModel::unlock,
+        contactActions = ContactActions(
+            unlock = viewModel::unlock,
+            interested = { viewModel.interested(context) },
+            cancel = viewModel::cancelRequest,
+            myRequests = onMyRequests,
+            settings = onSettings,
+            sentShown = viewModel::sentShown,
+            send = viewModel::sendRequest,
+            editContact = onMyContact,
+            dismissConfirm = viewModel::dismissConfirm,
+        ),
         map = map,
         modifier = modifier,
     )
@@ -177,7 +198,7 @@ internal fun MapContent(
     onVisibleArea: (GeoBounds) -> Unit,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
-    onUnlock: () -> Unit,
+    contactActions: ContactActions,
     map: @Composable (MapContent, Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -215,14 +236,25 @@ internal fun MapContent(
                 }
                 if (sidePane) {
                     state.selected?.let { selected ->
-                        GuidePane(selected, onUnlock, onTrip, onDismiss, Modifier.width(Sizes.sidePaneWidth).fillMaxHeight())
+                        GuidePane(selected, contactActions, state.sent, onTrip, onDismiss, Modifier.width(Sizes.sidePaneWidth).fillMaxHeight())
                     }
                 }
             }
             if (!sidePane) {
                 state.selected?.let { selected ->
-                    GuideSheet(selected = selected, onUnlock = onUnlock, onTrip = onTrip, onDismiss = onDismiss)
+                    GuideSheet(selected, contactActions, state.sent, onTrip, onDismiss)
                 }
+            }
+            state.confirm?.let { confirm ->
+                ConfirmRequestSheet(
+                    offerTitle = confirm.offerTitle,
+                    trip = confirm.trip,
+                    contact = confirm.contact,
+                    sending = state.selected?.busy == true,
+                    onSend = contactActions.send,
+                    onEdit = contactActions.editContact,
+                    onDismiss = contactActions.dismissConfirm,
+                )
             }
         }
     }

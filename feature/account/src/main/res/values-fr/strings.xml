@@ -31,7 +31,6 @@
     <string name="sign_out">Se déconnecter</string>
     <string name="delete_account">Supprimer mon compte</string>
     <string name="delete_account_title">Supprimer votre compte?</string>
-    <string name="delete_account_body">Vos offres sont retirées de la carte, et vos offres, votre profil et votre compte sont supprimés. Google vous demande d\'abord de confirmer votre compte. C\'est irréversible.</string>
     <string name="cancel">Annuler</string>
     <string name="dismiss">OK</string>
 
@@ -45,4 +44,34 @@
     <string name="species_filter_note">Seules ces espèces s\'affichent sur la carte. Gardées pour la prochaine fois, et aussi dans les paramètres.</string>
     <string name="species_filter_any">Toutes les espèces</string>
     <string name="species_filter_done">Voir sur la carte</string>
+
+    <string name="delete_account_body">Vos offres sont retirées de la carte, et vos offres, votre profil, vos coordonnées, vos demandes et votre compte sont supprimés. Google vous demande d’abord de confirmer votre compte. C’est irréversible.</string>
+    <string name="my_contact_intro">Transmises à un guide seulement quand vous touchez « Je suis intéressé », pour qu’il puisse vous joindre.</string>
+    <string name="field_name">Nom</string>
+    <string name="field_email">Courriel</string>
+    <string name="field_phone">Téléphone (facultatif)</string>
+    <string name="email_from_google">De votre compte Google. Il ne peut pas être modifié ici.</string>
+    <string name="error_name">Entrez votre nom.</string>
+    <string name="error_phone">Entrez un numéro d’au moins 7 chiffres, ou laissez le champ vide.</string>
+    <string name="my_contact_copy_note">Les demandes déjà envoyées gardent les coordonnées que vous aviez alors.</string>
+    <string name="save">Enregistrer</string>
+    <string name="saving">Enregistrement…</string>
+    <string name="save_failed">Vos coordonnées n’ont pas pu être enregistrées. Vérifiez votre connexion Internet et réessayez.</string>
+    <string name="save_not_configured">Cette version de l’application ne permet pas encore d’enregistrer vos coordonnées.</string>
+    <string name="my_contact_missing">Pas encore remplies</string>
+    <plurals name="requests_pending">
+        <item quantity="one">%d en attente</item>
+        <item quantity="other">%d en attente</item>
+    </plurals>
+    <plurals name="requests_waiting">
+        <item quantity="one">%d en attente de votre réponse</item>
+        <item quantity="other">%d en attente de votre réponse</item>
+    </plurals>
+    <string name="no_requests_sent">Aucune demande pour l’instant. Ouvrez une offre sur la carte et touchez « Je suis intéressé ».</string>
+    <string name="request_change_failed">La modification n’a pas abouti. Vérifiez votre connexion Internet et réessayez.</string>
+    <string name="request_sent_on">Envoyée le %1$s</string>
+    <string name="request_accepted_on">Acceptée le %1$s</string>
+    <string name="request_cancelled_on">Annulée le %1$s</string>
+    <string name="request_rejected_note">Le guide ne peut pas accepter cette demande.</string>
+    <string name="request_removed_note">Le guide a retiré cette offre de la carte.</string>
 </resources>

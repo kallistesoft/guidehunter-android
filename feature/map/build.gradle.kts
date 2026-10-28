@@ -8,6 +8,7 @@ android {
 
 dependencies {
     implementation(project(":core:ads"))
+    implementation(project(":core:auth"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.maps.compose)
 

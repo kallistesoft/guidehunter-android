@@ -1,6 +1,8 @@
 package ca.kallistesoft.guidehunter.core.data
 
-import ca.kallistesoft.guidehunter.core.model.GuideContact
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
@@ -14,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.WriteBatch
 import io.mockk.every
 import io.mockk.mockk
@@ -59,27 +62,14 @@ class FirestoreRepositoriesTest {
         verify { registration.remove() }
     }
 
-    @Test
-    fun `a contact is read from its own collection`() = runTest {
-        val contacts = mockk<CollectionReference>()
-        every { firestore.collection("guideContacts") } returns contacts
-        every { contacts.document("bear") } returns mockk<DocumentReference> {
-            every { get() } returns Tasks.forResult(document("bear", mapOf("name" to "Outfitter")))
-        }
-        every { contacts.document("none") } returns mockk<DocumentReference> {
-            every { get() } returns Tasks.forResult(document("none", null))
-        }
-        val repository = FirestoreGuideRepository(firestore)
-        assertEquals(GuideContact("Outfitter"), repository.contact("bear"))
-        assertNull(repository.contact("none"))
-    }
-
     // A guide's account: offers in `guideOffers` (one live, one waiting), the profile in `guideProfiles`.
     private val offers = mockk<CollectionReference>()
     private val profiles = mockk<CollectionReference>()
     private val guides = mockk<CollectionReference>()
     private val contacts = mockk<CollectionReference>()
     private val mails = mockk<CollectionReference>()
+    private val requests = mockk<CollectionReference>()
+    private val received = mockk<Query>()
     private val mine = mockk<Query>()
     private val published = mockk<Query>()
     private val now = Instant.parse("2026-10-28T12:00:00Z")
@@ -94,6 +84,7 @@ class FirestoreRepositoriesTest {
 
     private fun account(): FirestoreGuideAccountRepository {
         val paths = listOf("guideProfiles/u1", "mail/m", "guideOffers/new", "guideOffers/gone") +
+            listOf("requests/live_a", "requests/live_b", "requests/pending_a") +
             listOf("live", "pending").flatMap { id -> listOf("guideOffers/$id", "guides/$id", "guideContacts/$id") }
         for (path in paths) refs[path] = mockk(relaxed = true) { every { id } returns path.substringAfter('/') }
         val snapshot = mockk<QuerySnapshot> { every { documents } returns listOf(document("live", liveDoc), document("pending", pendingDoc)) }
@@ -102,6 +93,15 @@ class FirestoreRepositoriesTest {
         every { firestore.collection("guides") } returns guides
         every { firestore.collection("guideContacts") } returns contacts
         every { firestore.collection("mail") } returns mails
+        every { firestore.collection("requests") } returns requests
+        every { requests.whereEqualTo("guideUid", "u1") } returns received
+        // Open requests for both offers, and one for the live offer already answered.
+        val requestDocs = listOf(
+            request("live_a", "live", "PENDING"),
+            request("live_b", "live", "REJECTED"),
+            request("pending_a", "pending", "APPROVED"),
+        )
+        every { received.get() } returns Tasks.forResult(mockk { every { documents } returns requestDocs })
         every { offers.whereEqualTo("ownerUid", "u1") } returns mine
         every { mine.get() } returns Tasks.forResult(snapshot)
         for ((collection, name) in listOf(offers to "guideOffers", profiles to "guideProfiles", guides to "guides", contacts to "guideContacts")) {
@@ -113,6 +113,12 @@ class FirestoreRepositoriesTest {
         every { batch.commit() } returns Tasks.forResult(null)
         every { guides.whereEqualTo("ownerUid", "u1") } returns published
         return FirestoreGuideAccountRepository(firestore, "owner@example.com") { now }
+    }
+
+    private fun request(id: String, offerId: String, status: String) = mockk<DocumentSnapshot> {
+        every { this@mockk.id } returns id
+        every { data } returns mapOf("offerId" to offerId, "status" to status, "guideUid" to "u1", "userUid" to "u2")
+        every { reference } answers { ref("requests/$id") }
     }
 
     @Test
@@ -237,6 +243,8 @@ class FirestoreRepositoriesTest {
         verify { batch.delete(ref("guideOffers/live")) }
         verify { batch.delete(ref("guides/live")) }
         verify { batch.delete(ref("guideContacts/live")) }
+        verify { batch.update(ref("requests/live_a"), statusFields(RequestStatus.OFFER_REMOVED)) }
+        verify(exactly = 0) { batch.update(ref("requests/live_b"), any<Map<String, Any>>()) }
     }
 
     @Test
@@ -246,6 +254,128 @@ class FirestoreRepositoriesTest {
             verify { batch.delete(ref(it)) }
         }
         verify(exactly = 0) { batch.delete(ref("guides/pending")) }
+        verify { batch.update(ref("requests/live_a"), statusFields(RequestStatus.OFFER_REMOVED)) }
+        verify { batch.update(ref("requests/pending_a"), statusFields(RequestStatus.OFFER_REMOVED)) }
+        verify(exactly = 0) { batch.update(ref("requests/live_b"), any<Map<String, Any>>()) }
+        verify(exactly = 1) { batch.commit() }
+    }
+
+    // Requests and the user's contact.
+
+    private fun requestRepository(): FirestoreRequestRepository {
+        account()
+        return FirestoreRequestRepository(firestore)
+    }
+
+    @Test
+    fun `the user's contact is followed live, saved and deleted`() = runTest {
+        val profile = mockk<DocumentReference>()
+        every { firestore.collection("userProfiles") } returns mockk { every { document("u2") } returns profile }
+        val listener = slot<EventListener<DocumentSnapshot>>()
+        val registration = mockk<ListenerRegistration>(relaxed = true)
+        every { profile.addSnapshotListener(capture(listener)) } returns registration
+        every { profile.set(any()) } returns Tasks.forResult(null)
+        every { profile.delete() } returns Tasks.forResult(null)
+        val repository = FirestoreUserAccountRepository(firestore)
+        val contacts = mutableListOf<UserContact?>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { repository.contact("u2").toList(contacts) }
+        listener.captured.onEvent(document("u2", null), null)
+        listener.captured.onEvent(document("u2", alex.toDocument()), null)
+        listener.captured.onEvent(null, mockk())
+        job.cancel()
+        assertEquals(listOf(null, alex), contacts)
+        verify { registration.remove() }
+
+        repository.saveContact("u2", alex)
+        verify { profile.set(alex.toDocument()) }
+        repository.deleteAll("u2")
+        verify { profile.delete() }
+    }
+
+    private val alex = UserContact("Alex", "a@b.ca", "418 555 0199")
+
+    @Test
+    fun `the requests sent and received are followed live`() = runTest {
+        val repository = requestRepository()
+        val sent = mockk<Query>()
+        every { requests.whereEqualTo("userUid", "u2") } returns sent
+        val listeners = mutableListOf<EventListener<QuerySnapshot>>()
+        val registration = mockk<ListenerRegistration>(relaxed = true)
+        every { sent.addSnapshotListener(capture(listeners)) } returns registration
+        every { received.addSnapshotListener(capture(listeners)) } returns registration
+        val lists = mutableListOf<List<String>>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { repository.sent("u2").collect { lists += it.map(InterestRequest::id) } }
+        val job2 = launch(UnconfinedTestDispatcher(testScheduler)) { repository.received("u1").collect { lists += it.map(InterestRequest::id) } }
+        val snapshot = mockk<QuerySnapshot> { every { documents } returns listOf(request("live_a", "live", "PENDING"), document("bad", null)) }
+        listeners.forEach { it.onEvent(snapshot, null) }
+        listeners.forEach { it.onEvent(null, mockk()) }
+        job.cancel()
+        job2.cancel()
+        assertEquals(listOf(listOf("live_a"), listOf("live_a")), lists)
+        verify(exactly = 2) { registration.remove() }
+    }
+
+    @Test
+    fun `one offer's request is followed by its id`() = runTest {
+        val repository = requestRepository()
+        val listener = slot<EventListener<DocumentSnapshot>>()
+        val registration = mockk<ListenerRegistration>(relaxed = true)
+        every { requests.document("live_a") } returns ref("requests/live_a")
+        every { ref("requests/live_a").addSnapshotListener(capture(listener)) } returns registration
+        val seen = mutableListOf<String?>()
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) { repository.request("live", "a").collect { seen += it?.status?.name } }
+        listener.captured.onEvent(document("live_a", null), null)
+        listener.captured.onEvent(request("live_a", "live", "PENDING"), null)
+        listener.captured.onEvent(null, mockk())
+        job.cancel()
+        assertEquals(listOf(null, "PENDING"), seen)
+        verify { registration.remove() }
+    }
+
+    @Test
+    fun `sending writes the request under its offer and user, and each answer only its fields`() = runTest {
+        val repository = requestRepository()
+        every { requests.document(any()) } answers { ref("requests/${firstArg<String>()}") }
+        refs.values.forEach { every { it.set(any(), any<SetOptions>()) } returns Tasks.forResult(null) }
+        refs.values.forEach { every { it.set(any()) } returns Tasks.forResult(null) }
+        val guide = TestGuides.bear.copy(id = "live", ownerUid = "u1")
+        repository.send("a", guide, null, alex)
+        verify { ref("requests/live_a").set(requestDocument("a", guide, null, alex)) }
+        repository.cancel("live_a")
+        verify { ref("requests/live_a").set(statusFields(RequestStatus.CANCELLED), SetOptions.merge()) }
+        repository.resend("live_a", null, alex)
+        verify { ref("requests/live_a").set(resendFields(null, alex), SetOptions.merge()) }
+        repository.approve("live_a", TestGuides.profile)
+        verify { ref("requests/live_a").set(approveFields(TestGuides.profile), SetOptions.merge()) }
+        repository.reject("live_a")
+        verify { ref("requests/live_a").set(statusFields(RequestStatus.REJECTED), SetOptions.merge()) }
+    }
+
+    @Test
+    fun `an offer removed closes only its open requests, and nothing is written when there are none`() = runTest {
+        val repository = requestRepository()
+        repository.markOfferRemoved("u1", "pending")
+        verify { batch.update(ref("requests/pending_a"), statusFields(RequestStatus.OFFER_REMOVED)) }
+        verify(exactly = 0) { batch.update(ref("requests/live_a"), any<Map<String, Any>>()) }
+        verify(exactly = 1) { batch.commit() }
+        repository.markOfferRemoved("u1", "none")
+        verify(exactly = 1) { batch.commit() }
+    }
+
+    @Test
+    fun `the requests a user sent are deleted with their account`() = runTest {
+        val repository = requestRepository()
+        val sent = mockk<Query>()
+        every { requests.whereEqualTo("userUid", "u2") } returns sent
+        val docs = listOf(request("live_a", "live", "PENDING"))
+        every { sent.get() } returnsMany listOf(
+            Tasks.forResult(mockk { every { documents } returns docs }),
+            Tasks.forResult(mockk { every { documents } returns emptyList() }),
+        )
+        repository.deleteSent("u2")
+        verify { batch.delete(ref("requests/live_a")) }
+        verify(exactly = 1) { batch.commit() }
+        repository.deleteSent("u2")
         verify(exactly = 1) { batch.commit() }
     }
 }

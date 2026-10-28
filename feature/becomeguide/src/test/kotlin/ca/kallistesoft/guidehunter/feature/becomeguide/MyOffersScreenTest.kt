@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -17,6 +18,7 @@ import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeNativeAd
 import ca.kallistesoft.guidehunter.core.testing.FakeNativeAds
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.ui.date
 import kotlin.time.Duration.Companion.days
@@ -43,6 +45,7 @@ class MyOffersScreenTest {
     private val app: Application = RuntimeEnvironment.getApplication()
     private val uid = TestGuides.user.uid
     private val auth = FakeAuthRepository(TestGuides.user)
+    private val requests = FakeRequestRepository()
     private val account = FakeGuideAccountRepository()
     private val opened = mutableListOf<String>()
     private val nativeAds = FakeNativeAds(FakeNativeAd(headline = "Rangefinders"))
@@ -51,10 +54,11 @@ class MyOffersScreenTest {
     private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
 
     private fun launch() {
-        val viewModel = MyOffersViewModel(auth, account, ads, { TestGuides.today }, { TestGuides.now }, nativeAds)
+        val viewModel = MyOffersViewModel(auth, account, ads, requests, { TestGuides.today }, { TestGuides.now }, nativeAds)
         compose.setContent {
             GuideHunterTheme {
                 MyOffersScreen(
+                    onRequests = { opened += "requests" },
                     onSettings = { opened += "settings" },
                     onEditProfile = { opened += "profile" },
                     onAddOffer = { opened += "new" },
@@ -207,5 +211,16 @@ class MyOffersScreenTest {
         account.give(uid, liveOffer(TestGuides.now + 2.days))
         launch()
         compose.onNodeWithText("En vedette", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
+    fun `the requests icon opens them, with a badge while some wait`() {
+        launch()
+        compose.onNodeWithTag("requests-badge", useUnmergedTree = true).assertDoesNotExist()
+        requests.give(TestGuides.request.copy(guideUid = uid, userUid = "u2"))
+        compose.onNodeWithTag("requests-badge", useUnmergedTree = true).assertExists()
+        compose.onNodeWithContentDescription(app.resources.getQuantityString(R.plurals.requests_badge, 1, 1)).assertExists()
+        compose.onNodeWithTag("requests-received").performClick()
+        assertEquals(listOf("requests"), opened)
     }
 }

@@ -4,6 +4,8 @@ import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
+import ca.kallistesoft.guidehunter.core.data.UserAccountRepository
 import ca.kallistesoft.guidehunter.core.data.SettingsRepository
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.AppSettings
@@ -14,6 +16,10 @@ import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.GuideUser
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
 import ca.kallistesoft.guidehunter.core.model.Species
@@ -22,26 +28,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Instant
 
-/** Guides a test sets ([guides]) and contacts it hands out; counts the contacts read. */
-class FakeGuideRepository(
-    guides: List<Guide> = TestGuides.all,
-    var contacts: Map<String, GuideContact> = TestGuides.contacts,
-) : GuideRepository {
+/** Guides a test sets ([guides]). */
+class FakeGuideRepository(guides: List<Guide> = TestGuides.all) : GuideRepository {
     override val guides = MutableStateFlow(guides)
-    val contactsRead = mutableListOf<String>()
-
-    /** Set to make [contact] throw, like Firestore offline. */
-    var failure: Exception? = null
-
-    /** Set to hold a contact read until it's completed, like a slow network. */
-    var onContact: CompletableDeferred<Unit>? = null
-
-    override suspend fun contact(guideId: String): GuideContact? {
-        contactsRead += guideId
-        onContact?.await()
-        failure?.let { throw it }
-        return contacts[guideId]
-    }
 }
 
 /** Signs in whoever's token it's given ([tokens] maps a token to its user); [failure] makes the next calls throw. */
@@ -86,9 +75,10 @@ class FakeAuthRepository(signedIn: GuideUser? = null) : AuthRepository {
 
 /**
  * Guides' profiles and offers in memory, by user id. [failure] makes the next writes throw, [onWrite] holds them
- * until completed; [mails] counts the offers emailed for review. A boost ends [Boost.DURATION] after [now].
+ * until completed; [mails] counts the offers emailed for review. A boost ends [Boost.DURATION] after [now]. Deleting
+ * offers closes their requests in [requests].
  */
-class FakeGuideAccountRepository : GuideAccountRepository {
+class FakeGuideAccountRepository(private val requests: FakeRequestRepository? = null) : GuideAccountRepository {
     val profiles = MutableStateFlow<Map<String, GuideProfile>>(emptyMap())
     val offersByUser = MutableStateFlow<Map<String, List<GuideOffer>>>(emptyMap())
     val mails = mutableListOf<Pair<String, Boolean>>()
@@ -126,6 +116,7 @@ class FakeGuideAccountRepository : GuideAccountRepository {
     override suspend fun deleteOffer(uid: String, offer: GuideOffer) {
         write()
         offersByUser.value += uid to offersByUser.value[uid].orEmpty().filter { it.id != offer.id }
+        requests?.markOfferRemoved(uid, offer.id)
     }
 
     /** The clock boosts start from. */
@@ -143,6 +134,7 @@ class FakeGuideAccountRepository : GuideAccountRepository {
         write()
         offersByUser.value -= uid
         profiles.value -= uid
+        requests?.markOfferRemoved(uid, null)
     }
 
     /** Puts [offers] in [uid]'s account, as if sent (and reviewed) before. */
@@ -185,5 +177,99 @@ class FakeSettingsRepository(settings: AppSettings = AppSettings()) : SettingsRe
 
     override suspend fun reset() {
         settings.value = AppSettings()
+    }
+}
+
+/** Users' contacts in memory, by user id; [failure] makes the next writes throw, [onWrite] holds them. */
+class FakeUserAccountRepository : UserAccountRepository {
+    val contacts = MutableStateFlow<Map<String, UserContact>>(emptyMap())
+    var failure: Exception? = null
+    var onWrite: CompletableDeferred<Unit>? = null
+
+    override fun contact(uid: String) = contacts.map { it[uid] }
+
+    override suspend fun saveContact(uid: String, contact: UserContact) {
+        onWrite?.await()
+        failure?.let { throw it }
+        contacts.value += uid to contact.trimmed()
+    }
+
+    override suspend fun deleteAll(uid: String) {
+        failure?.let { throw it }
+        contacts.value -= uid
+    }
+}
+
+/**
+ * Requests in memory, by id, with the transitions firestore.rules allows (anything else throws, like a refused
+ * write). Each write moves a clock on, so the latest change comes first. [failure] makes the next writes throw,
+ * [onWrite] holds them until completed.
+ */
+class FakeRequestRepository : RequestRepository {
+    val requests = MutableStateFlow<Map<String, InterestRequest>>(emptyMap())
+    var failure: Exception? = null
+    var onWrite: CompletableDeferred<Unit>? = null
+    private var clock = 1_000L
+
+    override fun sent(uid: String) = requests.map { all -> all.values.filter { it.userUid == uid }.sortedByDescending { it.updatedAt } }
+
+    override fun received(uid: String) = requests.map { all -> all.values.filter { it.guideUid == uid }.sortedByDescending { it.updatedAt } }
+
+    override fun request(offerId: String, uid: String) = requests.map { it[InterestRequest.requestId(offerId, uid)] }
+
+    override suspend fun send(uid: String, guide: Guide, trip: Trip?, contact: UserContact) {
+        write()
+        val id = InterestRequest.requestId(guide.id, uid)
+        check(id !in requests.value) { "already sent" }
+        check(guide.ownerUid != uid) { "own offer" }
+        val now = clock++
+        requests.value += id to InterestRequest(
+            id, guide.id, guide.title, trip, guide.ownerUid, uid, contact.trimmed(), RequestStatus.PENDING,
+            createdAt = now, updatedAt = now,
+        )
+    }
+
+    override suspend fun cancel(id: String) = change(id, RequestStatus.PENDING, RequestStatus.APPROVED) {
+        it.copy(status = RequestStatus.CANCELLED)
+    }
+
+    override suspend fun resend(id: String, trip: Trip?, contact: UserContact) = change(id, RequestStatus.CANCELLED) {
+        it.copy(status = RequestStatus.PENDING, trip = trip, user = contact.trimmed())
+    }
+
+    override suspend fun approve(id: String, profile: GuideProfile) = change(id, RequestStatus.PENDING) {
+        val guide = profile.trimmed()
+        it.copy(status = RequestStatus.APPROVED, guideContact = GuideContact(guide.businessName, guide.phone, guide.email, guide.website))
+    }
+
+    override suspend fun reject(id: String) = change(id, RequestStatus.PENDING) { it.copy(status = RequestStatus.REJECTED) }
+
+    override suspend fun markOfferRemoved(guideUid: String, offerId: String?) {
+        write()
+        requests.value.values
+            .filter { it.guideUid == guideUid && (offerId == null || it.offerId == offerId) && it.status.open }
+            .forEach { request -> change(request.id, RequestStatus.PENDING, RequestStatus.APPROVED) { it.copy(status = RequestStatus.OFFER_REMOVED) } }
+    }
+
+    override suspend fun deleteSent(uid: String) {
+        write()
+        requests.value = requests.value.filterValues { it.userUid != uid }
+    }
+
+    /** Puts [request] in, as if sent before. */
+    fun give(vararg request: InterestRequest) {
+        requests.value += request.associateBy { it.id }
+    }
+
+    private suspend fun change(id: String, vararg from: RequestStatus, update: (InterestRequest) -> InterestRequest) {
+        write()
+        val request = checkNotNull(requests.value[id]) { "no request $id" }
+        check(request.status in from) { "${request.status} can't change that way" }
+        requests.value += id to update(request).copy(updatedAt = clock++)
+    }
+
+    private suspend fun write() {
+        onWrite?.await()
+        failure?.let { throw it }
     }
 }

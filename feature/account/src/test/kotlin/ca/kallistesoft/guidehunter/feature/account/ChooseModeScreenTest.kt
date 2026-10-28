@@ -14,6 +14,8 @@ import ca.kallistesoft.guidehunter.core.model.GuideUser
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import org.junit.Assert.assertEquals
@@ -34,7 +36,7 @@ class ChooseModeScreenTest {
     private val settings = FakeSettingsRepository()
 
     private fun launch(user: GuideUser? = TestGuides.user) {
-        val session = AccountSession(FakeAuthRepository(user), FakeGoogleSignIn(), FakeGuideAccountRepository(), settings)
+        val session = AccountSession(FakeAuthRepository(user), FakeGoogleSignIn(), FakeGuideAccountRepository(), FakeUserAccountRepository(), FakeRequestRepository(), settings)
         val viewModel = ChooseModeViewModel(session, settings)
         compose.setContent { GuideHunterTheme { ChooseModeScreen(viewModel = viewModel) } }
     }

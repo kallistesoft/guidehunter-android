@@ -5,7 +5,7 @@ import kotlinx.datetime.LocalDate
 
 /**
  * A guide's public offer, shown to everyone on the map. Who the guide is and how to reach them ([GuideContact]) is
- * kept apart and shown only once the user has watched a rewarded ad.
+ * kept apart: the user sees it once the guide accepts their request.
  */
 data class Guide(
     val id: String,
@@ -24,12 +24,14 @@ data class Guide(
     val schedule: Schedule = Schedule(),
     /** Until when its guide boosted it ([Boost]); null if never. */
     val boostedUntil: Instant? = null,
+    /** The guide's Firebase user id: their own offer can't be requested, and requests go to them. */
+    val ownerUid: String = "",
 ) {
     /** Boosted and not over: it may be featured on the map. */
     fun isBoosted(now: Instant): Boolean = boostedUntil != null && boostedUntil > now
 }
 
-/** The guide's name and contact details, unlocked by a rewarded ad. Blank fields aren't shown. */
+/** The guide's name and contact details, shown to a user whose request they accepted. Blank fields aren't shown. */
 data class GuideContact(
     val name: String,
     val phone: String = "",

@@ -6,6 +6,7 @@ import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferField
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
@@ -17,6 +18,7 @@ import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
 import kotlinx.coroutines.CancellationException
@@ -35,12 +37,13 @@ class OfferEditorViewModelTest {
 
     private val uid = TestGuides.user.uid
     private val auth = FakeAuthRepository(TestGuides.user)
-    private val account = FakeGuideAccountRepository().apply { profiles.value = mapOf(uid to TestGuides.profile) }
+    private val requests = FakeRequestRepository()
+    private val account = FakeGuideAccountRepository(requests).apply { profiles.value = mapOf(uid to TestGuides.profile) }
     private val location = FakeLocationRepository()
     private val live = GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true)
 
     private fun viewModel(offerId: String? = null, saved: SavedStateHandle = SavedStateHandle()) =
-        OfferEditorViewModel(offerId, auth, account, location, saved, { TestGuides.today })
+        OfferEditorViewModel(offerId, auth, account, location, requests, saved, { TestGuides.today })
 
     /** Types [offer] into the form, field by field, as the guide would. */
     private fun OfferEditorViewModel.fill(offer: OfferDraft = TestGuides.offer) {
@@ -105,13 +108,29 @@ class OfferEditorViewModelTest {
     }
 
     @Test
-    fun `an offer is deleted, and taken off the map`() = runTest {
+    fun `an offer is deleted, and taken off the map, closing its open requests`() = runTest {
         account.give(uid, live)
+        val pending = TestGuides.request.copy(id = "live_u2", offerId = "live", guideUid = uid, userUid = "u2")
+        val other = pending.copy(id = "other_u2", offerId = "other")
+        val answered = pending.copy(id = "live_u3", userUid = "u3", status = RequestStatus.REJECTED)
+        requests.give(pending, other, answered)
         val vm = viewModel("live")
         collecting(vm.uiState)
+        assertEquals("only this offer's pending ones", 1, vm.state.pendingRequests)
         vm.delete()
         assertTrue(vm.state.deleted)
         assertEquals(emptyList<GuideOffer>(), account.offersByUser.value[uid])
+        assertEquals(RequestStatus.OFFER_REMOVED, requests.requests.value.getValue("live_u2").status)
+        assertEquals(RequestStatus.PENDING, requests.requests.value.getValue("other_u2").status)
+        assertEquals(RequestStatus.REJECTED, requests.requests.value.getValue("live_u3").status)
+    }
+
+    @Test
+    fun `a new offer, or signed out, has no requests`() = runTest {
+        requests.give(TestGuides.request.copy(guideUid = uid, userUid = "u2"))
+        val vm = viewModel(null)
+        collecting(vm.uiState)
+        assertEquals(0, vm.state.pendingRequests)
     }
 
     @Test

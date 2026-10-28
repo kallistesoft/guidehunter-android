@@ -2,7 +2,6 @@ package ca.kallistesoft.guidehunter.feature.map
 
 import android.Manifest
 import android.app.Application
-import android.content.Intent
 import android.provider.Settings
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.result.ActivityResultRegistry
@@ -31,7 +30,14 @@ import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.ui.R as UiR
+import ca.kallistesoft.guidehunter.core.auth.AccountSession
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
+import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
@@ -67,6 +73,12 @@ class MapScreenTest {
     private val speciesFilters = mutableListOf<Discipline?>()
     private var permissionAnswer = false
     private var permissionAsked = 0
+    private val auth = FakeAuthRepository()
+    private val google = FakeGoogleSignIn()
+    private val users = FakeUserAccountRepository()
+    private val requests = FakeRequestRepository()
+    private var myContact = 0
+    private var myRequests = 0
 
     private fun str(id: Int, vararg args: Any) = app.getString(id, *args)
     private fun count(n: Int) = app.resources.getQuantityString(R.plurals.guide_count, n, n)
@@ -81,14 +93,21 @@ class MapScreenTest {
     }
 
     private fun launch() {
-        val viewModel = MapViewModel(guides, location, ads, appSettings, SavedStateHandle(), { TestGuides.today }, { TestGuides.now })
+        val session = AccountSession(auth, google, FakeGuideAccountRepository(requests), users, requests, appSettings)
+        val viewModel = MapViewModel(guides, location, ads, appSettings, session, users, requests, SavedStateHandle(), { TestGuides.today }, { TestGuides.now })
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
             }
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 GuideHunterTheme {
-                    MapScreen(onSettings = { settings++ }, onSpeciesFilter = { speciesFilters += it }, viewModel = viewModel, map = { content, modifier ->
+                    MapScreen(
+                        onSettings = { settings++ },
+                        onSpeciesFilter = { speciesFilters += it },
+                        onMyContact = { myContact++ },
+                        onMyRequests = { myRequests++ },
+                        viewModel = viewModel,
+                    ) { content, modifier ->
                         // A pin per guide, tapped like on the map.
                         Column(modifier) {
                             LazyRow {
@@ -102,7 +121,7 @@ class MapScreenTest {
                             Text("pan west", Modifier.testTag("pan-west").clickable { content.onVisibleArea(WEST_OF_GASPE) })
                             Text("pan north", Modifier.testTag("pan-north").clickable { content.onVisibleArea(FAR_NORTH) })
                         }
-                    })
+                    }
                 }
             }
         }
@@ -194,24 +213,72 @@ class MapScreenTest {
     }
 
     @Test
-    fun `a card opens the offer, and an ad shows the contact, whose links open`() {
+    fun `a card opens the offer, after the ad, interested signs in, confirms and sends the request`() {
         launch()
         compose.onNodeWithTag("guide-bear").performClick()
         compose.onNodeWithTag("guide-detail").assertIsDisplayed()
         compose.onNode(hasText(TestGuides.bear.title) and hasAnyAncestor(hasTestTag("guide-detail"))).assertExists()
-        compose.onNodeWithText(str(R.string.contact_hidden)).assertExists()
-        compose.onNodeWithTag("contact-name").assertDoesNotExist()
+        compose.onNodeWithText(str(R.string.contact_locked)).assertExists()
+        compose.onNodeWithTag("interested").assertDoesNotExist()
 
         compose.onNodeWithTag("unlock").performScrollTo().performClick()
-        compose.onNodeWithTag("contact-name").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText(TestGuides.bearContact.name).assertExists()
+        compose.onNodeWithTag("interested").performScrollTo().performClick()
+        assertEquals("signed in with Google", 1, google.shown)
+        compose.onNodeWithTag("confirm-request").assertExists()
+        compose.onNodeWithText(TestGuides.user.email).assertExists()
+        compose.onNodeWithTag("edit-contact").performScrollTo().performClick()
+        assertEquals(1, myContact)
+        compose.onNodeWithTag("send-request").performScrollTo().performClick()
+        compose.onNodeWithTag("confirm-request").assertDoesNotExist()
 
-        compose.onNodeWithTag("contact-phone").performScrollTo().performClick()
-        assertEquals(Intent.ACTION_DIAL, shadowOf(app).nextStartedActivity.action)
-        compose.onNodeWithTag("contact-email").performScrollTo().performClick()
-        assertEquals(Intent.ACTION_SENDTO, shadowOf(app).nextStartedActivity.action)
-        compose.onNodeWithTag("contact-website").performScrollTo().performClick()
-        assertEquals("https://example.com", shadowOf(app).nextStartedActivity.data.toString())
+        assertEquals(RequestStatus.PENDING, requests.requests.value.getValue("bear_${TestGuides.user.uid}").status)
+        compose.onNodeWithText(str(R.string.request_sent)).assertExists()
+        compose.onNode(hasText(str(UiR.string.my_requests)) and hasAnyAncestor(hasTestTag("request-sent"))).performClick()
+        compose.waitForIdle()
+        assertEquals(1, myRequests)
+        compose.onNodeWithTag("status-PENDING").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `not now closes the confirmation, and a sent request can be cancelled then sent again`() {
+        auth.user.value = TestGuides.user
+        requests.give(TestGuides.request)
+        launch()
+        compose.onNodeWithTag("guide-bear").performClick()
+        compose.onNodeWithTag("unlock").assertDoesNotExist()
+        compose.onNodeWithTag("my-requests").performScrollTo().performClick()
+        assertEquals(1, myRequests)
+        compose.onNodeWithTag("cancel-request").performScrollTo().performClick()
+        compose.onNodeWithTag("status-CANCELLED").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("send-again").performScrollTo().performClick()
+        compose.onNodeWithTag("not-now").performScrollTo().performClick()
+        compose.onNodeWithTag("confirm-request").assertDoesNotExist()
+        compose.onNodeWithTag("send-again").performScrollTo().performClick()
+        compose.onNodeWithTag("send-request").performScrollTo().performClick()
+        compose.onNodeWithTag("status-PENDING").performScrollTo().assertIsDisplayed()
+        assertEquals(0, ads.shown)
+    }
+
+    @Test
+    fun `an incomplete contact opens the contact form first`() {
+        auth.user.value = TestGuides.user.copy(name = "")
+        launch()
+        compose.onNodeWithTag("guide-bear").performClick()
+        compose.onNodeWithTag("unlock").performScrollTo().performClick()
+        compose.onNodeWithTag("interested").performScrollTo().performClick()
+        compose.waitForIdle()
+        assertEquals(1, myContact)
+        compose.onNodeWithTag("confirm-request").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the account's own offer offers guide mode instead`() {
+        auth.user.value = TestGuides.user.copy(uid = TestGuides.OWNER)
+        launch()
+        compose.onNodeWithTag("guide-bear").performClick()
+        compose.onNodeWithText(str(R.string.own_offer)).performScrollTo()
+        compose.onNodeWithTag("own-switch").performScrollTo().performClick()
+        assertEquals(1, settings)
     }
 
     @Test
@@ -231,7 +298,7 @@ class MapScreenTest {
         compose.onNodeWithTag("guide-detail").assertIsDisplayed()
         compose.onNodeWithTag("guide-count").assertIsDisplayed() // the map stays in view beside it
         compose.onNodeWithTag("unlock").performScrollTo().performClick()
-        compose.onNodeWithTag("contact-name").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("interested").performScrollTo().assertIsDisplayed()
         compose.onNodeWithTag("pane-close").performClick()
         compose.onNodeWithTag("guide-pane").assertDoesNotExist()
     }

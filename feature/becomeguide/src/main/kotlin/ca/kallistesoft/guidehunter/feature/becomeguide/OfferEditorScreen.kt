@@ -241,7 +241,17 @@ internal fun OfferEditorContent(
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text(stringResource(R.string.offer_delete_title)) },
-            text = { Text(stringResource(if (state.live) R.string.offer_delete_live_body else R.string.offer_delete_body)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                    Text(stringResource(if (state.live) R.string.offer_delete_live_body else R.string.offer_delete_body))
+                    if (state.pendingRequests > 0) {
+                        Text(
+                            pluralStringResource(R.plurals.offer_delete_requests, state.pendingRequests, state.pendingRequests),
+                            modifier = Modifier.testTag("delete-requests"),
+                        )
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(
                     onClick = {

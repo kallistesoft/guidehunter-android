@@ -7,6 +7,8 @@ import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
 import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
@@ -24,11 +26,16 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -62,6 +69,8 @@ data class OfferEditorUiState(
     val deleted: Boolean = false,
     /** The first day a departure can be. */
     val today: LocalDate = LocalDate.fromEpochDays(0),
+    /** Requests for this offer waiting for an answer: deleting it closes them. */
+    val pendingRequests: Int = 0,
 )
 
 /**
@@ -69,12 +78,14 @@ data class OfferEditorUiState(
  * death), each step checked by [OfferDraft.errors] before the next, sent to us for review (Pattern B of
  * .claude/skills/viewmodel-state: an edit is read once). A new offer starts on the first step, an edit on the summary.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = OfferEditorViewModel.Factory::class)
 class OfferEditorViewModel @AssistedInject constructor(
     @Assisted private val offerId: String?,
     private val auth: AuthRepository,
     private val account: GuideAccountRepository,
     private val locationRepository: LocationRepository,
+    private val requests: RequestRepository,
     private val savedState: SavedStateHandle,
     private val today: Today,
 ) : ViewModel() {
@@ -85,9 +96,20 @@ class OfferEditorViewModel @AssistedInject constructor(
 
     private val _uiState = MutableStateFlow(restore())
 
+    /** The pending requests for this offer (none for a new one), for the delete dialog. */
+    private val pendingRequests = auth.user.flatMapLatest { user ->
+        if (user == null || offerId == null) {
+            flowOf(0)
+        } else {
+            requests.received(user.uid).map { received -> received.count { it.offerId == offerId && it.status == RequestStatus.PENDING } }
+        }
+    }
+
     /** The offer is read when the screen starts, unless process death left the guide's edits to restore. */
-    val uiState: StateFlow<OfferEditorUiState> = _uiState.asStateFlow()
-        .onStart { if (_uiState.value.loading) load() }
+    val uiState: StateFlow<OfferEditorUiState> = combine(
+        _uiState.asStateFlow().onStart { if (_uiState.value.loading) load() },
+        pendingRequests,
+    ) { state, pending -> state.copy(pendingRequests = pending) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), _uiState.value)
 
     private suspend fun load() {

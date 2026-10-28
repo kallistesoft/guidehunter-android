@@ -18,7 +18,7 @@ What the MVP leaves for later, most urgent first.
    shared by AdMob for advertising; personal info and a location typed in the form, collected; guides' account (email,
    user id), collected. Plus the Advertising ID declaration, and Play's **account deletion** answers: in the app
    (Delete my account), and a web page or email address for guides who uninstalled it (Play requires one).
-5. **Ad policy check**: a rewarded ad must be optional and say what it gives ("Watch an ad to see the contact" does).
+5. **Ad policy check**: a rewarded ad must be optional and say what it gives ("Watch an ad to contact the guide" does).
 6. **AdMob IDs set** for the release build (`ADMOB_APP_ID`, `ADMOB_REWARDED_ID`, `ADMOB_NATIVE_ID`): without them
    the build only warns and serves Google's test ads. Create the **native ad unit** in GuideHunter's AdMob app (for
    the ad cards in the lists) and set `ADMOB_NATIVE_ID` as a CI variable and in `local.properties`. Likewise a second
@@ -26,13 +26,26 @@ What the MVP leaves for later, most urgent first.
 7. Test the release build on the emulator (`.claude/skills/testing-on-emulator`): the rewarded ad, the map, and a
    relaunch after process death ("Become a guide" open) for the Navigation 3 keys under R8.
 
-## Protecting the contacts
+## Requests
 
-The ad is only checked in the app: `guideContacts` documents can be read by anyone who knows a guide's id, and the
-ids are the same as the public `guides` documents', so the whole collection can be read one guide at a time. Fine
-for an MVP; before it matters:
+- **Production rules**: the `userProfiles` and `requests` rules are deployed to `guidehunter-dev` only. Deploy them to
+  production (`firebase deploy --only firestore:rules`) only on the owner's OK, once the privacy policy says users'
+  name, email and phone go to the guide they ask (and the Play Data safety form declares it).
+- **Push notifications** (FCM) for a new request (to the guide) and a status change (to the user); today each side
+  sees them when they open the app.
+- An optional **email to the guide** on each new request, through Trigger Email. The `mail` rule only allows mail to
+  contact@ today, so this needs its own careful rule, or better a Cloud Function on `requests` writes.
+- **Check the ad on the server**: the ad before "I'm interested" is only checked in the app, so anyone signed in could
+  send requests to every offer without one (one request per offer limits it). AdMob SSV and App Check, below.
+- Rules tests on the Firestore emulator (`@firebase/rules-unit-testing`) for the request cases: a wrong `guideUid` or
+  `offerTitle`, another email than the account's, one's own offer, a status change by the wrong side,
+  `OFFER_REMOVED` set by the user.
 
-- **AdMob server-side verification (SSV)** of rewarded ads, calling a Cloud Function that returns the contact only
+## Protecting the server
+
+The ads are only checked in the app. Before it matters:
+
+- **AdMob server-side verification (SSV)** of rewarded ads, calling a Cloud Function that creates the request only
   for a verified reward.
 - **Firebase App Check** (Play Integrity), so only the real app reaches Firestore.
 - Rate limits on offers (App Check, then a Cloud Function instead of client writes). Today any signed-in Google

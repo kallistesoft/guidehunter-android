@@ -14,19 +14,25 @@ import androidx.navigation3.ui.NavDisplay
 import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.feature.account.ChooseModeScreen
+import ca.kallistesoft.guidehunter.feature.account.MyContactScreen
+import ca.kallistesoft.guidehunter.feature.account.MyRequestsScreen
 import ca.kallistesoft.guidehunter.feature.account.SettingsScreen
 import ca.kallistesoft.guidehunter.feature.account.SpeciesFilterScreen
 import ca.kallistesoft.guidehunter.feature.account.WelcomeScreen
 import ca.kallistesoft.guidehunter.feature.becomeguide.GuideProfileScreen
 import ca.kallistesoft.guidehunter.feature.becomeguide.MyOffersScreen
 import ca.kallistesoft.guidehunter.feature.becomeguide.OfferEditorScreen
+import ca.kallistesoft.guidehunter.feature.becomeguide.RequestsReceivedScreen
 import ca.kallistesoft.guidehunter.feature.map.MapContent
 import ca.kallistesoft.guidehunter.feature.map.MapScreen
 import ca.kallistesoft.guidehunter.navigation.ChooseMode
 import ca.kallistesoft.guidehunter.navigation.GuideMap
 import ca.kallistesoft.guidehunter.navigation.GuideProfile
+import ca.kallistesoft.guidehunter.navigation.MyContact
 import ca.kallistesoft.guidehunter.navigation.MyOffers
+import ca.kallistesoft.guidehunter.navigation.MyRequests
 import ca.kallistesoft.guidehunter.navigation.OfferEditor
+import ca.kallistesoft.guidehunter.navigation.RequestsReceived
 import ca.kallistesoft.guidehunter.navigation.Settings
 import ca.kallistesoft.guidehunter.navigation.SpeciesFilter
 import ca.kallistesoft.guidehunter.navigation.Welcome
@@ -79,11 +85,14 @@ private fun AppNavigation(home: NavKey, modifier: Modifier, maps: Maps) {
             entry<GuideMap> {
                 val settings = { open(Settings) }
                 val species = { discipline: Discipline? -> open(SpeciesFilter(discipline?.name)) }
-                maps.guides?.let { MapScreen(onSettings = settings, onSpeciesFilter = species, map = it) }
-                    ?: MapScreen(onSettings = settings, onSpeciesFilter = species)
+                val myContact = { open(MyContact) }
+                val myRequests = { open(MyRequests) }
+                maps.guides?.let { MapScreen(settings, species, myContact, myRequests, map = it) }
+                    ?: MapScreen(settings, species, myContact, myRequests)
             }
             entry<MyOffers> {
                 MyOffersScreen(
+                    onRequests = { open(RequestsReceived) },
                     onSettings = { open(Settings) },
                     onEditProfile = { open(GuideProfile) },
                     onAddOffer = { open(OfferEditor()) },
@@ -91,7 +100,23 @@ private fun AppNavigation(home: NavKey, modifier: Modifier, maps: Maps) {
                 )
             }
             entry<Settings> {
-                SettingsScreen(onBack = back, onGuideProfile = { open(GuideProfile) }, onSpeciesFilter = { open(SpeciesFilter()) })
+                SettingsScreen(
+                    onBack = back,
+                    onGuideProfile = { open(GuideProfile) },
+                    onSpeciesFilter = { open(SpeciesFilter()) },
+                    onMyContact = { open(MyContact) },
+                    onMyRequests = { open(MyRequests) },
+                    onRequestsReceived = { open(RequestsReceived) },
+                )
+            }
+            entry<MyContact> {
+                MyContactScreen(onBack = back, onDone = back)
+            }
+            entry<MyRequests> {
+                MyRequestsScreen(onBack = back, onMyContact = { open(MyContact) })
+            }
+            entry<RequestsReceived> {
+                RequestsReceivedScreen(onBack = back, onEditProfile = { open(GuideProfile) })
             }
             entry<SpeciesFilter> { key ->
                 SpeciesFilterScreen(key.discipline?.let(Discipline::valueOf), onBack = back)

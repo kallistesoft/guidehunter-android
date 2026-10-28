@@ -1,6 +1,7 @@
 package ca.kallistesoft.guidehunter.core.data
 
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -11,12 +12,8 @@ import org.junit.Test
 
 class SampleGuidesTest {
     @Test
-    fun `every sample guide has a contact`() = runTest {
-        val repository = SampleGuideRepository()
-        val guides = repository.guides.first()
-        assertEquals(SAMPLE_GUIDES, guides)
-        assertTrue(guides.all { repository.contact(it.id) != null })
-        assertNull(repository.contact("unknown"))
+    fun `the sample guides show`() = runTest {
+        assertEquals(SAMPLE_GUIDES, SampleGuideRepository().guides.first())
     }
 
     @Test
@@ -29,7 +26,23 @@ class SampleGuidesTest {
         assertEquals(emptyList<GuideOffer>(), account.offers("u").first())
         assertNull(account.offer("u", "o"))
         val offer = GuideOffer("o", TestGuides.offer)
+        val users = UnconfiguredUserAccountRepository()
+        val requests = UnconfiguredRequestRepository()
+        assertNull(users.contact("u").first())
+        assertTrue(requests.sent("u").first().isEmpty())
+        assertTrue(requests.received("u").first().isEmpty())
+        assertNull(requests.request("o", "u").first())
+        val contact = UserContact("Alex", "a@b.ca")
         listOf<suspend () -> Unit>(
+            { users.saveContact("u", contact) },
+            { users.deleteAll("u") },
+            { requests.send("u", TestGuides.bear, null, contact) },
+            { requests.cancel("r") },
+            { requests.resend("r", null, contact) },
+            { requests.approve("r", TestGuides.profile) },
+            { requests.reject("r") },
+            { requests.markOfferRemoved("u", null) },
+            { requests.deleteSent("u") },
             { auth.signIn("t") },
             { auth.reauthenticate("t") },
             { auth.deleteUser() },

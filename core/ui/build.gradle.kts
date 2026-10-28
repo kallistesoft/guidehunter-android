@@ -12,6 +12,7 @@ dependencies {
     api(project(":core:model"))
     api(project(":core:designsystem"))
     implementation(libs.androidx.browser)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.core.ktx)
 
     testImplementation(project(":core:testing"))

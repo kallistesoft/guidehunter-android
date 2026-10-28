@@ -13,6 +13,10 @@ import ca.kallistesoft.guidehunter.core.model.Schedule
 import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.TripLength
 import kotlin.time.Instant
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import kotlinx.datetime.LocalDate
 
 /**
@@ -35,6 +39,7 @@ object TestGuides {
         region = "Abitibi",
         location = GeoPoint(48.0, -79.0),
         priceFrom = 2_400,
+        ownerUid = OWNER,
         schedule = Schedule(
             TripLength.Days(7),
             listOf(LocalDate(2027, 5, 1), LocalDate(2027, 5, 15), LocalDate(2027, 6, 5)).map { Departure(it) },
@@ -49,6 +54,7 @@ object TestGuides {
         species = listOf(Species.ATLANTIC_SALMON),
         region = "Gaspé",
         location = GeoPoint(48.8, -64.5),
+        ownerUid = OWNER,
         schedule = Schedule(
             TripLength.HalfDay,
             listOf(Departure(LocalDate(2027, 6, 10), Slot.MORNING), Departure(LocalDate(2027, 6, 10), Slot.AFTERNOON)),
@@ -64,19 +70,40 @@ object TestGuides {
         region = "La Tuque",
         location = GeoPoint(47.4, -72.8),
         priceFrom = 1_800,
+        ownerUid = OWNER,
         // Dates on request.
         schedule = Schedule(TripLength.Days(5)),
     )
     val all = listOf(bear, salmon, moose)
 
+    /** The guide who owns the test guides: not [user]. */
+    const val OWNER = "owner-1"
+
+    /** The contact of [OWNER], given to a user whose request they accept. */
     val bearContact = GuideContact("Bear Outfitter", phone = "+1 819 555 0100", email = "bear@example.com", website = "example.com")
-    val contacts = mapOf("bear" to bearContact, "moose" to GuideContact("Moose Camp"))
 
     /** Quebec City: about 470 km from [bear]. */
     val quebecCity = GeoPoint(46.81, -71.21)
 
     /** A guide signed in with Google. */
     val user = GuideUser(uid = "guide-1", email = "guide@example.com", name = "Jo Guide")
+
+    /** A user's contact, as [user] would share it. */
+    val userContact = UserContact(name = "Jo Guide", email = "guide@example.com", phone = "+1 418 555 0199")
+
+    /** [user]'s pending request for [bear]'s first trip. */
+    val request = InterestRequest(
+        id = "bear_guide-1",
+        offerId = "bear",
+        offerTitle = "Bear hunt",
+        trip = Trip(LocalDate(2027, 5, 1), LocalDate(2027, 5, 7)),
+        guideUid = OWNER,
+        userUid = "guide-1",
+        user = userContact,
+        status = RequestStatus.PENDING,
+        createdAt = 1,
+        updatedAt = 1,
+    )
 
     /** A complete profile. */
     val profile = GuideProfile(businessName = "Pourvoirie Test", email = "guide@example.com", phone = "819 555 0100")

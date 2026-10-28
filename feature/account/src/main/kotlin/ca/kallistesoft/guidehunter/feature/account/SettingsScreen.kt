@@ -16,10 +16,13 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -46,6 +49,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -62,6 +66,9 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onGuideProfile: () -> Unit,
     onSpeciesFilter: () -> Unit,
+    onMyContact: () -> Unit,
+    onMyRequests: () -> Unit,
+    onRequestsReceived: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -73,6 +80,9 @@ fun SettingsScreen(
             back = onBack,
             guideProfile = onGuideProfile,
             speciesFilter = onSpeciesFilter,
+            myContact = onMyContact,
+            myRequests = onMyRequests,
+            requestsReceived = onRequestsReceived,
             switchMode = { viewModel.switchMode(context) },
             signIn = { viewModel.signIn(context) },
             signOut = { viewModel.signOut(context) },
@@ -88,6 +98,9 @@ internal class SettingsActions(
     val back: () -> Unit,
     val guideProfile: () -> Unit,
     val speciesFilter: () -> Unit,
+    val myContact: () -> Unit,
+    val myRequests: () -> Unit,
+    val requestsReceived: () -> Unit,
     val switchMode: () -> Unit,
     val signIn: () -> Unit,
     val signOut: () -> Unit,
@@ -132,10 +145,40 @@ internal fun SettingsContent(state: SettingsUiState, actions: SettingsActions, m
                 if (guide) {
                     Section(R.string.section_guide) {
                         SettingsRow(Icons.Default.Storefront, R.string.guide_profile, stringResource(R.string.guide_profile_body), "guide-profile", actions.guideProfile)
+                        HorizontalDivider()
+                        SettingsRow(
+                            Icons.Default.Inbox,
+                            UiR.string.requests_received,
+                            pluralStringResource(R.plurals.requests_waiting, state.pendingReceived, state.pendingReceived),
+                            "requests-received",
+                            actions.requestsReceived,
+                            badge = state.pendingReceived,
+                        )
                     }
                 } else {
                     Section(R.string.section_looking) {
                         SettingsRow(Icons.Default.FilterList, R.string.species_on_map, speciesSummary(state), "species-filter", actions.speciesFilter)
+                        // A contact and requests need an account.
+                        if (state.user != null) {
+                            HorizontalDivider()
+                            val contact = state.contact
+                            SettingsRow(
+                                Icons.Default.Person,
+                                UiR.string.my_contact,
+                                contact?.let { listOf(it.name, it.phone).filter(String::isNotBlank).joinToString(" · ") }
+                                    ?: stringResource(R.string.my_contact_missing),
+                                "my-contact",
+                                actions.myContact,
+                            )
+                            HorizontalDivider()
+                            SettingsRow(
+                                Icons.Default.Inbox,
+                                UiR.string.my_requests,
+                                pluralStringResource(R.plurals.requests_pending, state.pendingSent, state.pendingSent),
+                                "my-requests",
+                                actions.myRequests,
+                            )
+                        }
                     }
                 }
                 Section(R.string.section_mode) {
@@ -231,11 +274,13 @@ private fun SettingsRow(
     enabled: Boolean = true,
     accent: Boolean = false,
     danger: Boolean = false,
+    badge: Int = 0,
 ) {
     val color = if (danger) MaterialTheme.colorScheme.error else Color.Unspecified
     ListItem(
         headlineContent = { Text(stringResource(label), color = color) },
         supportingContent = supporting?.let { { Text(it) } },
+        trailingContent = if (badge > 0) ({ Badge(Modifier.testTag("$tag-badge")) { Text(badge.toString()) } }) else null,
         leadingContent = {
             Icon(
                 icon,

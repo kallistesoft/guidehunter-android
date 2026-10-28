@@ -6,6 +6,8 @@ import ca.kallistesoft.guidehunter.core.model.AppSettings
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeUserAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
@@ -23,7 +25,7 @@ class ChooseModeViewModelTest {
     private val settings = FakeSettingsRepository()
 
     private fun viewModel() =
-        ChooseModeViewModel(AccountSession(auth, FakeGoogleSignIn(), FakeGuideAccountRepository(), settings), settings)
+        ChooseModeViewModel(AccountSession(auth, FakeGoogleSignIn(), FakeGuideAccountRepository(), FakeUserAccountRepository(), FakeRequestRepository(), settings), settings)
 
     @Test
     fun `shows the signed-in email, empty when signed out`() = runTest {

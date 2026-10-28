@@ -18,8 +18,8 @@ import org.robolectric.annotation.Config
 
 /**
  * The real app (real Hilt graph, no Firebase in tests: the sample guides; the real settings DataStore, fresh per test)
- * under Robolectric: a first launch opens the welcome, "Later" leads to the map with its guides, a guide's contact
- * unlocks (ads are off under tests), and the settings open and close.
+ * under Robolectric: a first launch opens the welcome, "Later" leads to the map with its guides, the ad before
+ * "I'm interested" (off under tests), and the settings open and close.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "en-w411dp-h891dp")
@@ -28,12 +28,12 @@ class GuideHunterAppTest {
     val compose = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun `later on the welcome opens the map, and a guide's contact unlocks`() {
+    fun `later on the welcome opens the map, and after the ad a guide can be told I'm interested`() {
         later()
         waitFor("guide-sample-bear")
         compose.onNodeWithTag("guide-sample-bear").performClick()
-        compose.onNodeWithTag("unlock").performClick()
-        waitFor("contact-name")
+        compose.onNodeWithTag("unlock").performScrollTo().performClick()
+        waitFor("interested")
     }
 
     @Test

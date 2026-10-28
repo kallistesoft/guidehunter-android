@@ -5,6 +5,10 @@ import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.GuideContact
+import ca.kallistesoft.guidehunter.core.model.InterestRequest
+import ca.kallistesoft.guidehunter.core.model.RequestStatus
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.model.UserContact
 import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
@@ -71,14 +75,99 @@ class FirestoreDocumentsTest {
     }
 
     @Test
-    fun `a contact needs a name`() {
+    fun `a published guide carries its owner`() {
+        val document = mapOf("title" to "T", "activity" to "HUNT", "lat" to 1.0, "lng" to 2.0)
+        assertEquals("u1", guideFrom("g1", document + ("ownerUid" to "u1"))?.ownerUid)
+        assertEquals("", guideFrom("g1", document)?.ownerUid)
+    }
+
+    @Test
+    fun `a user's contact is saved trimmed, and read back`() {
+        val doc = UserContact(" Alex ", "a@b.ca", " 418 555 0199").toDocument()
+        assertEquals(mapOf("name" to "Alex", "email" to "a@b.ca", "phone" to "418 555 0199"), doc)
+        assertEquals(UserContact("Alex", "a@b.ca", "418 555 0199"), userContactFrom(doc))
+        assertNull(userContactFrom(null))
+        assertEquals(UserContact(), userContactFrom(emptyMap()))
+    }
+
+    private val alex = UserContact("Alex", "a@b.ca", "418 555 0199")
+    private val trip = Trip(LocalDate(2027, 5, 18), LocalDate(2027, 5, 21))
+
+    @Test
+    fun `a new request is pending, with the offer's guide and title, the trip as dates and a copy of the contact`() {
+        val doc = requestDocument("u2", TestGuides.bear.copy(ownerUid = "g1"), trip, alex.copy(name = " Alex "))
+        assertEquals("bear", doc["offerId"])
+        assertEquals("Bear hunt", doc["offerTitle"])
+        assertEquals("g1", doc["guideUid"])
+        assertEquals("u2", doc["userUid"])
+        assertEquals("PENDING", doc["status"])
+        assertEquals("2027-05-18", doc["tripStart"])
+        assertEquals("2027-05-21", doc["tripEnd"])
+        assertNull(doc["tripSlot"])
+        assertEquals("Alex", doc["userName"])
+        assertEquals("a@b.ca", doc["userEmail"])
+        assertEquals("418 555 0199", doc["userPhone"])
+        assertTrue(doc["createdAt"] is FieldValue)
+        assertTrue(doc["updatedAt"] is FieldValue)
+        assertNull(resendFields(null, alex)["tripStart"])
+        assertEquals("AM", resendFields(Trip(trip.start, slot = Slot.MORNING), alex)["tripSlot"])
+        assertEquals("PM", resendFields(Trip(trip.start, slot = Slot.AFTERNOON), alex)["tripSlot"])
+    }
+
+    @Test
+    fun `accepting gives the guide's contact`() {
+        val fields = approveFields(TestGuides.profile.copy(website = "x.ca "))
+        assertEquals("APPROVED", fields["status"])
+        assertEquals("Pourvoirie Test", fields["guideName"])
+        assertEquals("guide@example.com", fields["guideEmail"])
+        assertEquals("819 555 0100", fields["guidePhone"])
+        assertEquals("x.ca", fields["guideWebsite"])
+        assertEquals("REJECTED", statusFields(RequestStatus.REJECTED)["status"])
+    }
+
+    @Test
+    fun `a request is read back, the guide's contact only once accepted`() {
+        val sent = requestDocument("u2", TestGuides.bear.copy(ownerUid = "g1"), Trip(trip.start, slot = Slot.AFTERNOON), alex) +
+            mapOf("createdAt" to Timestamp(1_000, 0), "updatedAt" to Timestamp(2_000, 0))
+        val request = requestFrom("bear_u2", sent, now = 5)!!
         assertEquals(
-            GuideContact("Outfitter", "819", "a@b.c", "x.com"),
-            contactFrom(mapOf("name" to "Outfitter", "phone" to "819", "email" to "a@b.c", "website" to "x.com")),
+            InterestRequest(
+                id = "bear_u2",
+                offerId = "bear",
+                offerTitle = "Bear hunt",
+                trip = Trip(trip.start, trip.start, Slot.AFTERNOON),
+                guideUid = "g1",
+                userUid = "u2",
+                user = alex,
+                status = RequestStatus.PENDING,
+                createdAt = 1_000_000,
+                updatedAt = 2_000_000,
+            ),
+            request,
         )
-        assertEquals(GuideContact("Outfitter"), contactFrom(mapOf("name" to "Outfitter")))
-        assertNull(contactFrom(emptyMap()))
-        assertNull(contactFrom(mapOf("name" to "")))
+        val guide = mapOf("guideName" to "Camp", "guidePhone" to "819", "guideEmail" to "c@d.ca", "guideWebsite" to "c.ca")
+        assertNull("pending: not given yet", requestFrom("bear_u2", sent + guide)?.guideContact)
+        assertEquals(GuideContact("Camp", "819", "c@d.ca", "c.ca"), requestFrom("bear_u2", sent + guide + ("status" to "APPROVED"))?.guideContact)
+        assertNull(requestFrom("bear_u2", sent + ("status" to "APPROVED"))?.guideContact)
+        assertEquals("a time not back from the server reads as now", 5L, requestFrom("x", sent - "updatedAt", now = 5)?.updatedAt)
+        assertNull("no trip", requestFrom("x", sent - "tripStart")?.trip)
+        assertEquals("a day", Trip(trip.start), requestFrom("x", sent - "tripEnd" - "tripSlot")?.trip)
+        listOf("offerId", "guideUid", "userUid", "status").forEach { assertNull(it, requestFrom("x", sent - it)) }
+        assertNull(requestFrom("x", sent + ("status" to "LOST")))
+        assertEquals("", requestFrom("x", mapOf("offerId" to "o", "guideUid" to "g", "userUid" to "u", "status" to "PENDING"))?.offerTitle)
+    }
+
+    @Test
+    fun `requests come the latest change first, unreadable ones left out`() {
+        val base = mapOf("offerId" to "o", "guideUid" to "g", "userUid" to "u", "status" to "PENDING")
+        val requests = requestsFrom(
+            listOf(
+                "old" to base + ("updatedAt" to Timestamp(1, 0)),
+                "bad" to emptyMap(),
+                "new" to base + ("updatedAt" to Timestamp(9, 0)),
+            ),
+        )
+        assertEquals(listOf("new", "old"), requests.map { it.id })
     }
 
     @Test

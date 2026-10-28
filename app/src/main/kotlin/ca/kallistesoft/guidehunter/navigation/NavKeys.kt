@@ -39,3 +39,15 @@ data object GuideProfile : NavKey
 /** A guide's offer: a new one ([offerId] null) or one sent before. */
 @Serializable
 data class OfferEditor(val offerId: String? = null) : NavKey
+
+/** What the user shares with a guide (name, email, phone). */
+@Serializable
+data object MyContact : NavKey
+
+/** The requests the user sent. */
+@Serializable
+data object MyRequests : NavKey
+
+/** The requests to the guide's offers. */
+@Serializable
+data object RequestsReceived : NavKey

@@ -3,7 +3,9 @@ package ca.kallistesoft.guidehunter.core.auth
 import android.content.Context
 import ca.kallistesoft.guidehunter.core.data.AuthRepository
 import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
+import ca.kallistesoft.guidehunter.core.data.RequestRepository
 import ca.kallistesoft.guidehunter.core.data.SettingsRepository
+import ca.kallistesoft.guidehunter.core.data.UserAccountRepository
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.GuideUser
 import javax.inject.Inject
@@ -18,6 +20,8 @@ class AccountSession @Inject constructor(
     private val auth: AuthRepository,
     private val google: GoogleSignIn,
     private val guideAccount: GuideAccountRepository,
+    private val userAccount: UserAccountRepository,
+    private val requests: RequestRepository,
     private val settings: SettingsRepository,
 ) {
     val user: Flow<GuideUser?> = auth.user
@@ -37,7 +41,8 @@ class AccountSession @Inject constructor(
     }
 
     /**
-     * Deletes the guide's offers (off the map too), profile and account, and the app starts over at the welcome.
+     * Deletes the guide's offers (off the map too, their open requests closed) and profile, the requests the user
+     * sent and their contact, then the account, and the app starts over at the welcome.
      * Firebase asks for a recent sign-in first, so Google's sheet shows again; closing it deletes nothing (false).
      */
     suspend fun deleteAccount(activity: Context): Boolean {
@@ -45,6 +50,8 @@ class AccountSession @Inject constructor(
         val token = google.idToken(activity) ?: return false
         auth.reauthenticate(token)
         guideAccount.deleteAll(user.uid)
+        requests.deleteSent(user.uid)
+        userAccount.deleteAll(user.uid)
         auth.deleteUser()
         settings.reset()
         runCatching { google.signOut(activity) }

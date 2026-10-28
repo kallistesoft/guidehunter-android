@@ -25,6 +25,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material.icons.filled.Inbox
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -43,6 +46,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -65,9 +69,10 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
-/** The guide's home: their profile and offers. [onSettings]: the settings (mode, account). */
+/** The guide's home: their profile and offers. [onRequests]: the requests received; [onSettings]: mode, account. */
 @Composable
 fun MyOffersScreen(
+    onRequests: () -> Unit,
     onSettings: () -> Unit,
     onEditProfile: () -> Unit,
     onAddOffer: () -> Unit,
@@ -79,6 +84,7 @@ fun MyOffersScreen(
     MyOffersContent(
         state = state,
         actions = MyOffersActions(
+            requests = onRequests,
             settings = onSettings,
             editProfile = onEditProfile,
             addOffer = onAddOffer,
@@ -92,6 +98,7 @@ fun MyOffersScreen(
 }
 
 internal class MyOffersActions(
+    val requests: () -> Unit,
     val settings: () -> Unit,
     val editProfile: () -> Unit,
     val addOffer: () -> Unit,
@@ -116,6 +123,23 @@ internal fun MyOffersContent(
             TopAppBar(
                 title = { Text(stringResource(R.string.my_offers_title)) },
                 actions = {
+                    val pending = state.pendingRequests
+                    IconButton(onClick = actions.requests, modifier = Modifier.testTag("requests-received")) {
+                        BadgedBox(
+                            badge = {
+                                if (pending > 0) Badge(Modifier.testTag("requests-badge")) { Text(pending.toString()) }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.Inbox,
+                                contentDescription = if (pending > 0) {
+                                    pluralStringResource(R.plurals.requests_badge, pending, pending)
+                                } else {
+                                    stringResource(UiR.string.requests_received)
+                                },
+                            )
+                        }
+                    }
                     IconButton(onClick = actions.settings, modifier = Modifier.testTag("settings")) {
                         Icon(Icons.Default.Settings, contentDescription = stringResource(UiR.string.settings))
                     }

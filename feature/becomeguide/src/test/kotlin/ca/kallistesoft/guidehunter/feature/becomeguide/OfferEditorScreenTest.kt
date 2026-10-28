@@ -32,6 +32,7 @@ import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeRequestRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.ui.departureDate
 import kotlinx.coroutines.CompletableDeferred
@@ -54,7 +55,8 @@ class OfferEditorScreenTest {
     private val app: Application = RuntimeEnvironment.getApplication()
     private val uid = TestGuides.user.uid
     private val auth = FakeAuthRepository(TestGuides.user)
-    private val account = FakeGuideAccountRepository().apply { profiles.value = mapOf(uid to TestGuides.profile) }
+    private val requests = FakeRequestRepository()
+    private val account = FakeGuideAccountRepository(requests).apply { profiles.value = mapOf(uid to TestGuides.profile) }
     private val location = FakeLocationRepository()
     private var backs = 0
     private var dones = 0
@@ -73,7 +75,7 @@ class OfferEditorScreenTest {
     }
 
     private fun launch(offerId: String? = null) {
-        val viewModel = OfferEditorViewModel(offerId, auth, account, location, SavedStateHandle(), { TestGuides.today })
+        val viewModel = OfferEditorViewModel(offerId, auth, account, location, requests, SavedStateHandle(), { TestGuides.today })
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
@@ -214,6 +216,7 @@ class OfferEditorScreenTest {
     @Test
     fun `an offer on the map opens on its summary, its dates can be changed, and it can be deleted`() {
         account.give(uid, GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true))
+        requests.give(TestGuides.request.copy(id = "live_u2", offerId = "live", guideUid = uid, userUid = "u2"))
         launch("live")
         step(R.string.step_review)
         compose.onNodeWithText(str(R.string.offer_live_intro)).assertExists()
@@ -234,6 +237,7 @@ class OfferEditorScreenTest {
 
         compose.onNodeWithTag("delete-offer").performClick()
         compose.onNodeWithText(str(R.string.offer_delete_live_body)).assertExists()
+        compose.onNodeWithText(app.resources.getQuantityString(R.plurals.offer_delete_requests, 1, 1)).assertExists()
         compose.onNodeWithTag("delete-cancel").performClick()
         compose.onNodeWithTag("delete-confirm").assertDoesNotExist()
         assertEquals(0, dones)
@@ -251,6 +255,7 @@ class OfferEditorScreenTest {
         launch("pending")
         compose.onNodeWithTag("delete-offer").performClick()
         compose.onNodeWithText(str(R.string.offer_delete_body)).assertExists()
+        compose.onNodeWithTag("delete-requests").assertDoesNotExist()
     }
 
     @Test
