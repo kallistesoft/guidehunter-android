@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>GuideHunter fishing species picker</title>
+<title>GuideHunter species filter</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -14,14 +14,23 @@
 body{margin:0}
 </style>
 </helmet>
-<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Barlow, system-ui, sans-serif">
-  <dc-import name="Main" theme="{{theme}}" mode="fish" hint-size="390px,844px"></dc-import>
-  <div role="menu" aria-label="Species" style="position: absolute; left: 150px; top: 98px; width: 224px; background: {{c.menu}}; border-radius: 14px; padding: 6px 0; box-shadow: {{c.shadow}}; display: flex; flex-direction: column">
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; position: relative; overflow: hidden">
+  <header style="height: 64px; padding: 8px 8px 0; box-sizing: border-box; display: flex; align-items: center; gap: 4px">
+    <a href="{{mapHref}}" aria-label="Back" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+    <h1 style="margin: 0; flex: 1; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px">Species</h1>
+    <a href="{{mapHref}}" style="min-height: 44px; padding: 0 12px; display: flex; align-items: center; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none">Clear</a>
+  </header>
+  <p style="margin: 0 20px 8px; font-size: 14px; line-height: 1.4; color: {{c.muted}}">Only these species show on the map. Kept for next time, and also in Settings.</p>
+  <span style="margin: 8px 20px 4px; font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Fishing</span>
+  <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0 8px">
     <sc-for list="{{items}}" as="it" hint-placeholder-count="15">
-      <a role="menuitemcheckbox" aria-checked="{{it.on}}" href="{{mapHref}}" style="height: 40px; padding: 0 14px; display: flex; align-items: center; gap: 12px; font-size: 15px; text-decoration: none; color: {{c.text}}; font-weight: {{it.weight}}">
-        <span aria-hidden="true" style="width: 18px; height: 18px; border-radius: 4px; box-sizing: border-box; border: 2px solid {{it.box}}; background: {{it.fill}}; display: flex; align-items: center; justify-content: center; color: {{c.onPrimary}}"><sc-if value="{{it.on}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if></span>{{it.label}}
-      </a>
+      <button type="button" aria-pressed="{{it.on}}" style="min-height: 44px; padding: 0 12px; border: 0; background: transparent; color: inherit; font: inherit; text-align: left; display: flex; align-items: center; gap: 14px; font-size: 16px; font-weight: {{it.weight}}; cursor: pointer">
+        <span aria-hidden="true" style="width: 20px; height: 20px; border-radius: 5px; box-sizing: border-box; border: 2px solid {{it.box}}; background: {{it.fill}}; display: flex; align-items: center; justify-content: center; color: #1A0E05"><sc-if value="{{it.on}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if></span>{{it.label}}
+      </button>
     </sc-for>
+  </div>
+  <div style="padding: 12px 20px 24px; border-top: 1px solid {{c.border}}; background: {{c.bg}}">
+    <a href="{{mapHref}}" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center">Show 3 guides</a>
   </div>
 </div>
 </x-dc>
@@ -31,9 +40,10 @@ class Component extends DCLogic {
     const theme = this.props.theme ?? 'dark';
     const light = theme === 'light';
     const c = light
-      ? {menu:'#FFFFFF', text:'#17201A', muted:'#5B6659', primary:'#E8691E', onPrimary:'#1A0E05', shadow:'0 10px 30px rgba(23,32,26,0.22)'}
-      : {menu:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', primary:'#F27B2B', onPrimary:'#1A0E05', shadow:'0 10px 30px rgba(0,0,0,0.55)'};
-    // Several species can be ticked; the menu stays open. Fishing chosen: one alphabetical list, no headings.
+      ? {bg:'#F5F2EA', text:'#17201A', muted:'#5B6659', green:'#2F6B3E', primary:'#E8691E', border:'#E6E1D5'}
+      : {bg:'#0E1611', text:'#EEF1EA', muted:'#A9B5AB', green:'#8FD19E', primary:'#F27B2B', border:'#24352A'};
+    // One full screen, opened by the map's Species chip and by Settings: the same saved choice.
+    // Fishing chosen on the map, so only fishing species, alphabetically.
     const names = ['Any species', 'Arctic char', 'Atlantic salmon', 'Brook trout', 'Ice fishing', 'Lake trout', 'Largemouth bass', 'Muskellunge', 'Northern pike', 'Pacific salmon', 'Rainbow trout', 'Smallmouth bass', 'Sturgeon', 'Walleye', 'Yellow perch'];
     const ticked = ['Brook trout', 'Walleye'];
     const items = names.map((label, i) => {

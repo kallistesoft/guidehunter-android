@@ -1,7 +1,10 @@
 package ca.kallistesoft.guidehunter.core.data.di
 
 import android.content.Context
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStoreFile
 import ca.kallistesoft.guidehunter.core.data.AuthRepository
+import ca.kallistesoft.guidehunter.core.data.DataStoreSettingsRepository
 import ca.kallistesoft.guidehunter.core.data.FirebaseAuthRepository
 import ca.kallistesoft.guidehunter.core.data.FirestoreGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.FirestoreGuideRepository
@@ -10,6 +13,7 @@ import ca.kallistesoft.guidehunter.core.data.GuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
 import ca.kallistesoft.guidehunter.core.data.SampleGuideRepository
+import ca.kallistesoft.guidehunter.core.data.SettingsRepository
 import ca.kallistesoft.guidehunter.core.data.UnconfiguredAuthRepository
 import ca.kallistesoft.guidehunter.core.data.UnconfiguredGuideAccountRepository
 import com.google.android.gms.location.LocationServices
@@ -55,6 +59,12 @@ object DataModule {
     @Provides
     fun locationRepository(@ApplicationContext context: Context): LocationRepository =
         FusedLocationRepository(context, LocationServices.getFusedLocationProviderClient(context))
+
+    /** One DataStore per file: a singleton. */
+    @Provides
+    @Singleton
+    fun settingsRepository(@ApplicationContext context: Context): SettingsRepository =
+        DataStoreSettingsRepository(PreferenceDataStoreFactory.create { context.preferencesDataStoreFile("settings") })
 
     private fun configured(context: Context) = FirebaseApp.getApps(context).isNotEmpty()
 

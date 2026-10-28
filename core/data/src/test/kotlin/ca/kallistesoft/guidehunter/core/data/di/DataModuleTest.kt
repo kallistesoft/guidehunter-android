@@ -1,6 +1,7 @@
 package ca.kallistesoft.guidehunter.core.data.di
 
 import android.app.Application
+import ca.kallistesoft.guidehunter.core.data.DataStoreSettingsRepository
 import ca.kallistesoft.guidehunter.core.data.FirebaseAuthRepository
 import ca.kallistesoft.guidehunter.core.data.FirestoreGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.data.FirestoreGuideRepository
@@ -43,6 +44,7 @@ class DataModuleTest {
         assertTrue(DataModule.authRepository(app) is UnconfiguredAuthRepository)
         assertTrue(DataModule.guideAccountRepository(app, config) is UnconfiguredGuideAccountRepository)
         assertTrue(DataModule.locationRepository(app) is FusedLocationRepository)
+        assertTrue(DataModule.settingsRepository(app) is DataStoreSettingsRepository)
     }
 
     @Test

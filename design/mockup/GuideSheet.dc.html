@@ -19,69 +19,125 @@ body{margin:0}
   <a href="{{l.map}}" aria-label="Close" style="position: absolute; inset: 0; background: rgba(5,9,7,0.55)"></a>
   <section aria-labelledby="guide-title" style="position: absolute; left: 0; right: 0; bottom: 0; top: 112px; background: {{c.sheet}}; color: {{c.text}}; border-radius: 28px 28px 0 0; padding: 10px 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
     <span style="align-self: center; width: 32px; height: 4px; border-radius: 999px; background: {{c.handle}}; margin-bottom: 8px"></span>
-    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.label}}">Hunting</span>
-    <h1 id="guide-title" style="margin: -6px 0 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 28px; line-height: 1.1">Black bear over bait</h1>
-    <span style="font-size: 15px; color: {{c.muted}}; margin-top: -4px">Abitibi-Témiscamingue · About 600 km from you</span>
-    <span style="font-size: 15px; font-weight: 600">From CA$2,400 per person</span>
+    <span style="display: flex; align-items: center; gap: 8px">
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{o.kindColor}}">{{o.kind}}</span>
+      <sc-if value="{{featured}}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; background: {{c.featuredTint}}; color: {{c.featuredText}}; font-size: 12px; font-weight: 600"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>Featured</span></sc-if>
+    </span>
+    <h1 id="guide-title" style="margin: -6px 0 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 28px; line-height: 1.1">{{o.title}}</h1>
+    <span style="font-size: 15px; color: {{c.muted}}; margin-top: -4px">{{o.where}}</span>
+    <span style="font-size: 15px; font-weight: 600">{{o.price}}</span>
     <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Species</span>
     <div style="display: flex; gap: 8px">
-      <span style="height: 32px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.outline}}; display: flex; align-items: center; font-size: 14px; font-weight: 500">Black bear</span>
+      <span style="height: 32px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.outline}}; display: flex; align-items: center; font-size: 14px; font-weight: 500">{{o.species}}</span>
     </div>
     <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">About this trip</span>
-    <p style="margin: 0; font-size: 16px; line-height: 1.4">Spring hunt from heated blinds over bait sites tended since April. Log cabins, meals and transport from the lodge included. English and French spoken.</p>
-    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Guide and contact</span>
+    <p style="margin: 0; font-size: 16px; line-height: 1.4">{{o.about}}</p>
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Contact the guide</span>
     <div style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
-      <sc-if value="{{s.locked}}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{s.status}}" hint-placeholder-val="{{ false }}">
+        <span style="align-self: flex-start; height: 28px; padding: 0 12px; border-radius: 999px; display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; background: {{st.bg}}; color: {{st.fg}}"><span aria-hidden="true" style="width: 8px; height: 8px; border-radius: 999px; background: currentColor"></span>{{st.label}}</span>
+        <span style="font-size: 15px; line-height: 1.4">{{st.text}}</span>
+      </sc-if>
+      <sc-if value="{{s.lockedText}}" hint-placeholder-val="{{ true }}">
         <div style="display: flex; gap: 10px; align-items: flex-start">
-          <span style="color: {{c.muted}}; flex-shrink: 0; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
-          <span style="font-size: 15px; line-height: 1.4">The guide’s name, phone, email and website show after a short ad.</span>
-        </div>
-        <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 8px">
-          <span style="width: 62%; height: 14px; border-radius: 6px; background: {{c.skeleton}}"></span>
-          <span style="width: 44%; height: 10px; border-radius: 6px; background: {{c.skeleton}}"></span>
+          <span style="color: {{c.muted}}; flex-shrink: 0; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg></span>
+          <span style="font-size: 15px; line-height: 1.4">After a short ad, tell the guide you’re interested. They get your name and contact and reach out to you.</span>
         </div>
       </sc-if>
       <sc-if value="{{s.notEarned}}" hint-placeholder-val="{{ false }}">
-        <span style="font-size: 15px; line-height: 1.4; color: {{c.error}}">The ad was closed before the end. Watch it all to see the contact.</span>
+        <span style="font-size: 15px; line-height: 1.4; color: {{c.error}}">The ad was closed before the end. Watch it all to contact the guide.</span>
       </sc-if>
       <sc-if value="{{s.offline}}" hint-placeholder-val="{{ false }}">
-        <span style="font-size: 15px; line-height: 1.4; color: {{c.error}}">You’re offline. Connect to the internet to see the contact.</span>
+        <span style="font-size: 15px; line-height: 1.4; color: {{c.error}}">You’re offline. Connect to the internet to contact the guide.</span>
       </sc-if>
-      <sc-if value="{{s.showButton}}" hint-placeholder-val="{{ true }}">
-        <a href="{{l.ad}}" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Watch an ad to see the contact</a>
+      <sc-if value="{{s.adButton}}" hint-placeholder-val="{{ true }}">
+        <a href="{{l.ad}}" style="min-height: 52px; padding: 8px 16px; box-sizing: border-box; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Watch an ad to contact the guide</a>
       </sc-if>
       <sc-if value="{{s.unlocked}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; gap: 10px; align-items: flex-start">
+          <span style="color: {{c.green}}; flex-shrink: 0; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span style="font-size: 15px; line-height: 1.4">The guide will get your name, email and phone, and contact you. You can cancel anytime in My requests.</span>
+        </div>
+        <a href="{{l.confirm}}" style="min-height: 52px; padding: 8px 16px; box-sizing: border-box; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>I’m interested</a>
+      </sc-if>
+      <sc-if value="{{s.approved}}" hint-placeholder-val="{{ false }}">
         <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.1">Pourvoirie du Lac Rond</span>
         <div style="display: flex; flex-direction: column; margin: 0 -8px">
           <a href="#" style="min-height: 44px; padding: 0 8px; display: flex; align-items: center; gap: 10px; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>Call +1 819 555 0142</a>
           <a href="#" style="min-height: 44px; padding: 0 8px; display: flex; align-items: center; gap: 10px; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email info@lacrond.example</a>
-          <a href="#" style="min-height: 44px; padding: 0 8px; display: flex; align-items: center; gap: 10px; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3"/></svg>Website lacrond.example</a>
         </div>
+      </sc-if>
+      <sc-if value="{{s.pending}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap">
+          <a href="{{l.requests}}" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid {{c.outline}}; color: {{c.text}}; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center">My requests</a>
+          <a href="{{l.unlocked}}" style="min-height: 44px; padding: 0 14px; border-radius: 12px; color: {{c.error}}; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center">Cancel request</a>
+        </div>
+      </sc-if>
+      <sc-if value="{{s.cancelled}}" hint-placeholder-val="{{ false }}">
+        <a href="{{l.confirm}}" style="min-height: 48px; border-radius: 14px; border: 1.5px solid {{c.primary}}; color: {{c.primaryText}}; font: 600 16px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center">Send again</a>
+      </sc-if>
+      <sc-if value="{{s.own}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; gap: 10px; align-items: flex-start">
+          <span style="color: {{c.green}}; flex-shrink: 0; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></span>
+          <span style="font-size: 15px; line-height: 1.4">This is your offer. Requests for it arrive in guide mode.</span>
+        </div>
+        <a href="{{l.settings}}" style="min-height: 44px; padding: 0 14px; align-self: flex-start; border-radius: 12px; border: 1px solid {{c.outline}}; color: {{c.text}}; font-size: 15px; font-weight: 600; text-decoration: none; display: flex; align-items: center">Switch to guide mode</a>
       </sc-if>
     </div>
   </section>
+  <sc-if value="{{sent}}" hint-placeholder-val="{{ false }}">
+    <div role="status" style="position: absolute; left: 16px; right: 16px; bottom: 20px; min-height: 52px; padding: 6px 8px 6px 16px; box-sizing: border-box; border-radius: 12px; background: {{c.snack}}; color: {{c.snackText}}; display: flex; align-items: center; justify-content: space-between; gap: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.35)">
+      <span style="font-size: 15px">Request sent to the guide</span>
+      <a href="{{l.requests}}" style="min-height: 44px; padding: 0 10px; display: flex; align-items: center; color: {{c.snackAction}}; font-size: 15px; font-weight: 600; text-decoration: none">My requests</a>
+    </div>
+  </sc-if>
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"contact":{"editor":"enum","options":["locked","unlocked","notEarned","offline"],"default":"locked"},"$preview":{"width":390,"height":844}}'>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"contact":{"editor":"enum","options":["locked","unlocked","notEarned","offline","pending","approved","rejected","cancelled","own"],"default":"locked"},"featured":{"editor":"boolean","default":false},"sent":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
 class Component extends DCLogic {
   renderVals() {
     const theme = this.props.theme ?? 'dark';
     const contact = this.props.contact ?? 'locked';
+    const featured = this.props.featured ?? false;
     const light = theme === 'light';
     const c = light
-      ? {sheet:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', label:'#B4500F', green:'#2F6B3E', primary:'#E8691E', border:'#E6E1D5', outline:'#DDD7C8', handle:'#C9C2B2', skeleton:'#EDE8DC', error:'#B3261E'}
-      : {sheet:'#17221A', card:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', green:'#8FD19E', primary:'#F27B2B', border:'#24352A', outline:'#2C3B30', handle:'#3A4B3F', skeleton:'#2A3A2F', error:'#F2867A'};
+      ? {sheet:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', label:'#B4500F', green:'#2F6B3E', greenTint:'#E3EFE4', primary:'#E8691E', primaryText:'#B4500F', border:'#E6E1D5', outline:'#DDD7C8', handle:'#C9C2B2', error:'#B3261E', errorTint:'#F9E3E0', amberTint:'#FBEBD9', amberText:'#8A3D0A', mutedTint:'#ECE8DE', featuredTint:'rgba(201,154,18,0.18)', featuredText:'#6E5100', snack:'#2B332C', snackText:'#F1F3EE', snackAction:'#8FD19E'}
+      : {sheet:'#17221A', card:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', green:'#8FD19E', greenTint:'#22382A', primary:'#F27B2B', primaryText:'#F7A06A', border:'#24352A', outline:'#2C3B30', handle:'#3A4B3F', error:'#F2867A', errorTint:'#3A1F1C', amberTint:'#3A2A18', amberText:'#F7B98A', mutedTint:'#26332A', featuredTint:'rgba(233,194,90,0.22)', featuredText:'#F2D58A', snack:'#EEF1EA', snackText:'#17201A', snackAction:'#2F6B3E'};
+    // The featured board shows the boosted fishing offer; the others the bear hunt.
+    const o = featured
+      ? {kind:'Fishing', kindColor:c.green, title:'Brook trout, fly-in lakes', where:'Laurentides · About 60 km from you', price:'From CA$950 per person', species:'Brook trout', about:'Float plane to three private lakes, cabins with boats and motors. Fly or spin fishing, catch and release on the big ones.'}
+      : {kind:'Hunting', kindColor:c.label, title:'Black bear over bait', where:'Abitibi-Témiscamingue · About 600 km from you', price:'From CA$2,400 per person', species:'Black bear', about:'Spring hunt from heated blinds over bait sites tended since April. Log cabins, meals and transport from the lodge included.'};
+    const statuses = {
+      pending: {label:'Pending', bg:c.amberTint, fg:c.amberText, text:'Request sent on Oct 28. The guide has your name, email and phone and will contact you.'},
+      approved: {label:'Accepted', bg:c.greenTint, fg:c.green, text:'The guide accepted your request. Reach them here:'},
+      rejected: {label:'Declined', bg:c.errorTint, fg:c.error, text:'The guide can’t take this request. Try another guide nearby.'},
+      cancelled: {label:'Cancelled', bg:c.mutedTint, fg:c.muted, text:'You cancelled this request. You can send it again.'}
+    };
+    const st = statuses[contact] ?? statuses.pending;
     const s = {
-      locked: contact === 'locked',
-      unlocked: contact === 'unlocked',
+      status: !!statuses[contact],
+      lockedText: contact === 'locked',
       notEarned: contact === 'notEarned',
       offline: contact === 'offline',
-      showButton: contact !== 'unlocked'
+      adButton: ['locked', 'notEarned', 'offline'].includes(contact),
+      unlocked: contact === 'unlocked',
+      pending: contact === 'pending',
+      approved: contact === 'approved',
+      cancelled: contact === 'cancelled',
+      own: contact === 'own'
     };
     const sfx = light ? 'Light' : '';
     return {
-      theme, c, s,
-      l: {map: light ? 'MapLight.dc.html' : 'Main.dc.html', ad: 'RewardedAd' + sfx + '.dc.html'}
+      theme, c, s, st, o, featured,
+      sent: this.props.sent ?? false,
+      l: {
+        map: light ? 'MapLight.dc.html' : 'Main.dc.html',
+        ad: 'RewardedAd' + sfx + '.dc.html',
+        unlocked: 'SheetUnlocked' + sfx + '.dc.html',
+        confirm: 'ConfirmRequest' + sfx + '.dc.html',
+        requests: 'MyRequests' + sfx + '.dc.html',
+        settings: 'Settings' + sfx + '.dc.html'
+      }
     };
   }
 }

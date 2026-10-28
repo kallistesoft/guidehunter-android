@@ -19,7 +19,7 @@ a{color:#8FD19E}a:hover{color:#B5E4BF}
   <header style="height: 56px; padding: 6px 8px 0; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between">
     <a href="{{l.location}}" aria-label="Show distances from my location" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{locateColor}}; background: {{locateBg}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></a>
     <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; letter-spacing: 0.2px">GuideHunter</span>
-    <a href="{{l.form}}" style="height: 44px; padding: 0 12px; display: flex; align-items: center; color: {{c.green}}; font-weight: 600; font-size: 15px; text-decoration: none">Become a guide</a>
+    <a href="{{l.settings}}" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
   </header>
   <nav aria-label="Filters" style="height: 48px; padding: 0 20px; display: flex; align-items: center; gap: 8px">
     <sc-for list="{{chips}}" as="chip" hint-placeholder-count="4">
@@ -61,14 +61,14 @@ a{color:#8FD19E}a:hover{color:#B5E4BF}
       <span aria-label="You are here" role="img" style="position: absolute; left: 189px; top: 504px; width: 32px; height: 32px; border-radius: 999px; background: {{c.youHalo}}; display: flex; align-items: center; justify-content: center"><span style="width: 14px; height: 14px; border-radius: 999px; background: {{c.you}}; border: 2.5px solid #FFFFFF"></span></span>
     </sc-if>
     <sc-for list="{{pins}}" as="p" hint-placeholder-count="7">
-      <a href="{{l.sheet}}" aria-label="{{p.title}}" style="position: absolute; left: {{p.left}}px; top: {{p.top}}px; width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center"><svg width="28" height="38" viewBox="0 0 28 38" aria-hidden="true"><path d="M14 1.5C7.1 1.5 1.5 7 1.5 13.9 1.5 23 14 36.5 14 36.5S26.5 23 26.5 13.9C26.5 7 20.9 1.5 14 1.5Z" fill="{{p.color}}" stroke="{{c.pinStroke}}" stroke-width="1.5"/><circle cx="14" cy="14" r="4.5" fill="{{c.pinDot}}"/></svg></a>
+      <a href="{{p.href}}" aria-label="{{p.label}}" style="position: absolute; left: {{p.left}}px; top: {{p.top}}px; width: 44px; height: 44px; display: flex; align-items: flex-end; justify-content: center"><sc-if value="{{p.featured}}" hint-placeholder-val="{{ false }}"><span aria-hidden="true" style="position: absolute; left: 2px; top: 0; width: 40px; height: 40px; border-radius: 999px; box-sizing: border-box; border: 3px solid {{c.featured}}; background: {{c.featuredTint}}"></span><span aria-hidden="true" style="position: absolute; right: -4px; top: -6px; width: 18px; height: 18px; border-radius: 999px; background: {{c.featured}}; color: {{c.pinDot}}; display: flex; align-items: center; justify-content: center; z-index: 1"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></span></sc-if><svg style="position: relative" width="28" height="38" viewBox="0 0 28 38" aria-hidden="true"><path d="M14 1.5C7.1 1.5 1.5 7 1.5 13.9 1.5 23 14 36.5 14 36.5S26.5 23 26.5 13.9C26.5 7 20.9 1.5 14 1.5Z" fill="{{p.color}}" stroke="{{c.pinStroke}}" stroke-width="1.5"/><circle cx="14" cy="14" r="4.5" fill="{{c.pinDot}}"/></svg></a>
     </sc-for>
     <div style="position: absolute; left: 0; right: 0; bottom: 20px; display: flex; flex-direction: column; gap: 8px">
       <span style="align-self: flex-start; margin-left: 20px; padding: 4px 12px; border-radius: 999px; background: {{c.card}}; border: 1px solid {{c.border}}; font-size: 14px; font-weight: 600">{{count}}</span>
       <div style="display: flex; gap: 12px; padding-left: 20px">
         <sc-for list="{{cards}}" as="g" hint-placeholder-count="2">
           <a href="{{l.sheet}}" style="flex: 0 0 240px; box-sizing: border-box; background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; text-decoration: none; color: {{c.text}}; box-shadow: {{c.shadow}}">
-            <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{g.kindColor}}">{{g.kind}}</span>
+            <span style="display: flex; align-items: center; gap: 8px"><span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{g.kindColor}}">{{g.kind}}</span><sc-if value="{{g.featured}}" hint-placeholder-val="{{ false }}"><span style="padding: 1px 8px; border-radius: 999px; background: {{c.featuredTint}}; color: {{c.featuredText}}; font-size: 12px; font-weight: 600">Featured</span></sc-if></span>
             <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{g.title}}</span>
             <span style="font-size: 13px; color: {{c.muted}}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{g.sub}}</span>
           </a>
@@ -85,18 +85,18 @@ class Component extends DCLogic {
     const mode = this.props.mode ?? 'all';
     const light = theme === 'light';
     const P = {
-      dark: {bg:'#0E1611',card:'#17221A',text:'#EEF1EA',muted:'#A9B5AB',green:'#8FD19E',greenTint:'#22382A',label:'#F7A06A',border:'#24352A',outline:'#2C3B30',land:'#18231C',water:'#0F2A33',park:'#1C3022',road:'#2B3B31',mapLabel:'#8C998E',hunt:'#F27B2B',fish:'#4FB3A0',both:'#E9C25A',pinStroke:'#0E1611',pinDot:'#0E1611',you:'#6EA8FF',youHalo:'rgba(110,168,255,0.28)',shadow:'0 6px 18px rgba(0,0,0,0.45)'},
-      light: {bg:'#F5F2EA',card:'#FFFFFF',text:'#17201A',muted:'#5B6659',green:'#2F6B3E',greenTint:'#E3EFE4',label:'#B4500F',border:'#E6E1D5',outline:'#DDD7C8',land:'#EDEAE1',water:'#B7D5E3',park:'#D5E6CC',road:'#FFFFFF',mapLabel:'#5F665C',hunt:'#E8691E',fish:'#1F7A6A',both:'#C99A12',pinStroke:'#FFFFFF',pinDot:'#FFFFFF',you:'#2563EB',youHalo:'rgba(37,99,235,0.2)',shadow:'0 6px 18px rgba(23,32,26,0.16)'}
+      dark: {bg:'#0E1611',card:'#17221A',text:'#EEF1EA',muted:'#A9B5AB',green:'#8FD19E',greenTint:'#22382A',label:'#F7A06A',border:'#24352A',outline:'#2C3B30',land:'#18231C',water:'#0F2A33',park:'#1C3022',road:'#2B3B31',mapLabel:'#8C998E',hunt:'#F27B2B',fish:'#4FB3A0',both:'#E9C25A',pinStroke:'#0E1611',pinDot:'#0E1611',you:'#6EA8FF',youHalo:'rgba(110,168,255,0.28)',shadow:'0 6px 18px rgba(0,0,0,0.45)',featured:'#E9C25A',featuredTint:'rgba(233,194,90,0.22)',featuredText:'#F2D58A'},
+      light: {bg:'#F5F2EA',card:'#FFFFFF',text:'#17201A',muted:'#5B6659',green:'#2F6B3E',greenTint:'#E3EFE4',label:'#B4500F',border:'#E6E1D5',outline:'#DDD7C8',land:'#EDEAE1',water:'#B7D5E3',park:'#D5E6CC',road:'#FFFFFF',mapLabel:'#5F665C',hunt:'#E8691E',fish:'#1F7A6A',both:'#C99A12',pinStroke:'#FFFFFF',pinDot:'#FFFFFF',you:'#2563EB',youHalo:'rgba(37,99,235,0.2)',shadow:'0 6px 18px rgba(23,32,26,0.16)',featured:'#B08200',featuredTint:'rgba(201,154,18,0.18)',featuredText:'#6E5100'}
     };
     const c = P[light ? 'light' : 'dark'];
     const s = light ? 'Light' : '';
     const link = (n) => (n === 'map' ? (light ? 'MapLight' : 'Main') : n + s) + '.dc.html';
-    const l = {map: link('map'), near: link('MapNear'), species: link('SpeciesPicker'), location: link('LocationAsk'), sheet: link('GuideSheet'), form: link('OfferStep')};
+    const l = {map: link('map'), near: link('MapNear'), species: link('SpeciesPicker'), location: link('LocationAsk'), sheet: link('GuideSheet'), featured: link('SheetFeatured'), settings: link('Settings')};
     const guides = [
       {id:'bear', act:'HUNT', title:'Black bear over bait', region:'Abitibi-Témiscamingue', km:600, x:46, y:206},
       {id:'walleye', act:'FISH', title:'Walleye on Lac Saint-Jean', region:'Saguenay–Lac-Saint-Jean', km:205, x:192, y:268},
       {id:'moose', act:'BOTH', title:'Moose by canoe, walleye in summer', region:'Haute-Mauricie', km:230, x:118, y:362},
-      {id:'trout', act:'FISH', title:'Brook trout, fly-in lakes', region:'Laurentides', km:60, x:214, y:420},
+      {id:'trout', act:'FISH', title:'Brook trout, fly-in lakes', region:'Laurentides', km:60, x:214, y:420, featured:true},
       {id:'goose', act:'HUNT', title:'Snow geese at Cap-Tourmente', region:'Côte-de-Beaupré', km:45, x:246, y:486},
       {id:'deer', act:'HUNT', title:'White-tailed deer on Anticosti', region:'Anticosti Island', km:650, x:340, y:206},
       {id:'salmon', act:'FISH', title:'Atlantic salmon, Gaspé rivers', region:'Gaspé', km:610, x:362, y:412}
@@ -105,8 +105,16 @@ class Component extends DCLogic {
     const colors = {HUNT: c.hunt, FISH: c.fish, BOTH: c.both};
     let shown = mode === 'fish' ? guides.filter(g => g.act !== 'HUNT') : guides;
     if (mode === 'near') shown = [...shown].sort((a, b) => a.km - b.km);
-    const pins = shown.map(g => ({title: g.title, color: colors[g.act], left: g.x - 22, top: g.y - 42}));
-    const cards = shown.slice(0, 3).map(g => ({
+    // A featured (boosted) offer: a gold ring and star, drawn last so it's on top; first among the cards.
+    const pins = [...shown].sort((a, b) => (a.featured ? 1 : 0) - (b.featured ? 1 : 0)).map(g => ({
+      label: g.featured ? g.title + ', featured' : g.title,
+      featured: !!g.featured,
+      href: g.featured ? l.featured : l.sheet,
+      color: colors[g.act], left: g.x - 22, top: g.y - 42
+    }));
+    const ordered = [...shown].sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+    const cards = ordered.slice(0, 3).map(g => ({
+      featured: !!g.featured,
       title: g.title,
       kind: kinds[g.act],
       kindColor: g.act === 'FISH' ? c.green : c.label,

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_title">Find your hunting or fishing guide</string>
+    <string name="welcome_body">Guides across Canada on one map. Sign in to send requests to guides, or to publish your own offers.</string>
+    <string name="sign_in_google">Sign in with Google</string>
+    <string name="signing_in">Signing in…</string>
+    <string name="later">Later</string>
+    <string name="later_note">You can sign in anytime from Settings.</string>
+
+    <string name="signed_in_as">Signed in as %1$s</string>
+    <string name="choose_mode_title">What brings you here?</string>
+    <string name="choose_mode_body">One account does both. You can switch anytime in Settings.</string>
+    <string name="mode_user_title">I\'m looking for a guide</string>
+    <string name="mode_user_body">Browse offers on the map and send requests to guides.</string>
+    <string name="mode_guide_title">I\'m a guide</string>
+    <string name="mode_guide_body">Publish your offers and answer the requests you get.</string>
+
+    <string name="section_guide">Guide</string>
+    <string name="section_mode">Mode</string>
+    <string name="section_account">Account</string>
+    <string name="guide_profile">Guide profile</string>
+    <string name="guide_profile_body">Your business and how people reach you</string>
+    <string name="switch_to_guide">Switch to guide mode</string>
+    <string name="switch_to_guide_body">Publish offers and answer requests</string>
+    <string name="switch_to_user">Switch to user mode</string>
+    <string name="switch_to_user_body">Find guides on the map</string>
+    <string name="signed_in_with_google">Signed in with Google</string>
+    <string name="sign_in_body">To publish offers, or to contact guides</string>
+    <string name="privacy_options">Privacy options</string>
+    <string name="privacy_options_body">Ads and consent</string>
+    <string name="sign_out">Sign out</string>
+    <string name="delete_account">Delete my account</string>
+    <string name="delete_account_title">Delete your account?</string>
+    <string name="delete_account_body">Your offers come off the map, and your offers, profile and account are deleted. Google asks you to confirm your account first. This can\'t be undone.</string>
+    <string name="cancel">Cancel</string>
+    <string name="dismiss">OK</string>
+
+    <string name="sign_in_failed">Sign-in failed. Check your connection and try again.</string>
+    <string name="sign_in_not_configured">You can\'t sign in from this version of the app yet.</string>
+    <string name="delete_account_failed">Your account couldn\'t be deleted. Check your connection and try again.</string>
+</resources>

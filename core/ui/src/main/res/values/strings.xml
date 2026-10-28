@@ -37,6 +37,7 @@
     <string name="activity_fish">Fishing</string>
     <string name="activity_both">Hunting and fishing</string>
 
+    <string name="settings">Settings</string>
     <string name="back">Back</string>
 
     <string name="slot_morning_of">%1$s, morning</string>

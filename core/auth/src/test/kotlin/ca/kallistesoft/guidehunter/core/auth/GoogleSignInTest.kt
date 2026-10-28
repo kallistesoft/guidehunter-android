@@ -1,4 +1,4 @@
-package ca.kallistesoft.guidehunter.feature.becomeguide
+package ca.kallistesoft.guidehunter.core.auth
 
 import android.content.Context
 import android.os.Bundle

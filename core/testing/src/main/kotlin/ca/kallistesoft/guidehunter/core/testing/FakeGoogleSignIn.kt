@@ -1,7 +1,7 @@
-package ca.kallistesoft.guidehunter.feature.becomeguide
+package ca.kallistesoft.guidehunter.core.testing
 
 import android.content.Context
-import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
+import ca.kallistesoft.guidehunter.core.auth.GoogleSignIn
 
 /** Google's sheet as a test sets it: hands out [token] (null: the guide closed it), or throws [failure]. */
 class FakeGoogleSignIn(var token: String? = FakeAuthRepository.TOKEN) : GoogleSignIn {

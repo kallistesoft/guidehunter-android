@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter my requests</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="height: 64px; flex-shrink: 0; padding: 8px 8px 0; box-sizing: border-box; display: flex; align-items: center; gap: 4px">
+    <a href="{{l.settings}}" aria-label="Back" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+    <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px">My requests</h1>
+  </header>
+  <div style="padding: 4px 16px 24px; display: flex; flex-direction: column; gap: 10px">
+    <sc-for list="{{items}}" as="r" hint-placeholder-count="6">
+      <sc-if value="{{r.ad}}" hint-placeholder-val="{{ false }}">
+        <div aria-label="Advertisement" style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 12px 14px; display: flex; gap: 12px; align-items: center">
+          <span style="flex-shrink: 0; width: 52px; height: 52px; border-radius: 10px; background: {{c.adImg}}; display: flex; align-items: center; justify-content: center; color: {{c.muted}}; font-size: 11px">[Icon]</span>
+          <span style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px">
+            <span style="display: flex; align-items: center; gap: 6px"><span style="padding: 0 6px; border-radius: 4px; background: {{c.adTag}}; color: #1A0E05; font-size: 11px; font-weight: 700">Ad</span><span style="font-size: 15px; font-weight: 600">[Advertiser headline]</span></span>
+            <span style="font-size: 13px; color: {{c.muted}}">[Advertiser text]</span>
+          </span>
+          <a href="#" style="min-height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid {{c.outline}}; color: {{c.text}}; font-size: 14px; font-weight: 600; text-decoration: none; display: flex; align-items: center">[Action]</a>
+        </div>
+      </sc-if>
+      <sc-if value="{{r.req}}" hint-placeholder-val="{{ true }}">
+        <article style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px">
+            <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{r.kindColor}}">{{r.kind}}</span>
+            <span style="height: 26px; padding: 0 10px; border-radius: 999px; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; background: {{r.bg}}; color: {{r.fg}}"><span aria-hidden="true" style="width: 7px; height: 7px; border-radius: 999px; background: currentColor"></span>{{r.status}}</span>
+          </div>
+          <h2 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 20px; line-height: 1.15">{{r.title}}</h2>
+          <span style="font-size: 14px; color: {{c.muted}}">{{r.meta}}</span>
+          <sc-if value="{{r.note}}" hint-placeholder-val="{{ false }}"><span style="font-size: 14px; line-height: 1.4">{{r.note}}</span></sc-if>
+          <sc-if value="{{r.approved}}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 2px; padding: 10px 12px; border-radius: 12px; background: {{c.greenTint}}; display: flex; flex-direction: column; gap: 2px">
+              <span style="font-size: 15px; font-weight: 600">Pourvoirie du Lac Rond</span>
+              <a href="#" style="min-height: 36px; display: flex; align-items: center; gap: 8px; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>Call +1 819 555 0142</a>
+              <a href="#" style="min-height: 36px; display: flex; align-items: center; gap: 8px; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Email info@lacrond.example</a>
+            </div>
+          </sc-if>
+          <sc-if value="{{r.action}}" hint-placeholder-val="{{ false }}">
+            <a href="{{r.actionHref}}" style="align-self: flex-start; min-height: 44px; margin: -2px -8px -6px; padding: 0 8px; display: flex; align-items: center; color: {{r.actionColor}}; font-size: 15px; font-weight: 600; text-decoration: none">{{r.action}}</a>
+          </sc-if>
+        </article>
+      </sc-if>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const light = (this.props.theme ?? 'dark') === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', label:'#B4500F', green:'#2F6B3E', greenTint:'#E3EFE4', border:'#E6E1D5', outline:'#DDD7C8', error:'#B3261E', errorTint:'#F9E3E0', amberTint:'#FBEBD9', amberText:'#8A3D0A', mutedTint:'#ECE8DE', adImg:'#ECE8DE', adTag:'#E9C25A'}
+      : {bg:'#0E1611', card:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', green:'#8FD19E', greenTint:'#22382A', border:'#24352A', outline:'#2C3B30', error:'#F2867A', errorTint:'#3A1F1C', amberTint:'#3A2A18', amberText:'#F7B98A', mutedTint:'#26332A', adImg:'#26332A', adTag:'#E9C25A'};
+    const sfx = light ? 'Light' : '';
+    const S = {
+      pending: {status: 'Pending', bg: c.amberTint, fg: c.amberText},
+      approved: {status: 'Accepted', bg: c.greenTint, fg: c.green},
+      rejected: {status: 'Declined', bg: c.errorTint, fg: c.error},
+      cancelled: {status: 'Cancelled', bg: c.mutedTint, fg: c.muted},
+      removed: {status: 'Offer removed', bg: c.mutedTint, fg: c.muted}
+    };
+    const req = (s, kind, title, meta, extra = {}) => Object.assign({req: true, ad: false, kind, kindColor: kind === 'Fishing' ? c.green : c.label, title, meta, note: '', approved: s === 'approved', action: '', actionHref: '#', actionColor: c.green}, S[s], extra);
+    // Newest first. One native ad after the second request.
+    const items = [
+      req('pending', 'Fishing', 'Walleye on Lac Saint-Jean', 'Jun 6 to 8, 2027 · Sent Oct 28', {action: 'Cancel request', actionColor: c.error, actionHref: 'SheetUnlocked' + sfx + '.dc.html'}),
+      req('approved', 'Hunting', 'Black bear over bait', 'May 18 to 21, 2027 · Accepted Oct 27', {action: 'Cancel request', actionColor: c.error}),
+      {ad: true, req: false},
+      req('rejected', 'Hunting', 'Snow geese at Cap-Tourmente', 'Dates on request · Sent Oct 20', {note: 'The guide can’t take this request.'}),
+      req('cancelled', 'Fishing', 'Brook trout, fly-in lakes', 'Jul 3 to 5, 2027 · Cancelled Oct 18', {action: 'Send again', actionHref: 'ConfirmRequest' + sfx + '.dc.html'}),
+      req('removed', 'Hunting', 'Moose by canoe', 'Sep 20 to 26, 2027 · Sent Oct 12', {note: 'The guide took this offer off the map.'})
+    ];
+    return {c, items, l: {settings: 'Settings' + sfx + '.dc.html'}};
+  }
+}
+</script>
+</body>
+</html>

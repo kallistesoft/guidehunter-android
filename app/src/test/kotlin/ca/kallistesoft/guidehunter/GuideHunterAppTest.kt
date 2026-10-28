@@ -1,5 +1,6 @@
 package ca.kallistesoft.guidehunter
 
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
@@ -14,8 +15,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The real app (real Hilt graph, no Firebase in tests: the sample guides) under Robolectric: the map opens with its
- * guides, a guide's contact unlocks (ads are off under tests), and the guide's space opens and closes.
+ * The real app (real Hilt graph, no Firebase in tests: the sample guides; the real settings DataStore, fresh per test)
+ * under Robolectric: a first launch opens the welcome, "Later" leads to the map with its guides, a guide's contact
+ * unlocks (ads are off under tests), and the settings open and close.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(qualifiers = "en-w411dp-h891dp")
@@ -24,19 +26,22 @@ class GuideHunterAppTest {
     val compose = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun `the map shows the guides, and a guide's contact unlocks`() {
-        compose.waitUntil(TIMEOUT) { compose.onAllNodes(hasTag("guide-sample-bear")).fetchSemanticsNodes().isNotEmpty() }
+    fun `later on the welcome opens the map, and a guide's contact unlocks`() {
+        later()
+        waitFor("guide-sample-bear")
         compose.onNodeWithTag("guide-sample-bear").performClick()
         compose.onNodeWithTag("unlock").performClick()
-        compose.waitUntil(TIMEOUT) { compose.onAllNodes(hasTag("contact-name")).fetchSemanticsNodes().isNotEmpty() }
+        waitFor("contact-name")
     }
 
     @Test
-    fun `become a guide opens the sign-in, and back returns to the map`() {
-        compose.onNodeWithTag("become-guide").performClick()
-        compose.onNodeWithTag("sign-in").assertExists()
+    fun `the settings open from the map, back returns to it, and back on the map leaves the app`() {
+        later()
+        compose.onNodeWithTag("settings").performClick()
+        waitFor("settings-screen")
         compose.onNodeWithTag("back").performClick()
-        compose.onNodeWithTag("become-guide").assertExists()
+        waitFor("locate")
+        compose.onNodeWithTag("settings-screen").assertDoesNotExist()
         // Back on the map (the only entry) leaves the app, as Android does.
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         compose.activityRule.scenario.onActivity { assertTrue(it.isFinishing) }
@@ -53,7 +58,15 @@ class GuideHunterAppTest {
         }
     }
 
-    private fun hasTag(tag: String) = androidx.compose.ui.test.hasTestTag(tag)
+    /** A first launch: the welcome, then "Later" to the map. */
+    private fun later() {
+        waitFor("welcome")
+        compose.onNodeWithTag("later").performClick()
+        waitFor("locate")
+    }
+
+    private fun waitFor(tag: String) =
+        compose.waitUntil(TIMEOUT) { compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty() }
 
     private companion object {
         const val TIMEOUT = 5_000L

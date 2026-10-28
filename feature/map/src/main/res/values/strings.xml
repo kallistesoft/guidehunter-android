@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="map_title">GuideHunter</string>
-    <string name="become_guide">Become a guide</string>
     <string name="my_location">Show distances from my location</string>
-    <string name="privacy_options">Privacy options</string>
     <string name="location_rationale_title">Show distances?</string>
     <string name="location_rationale">With your approximate location, each guide shows how far away it is. Your location stays on this phone.</string>
     <string name="location_rationale_allow">Allow</string>

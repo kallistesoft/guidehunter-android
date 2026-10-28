@@ -31,7 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -78,6 +78,7 @@ import ca.kallistesoft.guidehunter.core.model.GuideFilter
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.model.Trip
 import ca.kallistesoft.guidehunter.core.ui.DateRangeDialog
+import ca.kallistesoft.guidehunter.core.ui.R as UiR
 import ca.kallistesoft.guidehunter.core.ui.dateRange
 import ca.kallistesoft.guidehunter.core.ui.label
 import ca.kallistesoft.guidehunter.core.ui.speciesByDiscipline
@@ -100,7 +101,7 @@ data class MapContent(
  */
 @Composable
 fun MapScreen(
-    onBecomeGuide: () -> Unit,
+    onSettings: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = hiltViewModel(),
     map: @Composable (MapContent, Modifier) -> Unit = { content, mapModifier -> GuideMap(content, mapModifier) },
@@ -121,11 +122,10 @@ fun MapScreen(
 
     MapContent(
         state = state,
-        onBecomeGuide = onBecomeGuide,
+        onSettings = onSettings,
         onLocate = {
             if (hasLocationPermission(context)) viewModel.refreshLocation() else permission.launch(LOCATION_PERMISSION)
         },
-        onPrivacyOptions = viewModel::showPrivacyOptions,
         onDiscipline = viewModel::chooseDiscipline,
         onSpecies = viewModel::toggleSpecies,
         onAnySpecies = viewModel::clearSpecies,
@@ -174,9 +174,8 @@ private fun LocationRationale(onAllow: () -> Unit, onDismiss: () -> Unit) {
 @Composable
 internal fun MapContent(
     state: MapUiState,
-    onBecomeGuide: () -> Unit,
+    onSettings: () -> Unit,
     onLocate: () -> Unit,
-    onPrivacyOptions: () -> Unit,
     onDiscipline: (Discipline?) -> Unit,
     onSpecies: (Species) -> Unit,
     onAnySpecies: () -> Unit,
@@ -201,13 +200,8 @@ internal fun MapContent(
                     }
                 },
                 actions = {
-                    if (state.privacyOptionsRequired) {
-                        IconButton(onClick = onPrivacyOptions, modifier = Modifier.testTag("privacy-options")) {
-                            Icon(Icons.Default.Shield, contentDescription = stringResource(R.string.privacy_options))
-                        }
-                    }
-                    TextButton(onClick = onBecomeGuide, modifier = Modifier.testTag("become-guide")) {
-                        Text(stringResource(R.string.become_guide))
+                    IconButton(onClick = onSettings, modifier = Modifier.testTag("settings")) {
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(UiR.string.settings))
                     }
                 },
             )

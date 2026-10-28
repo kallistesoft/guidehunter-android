@@ -3,7 +3,6 @@ package ca.kallistesoft.guidehunter.feature.map
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import ca.kallistesoft.guidehunter.core.ads.AdConsent
 import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
@@ -85,8 +84,6 @@ data class MapUiState(
     val userLocation: GeoPoint? = null,
     /** The guide whose offer is open, or null. */
     val selected: SelectedGuide? = null,
-    /** The user's region requires a way back to their ad consent choices: show "Privacy options". */
-    val privacyOptionsRequired: Boolean = false,
     /** The first day the dates picker offers. */
     val today: LocalDate = LocalDate.fromEpochDays(0),
 )
@@ -101,7 +98,6 @@ class MapViewModel @Inject constructor(
     private val guideRepository: GuideRepository,
     private val locationRepository: LocationRepository,
     private val rewardedAds: RewardedAds,
-    private val adConsent: AdConsent,
     private val savedState: SavedStateHandle,
     private val today: Today,
 ) : ViewModel() {
@@ -142,8 +138,7 @@ class MapViewModel @Inject constructor(
         visibleArea,
         selection,
         contacts,
-        adConsent.privacyOptionsRequired,
-    ) { listing, area, selection, contacts, privacyRequired ->
+    ) { listing, area, selection, contacts ->
         MapUiState(
             loading = false,
             guides = listing.shown,
@@ -160,7 +155,6 @@ class MapViewModel @Inject constructor(
                     trip = selection.trip?.takeIf { it in trips } ?: listing.filter.dates?.let { free -> trips.find { it.within(free) } },
                 )
             },
-            privacyOptionsRequired = privacyRequired,
             today = today(),
         )
     }.onStart {
@@ -175,9 +169,6 @@ class MapViewModel @Inject constructor(
     fun showArea(area: GeoBounds) {
         visibleArea.value = area
     }
-
-    /** "Privacy options": the ad consent choices again (only offered where the user's region requires it). */
-    fun showPrivacyOptions() = adConsent.showPrivacyOptions()
 
     /** Shows the guides of [discipline] (null: both). The chosen species of the other discipline are dropped. */
     fun chooseDiscipline(discipline: Discipline?) = setFilter { current ->

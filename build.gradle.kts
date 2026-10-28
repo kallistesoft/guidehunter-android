@@ -20,10 +20,12 @@ dependencies {
     listOf(
         ":app",
         ":core:ads",
+        ":core:auth",
         ":core:data",
         ":core:designsystem",
         ":core:model",
         ":core:ui",
+        ":feature:account",
         ":feature:becomeguide",
         ":feature:map",
     ).forEach { kover(project(it)) }

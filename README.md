@@ -9,7 +9,10 @@ changes. Native Android first; iOS later (see FOLLOW-UP.md).
 
 ## The MVP
 
-- **No accounts for users.** Hunters and anglers never sign in; guides do, with their Google account.
+- **One account, two modes.** The first launch asks to sign in with Google (or "Later": the map works signed out),
+  then "What brings you here?": **user** (the map) or **guide** (their offers). The app opens on that mode's home;
+  Settings switches mode (guide mode needs an account), signs in or out and deletes the account. The mode is kept on
+  the phone (DataStore); signing out goes back to user mode, deleting the account back to the welcome.
 - **Map of guides** (Google Maps): a pin per guide (orange for hunting, green for fishing, yellow for both), filters
   (hunting, fishing, several species, the dates the user can go: guides with a trip that fits them), and how far each
   guide is once the user shares their location. Offers whose dates are all over leave the map.
@@ -17,7 +20,7 @@ changes. Native Android first; iOS later (see FOLLOW-UP.md).
   one shown, the others under "Other dates"; the one the user picks goes into the email to the guide). The guide's
   **name and contact are hidden until the user watches a rewarded ad**. Then they get the phone, email and website,
   each one tap away.
-- **Become a guide**: a guide signs in with Google, fills in a **profile** (business name, email, phone, website,
+- **Guide mode**: a signed-in guide fills in a **profile** (business name, email, phone, website,
   shared by all their offers) and adds **offers**, as many as they like, in five steps: the trip (title,
   hunting/fishing/both, description), species, where (town or region, a pin on the map), when (half day to weeks,
   departure dates, weekly in one go, these dates only or every year) and price and send (a summary with Change on each
@@ -32,15 +35,17 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 
 | Module | What's in it |
 |---|---|
-| `:app` | `MainActivity`, navigation (`GuideHunterApp`, `navigation/NavKeys.kt`), build-type settings (AdMob, Maps key, application email) |
-| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `GeoPoint.distanceKm` |
-| `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), sample guides when Firebase isn't set up |
+| `:app` | `MainActivity`, navigation (`GuideHunterApp`, `navigation/NavKeys.kt`; `AppViewModel` picks the home: welcome, map or guide's offers), build-type settings (AdMob, Maps key, application email) |
+| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `AppSettings` (`AppMode`), `GeoPoint.distanceKm` |
+| `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), `SettingsRepository` (onboarding done, mode; Preferences DataStore), sample guides when Firebase isn't set up |
+| `:core:auth` | Google sign-in (Credential Manager) and `AccountSession` (sign in, sign out, delete the account), shared by the welcome and the settings |
 | `:core:ads` | The rewarded ad and the consent form (AdMob, UMP), from BetterHunter |
 | `:core:designsystem` | Theme (BetterHunter's palette and Barlow fonts for now), spacing, sizes, buttons |
 | `:core:ui` | Species and activity labels (EN/FR), links (dialer, mail, website) |
 | `:core:testing` | Fakes and test rules |
 | `:feature:map` | The map, filters, guide cards, the guide's sheet and the unlock |
-| `:feature:becomeguide` | The guide's space: Google sign-in (Credential Manager), their offers, profile and offer form |
+| `:feature:account` | The welcome (sign in or later), user or guide, and the settings of both modes |
+| `:feature:becomeguide` | Guide mode: their offers (the guide's home), profile and offer form |
 
 ### Firestore
 
@@ -123,11 +128,11 @@ ads too.
 
 ### Baseline profile
 
-The release build ships a baseline profile (startup, the map, a guide's offer precompiled). To record it again
+The release build ships a baseline profile (startup, the welcome, the map, a guide's offer, the settings precompiled). To record it again
 after the screens change: `./gradlew :app:generateBaselineProfile` runs `:baselineprofile` on a Gradle-managed
 emulator (Pixel 6, API 34, downloaded on first run) and writes `app/src/main/generated/baselineProfiles/`, which is
-committed. The test tags it drives are `guide-count`, `guide-sample-bear`, `guide-detail`, `become-guide` and
-`field-business-name`: they must stay testTags **and** resource ids (`Modifier.testTag` with
+committed. The test tags it drives are `later`, `guide-count`, `guide-sample-bear`, `guide-detail`, `settings` and
+`settings-screen`: they must stay testTags **and** resource ids (`Modifier.testTag` with
 `testTagsAsResourceId` on the root; see `MainActivity`).
 
 ## Commands

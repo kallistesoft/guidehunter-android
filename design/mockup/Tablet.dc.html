@@ -18,7 +18,7 @@ body{margin:0}
   <header style="height: 56px; padding: 6px 8px 0; box-sizing: border-box; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0">
     <a href="#" aria-label="Show distances from my location" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></a>
     <span style="font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 26px; letter-spacing: 0.2px">GuideHunter</span>
-    <a href="{{formHref}}" style="height: 44px; padding: 0 12px; display: flex; align-items: center; color: {{c.green}}; font-weight: 600; font-size: 15px; text-decoration: none">Become a guide</a>
+    <a href="{{formHref}}" aria-label="Settings" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
   </header>
   <div style="flex: 1; display: flex; min-height: 0">
     <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
@@ -78,17 +78,13 @@ body{margin:0}
       </div>
       <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">About this trip</span>
       <p style="margin: 0; font-size: 16px; line-height: 1.4">Spring hunt from heated blinds over bait sites tended since April. Log cabins, meals and transport from the lodge included. English and French spoken.</p>
-      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Guide and contact</span>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Contact the guide</span>
       <div style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px">
         <div style="display: flex; gap: 10px; align-items: flex-start">
-          <span style="color: {{c.muted}}; flex-shrink: 0; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
-          <span style="font-size: 15px; line-height: 1.4">The guide’s name, phone, email and website show after a short ad.</span>
+          <span style="color: {{c.muted}}; flex-shrink: 0; margin-top: 1px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg></span>
+          <span style="font-size: 15px; line-height: 1.4">After a short ad, tell the guide you’re interested. They get your name and contact and reach out to you.</span>
         </div>
-        <div aria-hidden="true" style="display: flex; flex-direction: column; gap: 8px">
-          <span style="width: 62%; height: 14px; border-radius: 6px; background: {{c.skeleton}}"></span>
-          <span style="width: 44%; height: 10px; border-radius: 6px; background: {{c.skeleton}}"></span>
-        </div>
-        <a href="{{adHref}}" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Watch an ad to see the contact</a>
+        <a href="{{adHref}}" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Watch an ad to contact the guide</a>
       </div>
     </aside>
   </div>
@@ -127,7 +123,7 @@ class Component extends DCLogic {
       border: g.id === 'bear' ? c.primary : c.border
     }));
     const sfx = light ? 'Light' : '';
-    return {c, pins, cards, formHref: 'Form' + sfx + '.dc.html', adHref: 'RewardedAd' + sfx + '.dc.html'};
+    return {c, pins, cards, formHref: 'Settings' + sfx + '.dc.html', adHref: 'RewardedAd' + sfx + '.dc.html'};
   }
 }
 </script>
