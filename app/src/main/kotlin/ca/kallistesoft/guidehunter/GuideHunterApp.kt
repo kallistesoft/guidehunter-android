@@ -11,9 +11,11 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.feature.account.ChooseModeScreen
 import ca.kallistesoft.guidehunter.feature.account.SettingsScreen
+import ca.kallistesoft.guidehunter.feature.account.SpeciesFilterScreen
 import ca.kallistesoft.guidehunter.feature.account.WelcomeScreen
 import ca.kallistesoft.guidehunter.feature.becomeguide.GuideProfileScreen
 import ca.kallistesoft.guidehunter.feature.becomeguide.MyOffersScreen
@@ -26,6 +28,7 @@ import ca.kallistesoft.guidehunter.navigation.GuideProfile
 import ca.kallistesoft.guidehunter.navigation.MyOffers
 import ca.kallistesoft.guidehunter.navigation.OfferEditor
 import ca.kallistesoft.guidehunter.navigation.Settings
+import ca.kallistesoft.guidehunter.navigation.SpeciesFilter
 import ca.kallistesoft.guidehunter.navigation.Welcome
 
 /** Draws the maps; the default is Google Maps, tests pass stand-ins (Google Maps can't draw on the JVM). */
@@ -75,7 +78,9 @@ private fun AppNavigation(home: NavKey, modifier: Modifier, maps: Maps) {
             }
             entry<GuideMap> {
                 val settings = { open(Settings) }
-                maps.guides?.let { MapScreen(onSettings = settings, map = it) } ?: MapScreen(onSettings = settings)
+                val species = { discipline: Discipline? -> open(SpeciesFilter(discipline?.name)) }
+                maps.guides?.let { MapScreen(onSettings = settings, onSpeciesFilter = species, map = it) }
+                    ?: MapScreen(onSettings = settings, onSpeciesFilter = species)
             }
             entry<MyOffers> {
                 MyOffersScreen(
@@ -86,7 +91,10 @@ private fun AppNavigation(home: NavKey, modifier: Modifier, maps: Maps) {
                 )
             }
             entry<Settings> {
-                SettingsScreen(onBack = back, onGuideProfile = { open(GuideProfile) })
+                SettingsScreen(onBack = back, onGuideProfile = { open(GuideProfile) }, onSpeciesFilter = { open(SpeciesFilter()) })
+            }
+            entry<SpeciesFilter> { key ->
+                SpeciesFilterScreen(key.discipline?.let(Discipline::valueOf), onBack = back)
             }
             entry<GuideProfile> {
                 GuideProfileScreen(onBack = back, onDone = back)

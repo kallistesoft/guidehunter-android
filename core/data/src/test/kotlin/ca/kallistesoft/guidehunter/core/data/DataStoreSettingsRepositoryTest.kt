@@ -3,8 +3,10 @@ package ca.kallistesoft.guidehunter.core.data
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.AppSettings
+import ca.kallistesoft.guidehunter.core.model.Species
 import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
@@ -41,5 +43,30 @@ class DataStoreSettingsRepositoryTest {
         val store = store()
         store.edit { it[stringPreferencesKey("mode")] = "ADMIN" }
         assertEquals(AppMode.USER, DataStoreSettingsRepository(store).settings.first().mode)
+    }
+
+    @Test
+    fun `the species filter is kept, cleared, and reset with the rest`() = runTest {
+        val repository = DataStoreSettingsRepository(store())
+        repository.finishOnboarding(AppMode.USER)
+        repository.setSpeciesFilter(setOf(Species.MOOSE, Species.WALLEYE))
+        assertEquals(
+            AppSettings(onboarded = true, speciesFilter = setOf(Species.MOOSE, Species.WALLEYE)),
+            repository.settings.first(),
+        )
+
+        repository.setSpeciesFilter(emptySet())
+        assertEquals(emptySet<Species>(), repository.settings.first().speciesFilter)
+
+        repository.setSpeciesFilter(setOf(Species.ELK))
+        repository.reset()
+        assertEquals(AppSettings(), repository.settings.first())
+    }
+
+    @Test
+    fun `an unknown species name (removed since) is ignored`() = runTest {
+        val store = store()
+        store.edit { it[stringSetPreferencesKey("species_filter")] = setOf("MOOSE", "DODO") }
+        assertEquals(setOf(Species.MOOSE), DataStoreSettingsRepository(store).settings.first().speciesFilter)
     }
 }

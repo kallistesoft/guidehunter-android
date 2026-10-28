@@ -7,6 +7,7 @@ import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import ca.kallistesoft.guidehunter.core.data.GuideRepository
 import ca.kallistesoft.guidehunter.core.data.LocationRepository
+import ca.kallistesoft.guidehunter.core.data.SettingsRepository
 import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
@@ -14,7 +15,6 @@ import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
 import ca.kallistesoft.guidehunter.core.model.Slot
-import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.model.Today
 import ca.kallistesoft.guidehunter.core.model.Trip
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,6 +24,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -89,8 +91,9 @@ data class MapUiState(
 )
 
 /**
- * The map of guides: filtered by discipline, species and the dates the user can go, with the distance from the user. Opening a guide shows its
- * public offer; its name and contact details are shown once the user has watched a rewarded ad (Pattern A of
+ * The map of guides: filtered by discipline, species and the dates the user can go, with the distance from the user.
+ * The species are a setting ([SettingsRepository], chosen on their own screen and kept for next time); the discipline
+ * and the dates are this screen's. Opening a guide shows its public offer; its name and contact details are shown once the user has watched a rewarded ad (Pattern A of
  * .claude/skills/viewmodel-state).
  */
 @HiltViewModel
@@ -98,16 +101,21 @@ class MapViewModel @Inject constructor(
     private val guideRepository: GuideRepository,
     private val locationRepository: LocationRepository,
     private val rewardedAds: RewardedAds,
+    private val settings: SettingsRepository,
     private val savedState: SavedStateHandle,
     private val today: Today,
 ) : ViewModel() {
-    private val filter = MutableStateFlow(
+    /** The screen's own choices: the discipline and the dates (the species come from the settings). */
+    private val choices = MutableStateFlow(
         GuideFilter(
             discipline = savedState.get<String>(KEY_DISCIPLINE)?.let(Discipline::valueOf),
-            species = Species.fromNames(savedState.get<ArrayList<String>>(KEY_SPECIES).orEmpty()).toSet(),
             dates = savedState.get<LongArray>(KEY_DATES)?.toTrip(),
         ),
     )
+
+    private val filter = combine(choices, settings.settings.map { it.speciesFilter }.distinctUntilChanged()) { choices, species ->
+        choices.copy(species = species)
+    }
 
     /** The open guide, and the trip the user chose in it. */
     private data class Selection(val id: String? = null, val trip: Trip? = null)
@@ -171,8 +179,14 @@ class MapViewModel @Inject constructor(
     }
 
     /** Shows the guides of [discipline] (null: both). The chosen species of the other discipline are dropped. */
-    fun chooseDiscipline(discipline: Discipline?) = setFilter { current ->
-        current.copy(discipline = discipline, species = current.species.filter { discipline == null || it.discipline == discipline }.toSet())
+    fun chooseDiscipline(discipline: Discipline?) {
+        setFilter { it.copy(discipline = discipline) }
+        if (discipline == null) return
+        viewModelScope.launch {
+            val species = settings.settings.first().speciesFilter
+            val kept = species.filter { it.discipline == discipline }.toSet()
+            if (kept != species) settings.setSpeciesFilter(kept)
+        }
     }
 
     /** Shows the guides with a trip that fits [free], the dates the user can go. */
@@ -183,12 +197,6 @@ class MapViewModel @Inject constructor(
 
     /** Chooses one of the open guide's trips (again: unchooses it); the contact and the email repeat it. */
     fun chooseTrip(trip: Trip) = setSelection { current -> current.copy(trip = trip.takeIf { trip != current.trip }) }
-
-    /** Adds [species] to the chosen ones, or removes it: the map shows guides offering any of them. */
-    fun toggleSpecies(species: Species) = setFilter { it.copy(species = if (species in it.species) it.species - species else it.species + species) }
-
-    /** Any species again. */
-    fun clearSpecies() = setFilter { it.copy(species = emptySet()) }
 
     /** Opens a guide's offer, and gets a rewarded ad ready for its contact details. */
     fun select(guideId: String) {
@@ -252,9 +260,8 @@ class MapViewModel @Inject constructor(
     private fun setContact(id: String, state: ContactState) = contacts.update { it + (id to state) }
 
     private fun setFilter(change: (GuideFilter) -> GuideFilter) {
-        val next = filter.updateAndGet(change)
+        val next = choices.updateAndGet(change)
         savedState[KEY_DISCIPLINE] = next.discipline?.name
-        savedState[KEY_SPECIES] = ArrayList(next.species.map { it.name })
         savedState[KEY_DATES] = next.dates?.toLongs()
     }
 
@@ -275,7 +282,6 @@ class MapViewModel @Inject constructor(
 
     private companion object {
         const val KEY_DISCIPLINE = "discipline"
-        const val KEY_SPECIES = "species"
         const val KEY_SELECTED = "selected"
         const val KEY_UNLOCKED = "unlocked"
         const val KEY_DATES = "dates"

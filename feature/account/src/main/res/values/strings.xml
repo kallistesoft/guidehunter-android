@@ -38,4 +38,11 @@
     <string name="sign_in_failed">Sign-in failed. Check your connection and try again.</string>
     <string name="sign_in_not_configured">You can\'t sign in from this version of the app yet.</string>
     <string name="delete_account_failed">Your account couldn\'t be deleted. Check your connection and try again.</string>
+
+    <string name="section_looking">Looking for a guide</string>
+    <string name="species_on_map">Species on the map</string>
+    <string name="species_filter_title">Species</string>
+    <string name="species_filter_note">Only these species show on the map. Kept for next time, and also in Settings.</string>
+    <string name="species_filter_any">Any species</string>
+    <string name="species_filter_done">Show on the map</string>
 </resources>

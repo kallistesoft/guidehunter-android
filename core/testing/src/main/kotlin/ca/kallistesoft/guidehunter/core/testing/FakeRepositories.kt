@@ -15,6 +15,7 @@ import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.GuideUser
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
+import ca.kallistesoft.guidehunter.core.model.Species
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -158,11 +159,15 @@ class FakeSettingsRepository(settings: AppSettings = AppSettings()) : SettingsRe
     override val settings = MutableStateFlow(settings)
 
     override suspend fun finishOnboarding(mode: AppMode) {
-        settings.value = AppSettings(onboarded = true, mode = mode)
+        settings.value = settings.value.copy(onboarded = true, mode = mode)
     }
 
     override suspend fun setMode(mode: AppMode) {
         settings.value = settings.value.copy(mode = mode)
+    }
+
+    override suspend fun setSpeciesFilter(species: Set<Species>) {
+        settings.value = settings.value.copy(speciesFilter = species)
     }
 
     override suspend fun reset() {

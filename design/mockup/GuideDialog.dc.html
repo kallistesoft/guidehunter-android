@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter guide confirmation dialog</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Barlow, system-ui, sans-serif">
+  <sc-if value="{{reject}}" hint-placeholder-val="{{ true }}"><dc-import name="RequestsReceived" theme="{{theme}}" hint-size="390px,844px"></dc-import></sc-if>
+  <sc-if value="{{del}}" hint-placeholder-val="{{ false }}"><dc-import name="GuideHome" theme="{{theme}}" hint-size="390px,844px"></dc-import></sc-if>
+  <div style="position: absolute; inset: 0; background: rgba(5,9,7,0.6)"></div>
+  <div role="alertdialog" aria-labelledby="dlg-title" style="position: absolute; left: 24px; right: 24px; top: 300px; background: {{c.dialog}}; color: {{c.text}}; border-radius: 28px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+    <h2 id="dlg-title" style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 24px">{{d.title}}</h2>
+    <p style="margin: 0; font-size: 15px; line-height: 1.45; color: {{c.muted}}">{{d.body}}</p>
+    <div style="display: flex; justify-content: flex-end; gap: 8px">
+      <a href="{{d.back}}" style="min-height: 44px; padding: 0 12px; display: flex; align-items: center; color: {{c.green}}; font-size: 15px; font-weight: 600; text-decoration: none">Cancel</a>
+      <a href="{{d.back}}" style="min-height: 44px; padding: 0 12px; display: flex; align-items: center; color: {{c.error}}; font-size: 15px; font-weight: 700; text-decoration: none">{{d.action}}</a>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"kind":{"editor":"enum","options":["reject","delete"],"default":"reject"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const light = theme === 'light';
+    const kind = this.props.kind ?? 'reject';
+    const c = light
+      ? {dialog:'#FFFFFF', text:'#17201A', muted:'#5B6659', green:'#2F6B3E', error:'#B3261E'}
+      : {dialog:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', green:'#8FD19E', error:'#F2867A'};
+    const sfx = light ? 'Light' : '';
+    const d = kind === 'reject'
+      ? {title:'Decline Alex Tremblay’s request?', body:'They’ll see it as declined in their requests. You can’t undo it.', action:'Decline', back:'RequestsReceived' + sfx + '.dc.html'}
+      : {title:'Delete this offer?', body:'It comes off the map and is deleted. 2 pending requests will be closed: those users see “Offer removed”. This can’t be undone.', action:'Delete', back:'GuideHome' + sfx + '.dc.html'};
+    return {theme, c, d, reject: kind === 'reject', del: kind === 'delete'};
+  }
+}
+</script>
+</body>
+</html>

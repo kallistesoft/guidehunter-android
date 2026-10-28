@@ -9,4 +9,6 @@ data class AppSettings(
     val onboarded: Boolean = false,
     /** The home the app opens on; guide mode only with an account. */
     val mode: AppMode = AppMode.USER,
+    /** The species the map shows (none: any species), chosen on the map or in Settings and kept for next time. */
+    val speciesFilter: Set<Species> = emptySet(),
 )

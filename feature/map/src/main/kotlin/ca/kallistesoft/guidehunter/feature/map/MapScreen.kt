@@ -36,10 +36,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -52,12 +49,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -67,7 +62,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import ca.kallistesoft.guidehunter.core.designsystem.component.SectionToggle
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GhTextStyles
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
@@ -75,13 +69,11 @@ import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
-import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.model.Trip
 import ca.kallistesoft.guidehunter.core.ui.DateRangeDialog
 import ca.kallistesoft.guidehunter.core.ui.R as UiR
 import ca.kallistesoft.guidehunter.core.ui.dateRange
 import ca.kallistesoft.guidehunter.core.ui.label
-import ca.kallistesoft.guidehunter.core.ui.speciesByDiscipline
 import kotlinx.datetime.LocalDate
 
 /**
@@ -102,6 +94,7 @@ data class MapContent(
 @Composable
 fun MapScreen(
     onSettings: () -> Unit,
+    onSpeciesFilter: (Discipline?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MapViewModel = hiltViewModel(),
     map: @Composable (MapContent, Modifier) -> Unit = { content, mapModifier -> GuideMap(content, mapModifier) },
@@ -127,8 +120,7 @@ fun MapScreen(
             if (hasLocationPermission(context)) viewModel.refreshLocation() else permission.launch(LOCATION_PERMISSION)
         },
         onDiscipline = viewModel::chooseDiscipline,
-        onSpecies = viewModel::toggleSpecies,
-        onAnySpecies = viewModel::clearSpecies,
+        onSpeciesFilter = onSpeciesFilter,
         onDates = viewModel::chooseDates,
         onAnyDates = viewModel::clearDates,
         onTrip = viewModel::chooseTrip,
@@ -177,8 +169,7 @@ internal fun MapContent(
     onSettings: () -> Unit,
     onLocate: () -> Unit,
     onDiscipline: (Discipline?) -> Unit,
-    onSpecies: (Species) -> Unit,
-    onAnySpecies: () -> Unit,
+    onSpeciesFilter: (Discipline?) -> Unit,
     onDates: (Trip) -> Unit,
     onAnyDates: () -> Unit,
     onTrip: (Trip) -> Unit,
@@ -212,7 +203,7 @@ internal fun MapContent(
             val sidePane = maxWidth >= Sizes.sidePaneMinWindowWidth
             Row(Modifier.fillMaxSize()) {
                 Column(Modifier.weight(1f).fillMaxHeight()) {
-                    Filters(state, onDiscipline, onSpecies, onAnySpecies, onDates, onAnyDates)
+                    Filters(state, onDiscipline, onSpeciesFilter, onDates, onAnyDates)
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         map(MapContent(state.guides, state.userLocation, onVisibleArea, onSelect), Modifier.fillMaxSize())
                         when {
@@ -240,8 +231,7 @@ internal fun MapContent(
 private fun Filters(
     state: MapUiState,
     onDiscipline: (Discipline?) -> Unit,
-    onSpecies: (Species) -> Unit,
-    onAnySpecies: () -> Unit,
+    onSpeciesFilter: (Discipline?) -> Unit,
     onDates: (Trip) -> Unit,
     onAnyDates: () -> Unit,
 ) {
@@ -265,7 +255,7 @@ private fun Filters(
                 modifier = Modifier.testTag("discipline-${discipline.name}"),
             )
         }
-        SpeciesPicker(filter, onSpecies, onAnySpecies)
+        SpeciesChip(filter, onSpeciesFilter)
         DatesPicker(filter.dates, state.today, onDates, onAnyDates)
     }
 }
@@ -299,67 +289,23 @@ private fun DatesPicker(dates: Trip?, today: LocalDate, onDates: (Trip) -> Unit,
     }
 }
 
-/**
- * The species menu: several can be chosen (the map shows guides offering any of them), so it stays open while the user
- * ticks them; "Any species" clears them and closes it.
- */
+/** The species chip: the chosen species open on their own screen ([onSpeciesFilter], with the discipline chosen here). */
 @Composable
-private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species) -> Unit, onAnySpecies: () -> Unit) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    Box {
-        FilterChip(
-            selected = filter.species.isNotEmpty(),
-            onClick = { expanded = true },
-            label = {
-                Text(
-                    when (filter.species.size) {
-                        0 -> stringResource(R.string.filter_species)
-                        1 -> stringResource(filter.species.single().label)
-                        else -> pluralStringResource(R.plurals.filter_species_count, filter.species.size, filter.species.size)
-                    },
-                )
-            },
-            modifier = Modifier.testTag("species-picker"),
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.filter_species_any)) },
-                onClick = {
-                    expanded = false
-                    onAnySpecies()
+private fun SpeciesChip(filter: GuideFilter, onSpeciesFilter: (Discipline?) -> Unit) {
+    FilterChip(
+        selected = filter.species.isNotEmpty(),
+        onClick = { onSpeciesFilter(filter.discipline) },
+        label = {
+            Text(
+                when (filter.species.size) {
+                    0 -> stringResource(R.string.filter_species)
+                    1 -> stringResource(filter.species.single().label)
+                    else -> pluralStringResource(R.plurals.filter_species_count, filter.species.size, filter.species.size)
                 },
-                leadingIcon = { Checkbox(checked = filter.species.isEmpty(), onCheckedChange = null) },
-                modifier = Modifier.testTag("species-any"),
             )
-            val context = LocalContext.current
-            val groups = remember(filter.speciesChoices, LocalConfiguration.current) { context.speciesByDiscipline(filter.speciesChoices) }
-            // With both disciplines, each list opens under its heading; the lists holding chosen species start open.
-            var open by remember(expanded) { mutableStateOf(filter.species.map { it.discipline }.toSet()) }
-            groups.forEach { (discipline, species) ->
-                val shown = groups.size == 1 || discipline in open
-                if (groups.size > 1) {
-                    val chosen = species.count { it in filter.species }
-                    SectionToggle(
-                        title = stringResource(discipline.label),
-                        expanded = shown,
-                        onToggle = { open = if (shown) open - discipline else open + discipline },
-                        detail = if (chosen > 0) "$chosen/${species.size}" else species.size.toString(),
-                        modifier = Modifier.padding(horizontal = Spacing.m).testTag("species-group-${discipline.name}"),
-                    )
-                }
-                if (shown) {
-                    species.forEach { choice ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(choice.label)) },
-                            onClick = { onSpecies(choice) },
-                            leadingIcon = { Checkbox(checked = choice in filter.species, onCheckedChange = null) },
-                            modifier = Modifier.testTag("species-${choice.name}"),
-                        )
-                    }
-                }
-            }
-        }
-    }
+        },
+        modifier = Modifier.testTag("species-picker"),
+    )
 }
 
 /**

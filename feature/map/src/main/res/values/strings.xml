@@ -7,7 +7,6 @@
     <string name="location_rationale_allow">Allow</string>
     <string name="location_rationale_not_now">Not now</string>
     <string name="filter_all">All</string>
-    <string name="filter_species_any">Any species</string>
     <string name="filter_species">Species</string>
     <plurals name="guide_count">
         <item quantity="one">%d guide</item>

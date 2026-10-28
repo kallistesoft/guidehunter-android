@@ -8,6 +8,7 @@ import ca.kallistesoft.guidehunter.core.auth.AccountSession
 import ca.kallistesoft.guidehunter.core.data.SettingsRepository
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.GuideUser
+import ca.kallistesoft.guidehunter.core.model.Species
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,10 +28,12 @@ data class SettingsUiState(
     /** Signing in or deleting the account: the actions wait. */
     val busy: Boolean = false,
     val error: AccountError? = null,
+    /** The species the map shows (none: any species), in user mode. */
+    val speciesFilter: Set<Species> = emptySet(),
 )
 
 /**
- * The settings of both modes: switch between user and guide, the account (sign in or out, delete), and the ad
+ * The settings of both modes: the species the map shows (user mode), switch between user and guide, the account (sign in or out, delete), and the ad
  * privacy options (Pattern A of .claude/skills/viewmodel-state). Google's sheet shows over [Context], the activity
  * the screen passes.
  */
@@ -49,7 +52,7 @@ class SettingsViewModel @Inject constructor(
         work.busy,
         work.error,
     ) { user, settings, privacyRequired, busy, error ->
-        SettingsUiState(false, user, settings.mode, privacyRequired, busy, error)
+        SettingsUiState(false, user, settings.mode, privacyRequired, busy, error, settings.speciesFilter)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     /** The other mode; guide mode needs an account, so signed out it signs in first (closing the sheet stays). */

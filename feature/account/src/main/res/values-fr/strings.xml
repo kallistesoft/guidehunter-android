@@ -38,4 +38,11 @@
     <string name="sign_in_failed">La connexion a échoué. Vérifiez votre connexion Internet et réessayez.</string>
     <string name="sign_in_not_configured">Cette version de l\'application ne permet pas encore de se connecter.</string>
     <string name="delete_account_failed">Votre compte n\'a pas pu être supprimé. Vérifiez votre connexion Internet et réessayez.</string>
+
+    <string name="section_looking">Vous cherchez un guide</string>
+    <string name="species_on_map">Espèces sur la carte</string>
+    <string name="species_filter_title">Espèces</string>
+    <string name="species_filter_note">Seules ces espèces s\'affichent sur la carte. Gardées pour la prochaine fois, et aussi dans les paramètres.</string>
+    <string name="species_filter_any">Toutes les espèces</string>
+    <string name="species_filter_done">Voir sur la carte</string>
 </resources>

@@ -15,6 +15,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -35,12 +36,14 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -50,12 +53,15 @@ import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.ui.R as UiR
+import ca.kallistesoft.guidehunter.core.ui.label
+import ca.kallistesoft.guidehunter.core.ui.speciesByDiscipline
 
 /** Settings, for both modes. Switching mode sends the app to the other home (the app watches the mode). */
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
     onGuideProfile: () -> Unit,
+    onSpeciesFilter: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
@@ -66,6 +72,7 @@ fun SettingsScreen(
         actions = SettingsActions(
             back = onBack,
             guideProfile = onGuideProfile,
+            speciesFilter = onSpeciesFilter,
             switchMode = { viewModel.switchMode(context) },
             signIn = { viewModel.signIn(context) },
             signOut = { viewModel.signOut(context) },
@@ -80,6 +87,7 @@ fun SettingsScreen(
 internal class SettingsActions(
     val back: () -> Unit,
     val guideProfile: () -> Unit,
+    val speciesFilter: () -> Unit,
     val switchMode: () -> Unit,
     val signIn: () -> Unit,
     val signOut: () -> Unit,
@@ -124,6 +132,10 @@ internal fun SettingsContent(state: SettingsUiState, actions: SettingsActions, m
                 if (guide) {
                     Section(R.string.section_guide) {
                         SettingsRow(Icons.Default.Storefront, R.string.guide_profile, stringResource(R.string.guide_profile_body), "guide-profile", actions.guideProfile)
+                    }
+                } else {
+                    Section(R.string.section_looking) {
+                        SettingsRow(Icons.Default.FilterList, R.string.species_on_map, speciesSummary(state), "species-filter", actions.speciesFilter)
                     }
                 }
                 Section(R.string.section_mode) {
@@ -183,6 +195,18 @@ internal fun SettingsContent(state: SettingsUiState, actions: SettingsActions, m
                 }
             },
         )
+    }
+}
+
+/** The chosen species' names, in the pickers' order, or "Any species". */
+@Composable
+private fun speciesSummary(state: SettingsUiState): String {
+    val context = LocalContext.current
+    val any = stringResource(R.string.species_filter_any)
+    return remember(state.speciesFilter, LocalConfiguration.current) {
+        context.speciesByDiscipline(state.speciesFilter).flatMap { it.second }
+            .joinToString(", ") { context.getString(it.label) }
+            .ifEmpty { any }
     }
 }
 

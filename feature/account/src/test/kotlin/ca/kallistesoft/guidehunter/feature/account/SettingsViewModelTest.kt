@@ -5,6 +5,7 @@ import ca.kallistesoft.guidehunter.core.auth.AccountSession
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.AppSettings
+import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
@@ -48,6 +49,8 @@ class SettingsViewModelTest {
         assertTrue(vm.state.loading)
         collecting(vm.uiState)
         assertEquals(SettingsUiState(false, TestGuides.user, AppMode.GUIDE, privacyOptionsRequired = true), vm.state)
+        settings.setSpeciesFilter(setOf(Species.MOOSE))
+        assertEquals("the species the map shows", setOf(Species.MOOSE), vm.state.speciesFilter)
     }
 
     @Test

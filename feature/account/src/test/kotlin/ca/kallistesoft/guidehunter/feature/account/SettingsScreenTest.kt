@@ -1,6 +1,7 @@
 package ca.kallistesoft.guidehunter.feature.account
 
 import android.app.Application
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -10,6 +11,7 @@ import ca.kallistesoft.guidehunter.core.auth.AccountSession
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.model.AppMode
 import ca.kallistesoft.guidehunter.core.model.AppSettings
+import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeGoogleSignIn
@@ -40,6 +42,7 @@ class SettingsScreenTest {
     private val consent = FakeAdConsent()
     private var backs = 0
     private var profiles = 0
+    private var speciesFilters = 0
 
     private fun str(id: Int) = app.getString(id)
 
@@ -48,7 +51,7 @@ class SettingsScreenTest {
         val viewModel = SettingsViewModel(session, settings, consent)
         compose.setContent {
             GuideHunterTheme {
-                SettingsScreen(onBack = { backs++ }, onGuideProfile = { profiles++ }, viewModel = viewModel)
+                SettingsScreen(onBack = { backs++ }, onGuideProfile = { profiles++ }, onSpeciesFilter = { speciesFilters++ }, viewModel = viewModel)
             }
         }
     }
@@ -83,6 +86,27 @@ class SettingsScreenTest {
         compose.onNodeWithTag("account").assertExists()
         compose.onNodeWithText("guide@example.com").assertExists()
         compose.onNodeWithTag("sign-in").assertDoesNotExist()
+    }
+
+    @Test
+    fun `user mode shows the species on the map and opens their screen`() {
+        launch()
+        compose.onNodeWithTag("species-filter").assertTextContains(str(R.string.species_filter_any), substring = true)
+        settings.settings.value = AppSettings(onboarded = true, speciesFilter = setOf(Species.WALLEYE, Species.MOOSE))
+        compose.waitForIdle()
+        // In the pickers' order: hunting first.
+        val names = "${str(ca.kallistesoft.guidehunter.core.ui.R.string.species_moose)}, ${str(ca.kallistesoft.guidehunter.core.ui.R.string.species_walleye)}"
+        compose.onNodeWithTag("species-filter").assertTextContains(names, substring = true)
+        click("species-filter")
+        assertEquals(1, speciesFilters)
+    }
+
+    @Test
+    fun `guide mode has no species row`() {
+        signedInGuide()
+        launch()
+        compose.onNodeWithTag("guide-profile").assertExists()
+        compose.onNodeWithTag("species-filter").assertDoesNotExist()
     }
 
     @Test
@@ -165,7 +189,7 @@ class SettingsScreenTest {
 
     @Test
     fun `loading shows a spinner, not the settings`() {
-        val actions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {})
+        val actions = SettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {})
         compose.setContent { GuideHunterTheme { SettingsContent(SettingsUiState(), actions) } }
         compose.onNodeWithTag("settings-screen").assertDoesNotExist()
     }

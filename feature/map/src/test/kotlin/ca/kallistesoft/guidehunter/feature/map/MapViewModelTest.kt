@@ -14,6 +14,7 @@ import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
+import ca.kallistesoft.guidehunter.core.testing.FakeSettingsRepository
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
@@ -41,8 +42,15 @@ class MapViewModelTest {
     private val guides = FakeGuideRepository()
     private val location = FakeLocationRepository()
     private val ads = FakeRewardedAds()
+    private val settings = FakeSettingsRepository()
 
-    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = MapViewModel(guides, location, ads, saved, { TestGuides.today })
+    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) =
+        MapViewModel(guides, location, ads, settings, saved, { TestGuides.today })
+
+    /** What the species screen does: writes the chosen species to the settings. */
+    private fun chooseSpecies(vararg species: Species) {
+        settings.settings.value = settings.settings.value.copy(speciesFilter = species.toSet())
+    }
 
     private val MapViewModel.ids get() = uiState.value.guides.map { it.guide.id }
     private val MapViewModel.contact get() = uiState.value.selected?.contact
@@ -76,42 +84,50 @@ class MapViewModelTest {
         collecting(vm.uiState)
         vm.chooseDiscipline(Discipline.FISHING)
         assertEquals(listOf("salmon", "moose"), vm.ids)
-        vm.toggleSpecies(Species.WALLEYE)
+        chooseSpecies(Species.WALLEYE)
         assertEquals(listOf("moose"), vm.ids)
         vm.chooseDiscipline(Discipline.FISHING)
         assertEquals("same discipline keeps the species", setOf(Species.WALLEYE), vm.uiState.value.filter.species)
         vm.chooseDiscipline(Discipline.HUNTING)
         assertEquals(emptySet<Species>(), vm.uiState.value.filter.species)
+        assertEquals("dropped from the settings too", emptySet<Species>(), settings.settings.value.speciesFilter)
         assertEquals(listOf("bear", "moose"), vm.ids)
         vm.chooseDiscipline(null)
-        vm.toggleSpecies(Species.MOOSE)
+        chooseSpecies(Species.MOOSE, Species.WALLEYE)
         assertEquals(listOf("moose"), vm.ids)
+        vm.chooseDiscipline(null)
+        assertEquals("both disciplines keep every species", setOf(Species.MOOSE, Species.WALLEYE), settings.settings.value.speciesFilter)
     }
 
     @Test
     fun `several species show the guides offering any of them`() = runTest {
         val vm = viewModel()
         collecting(vm.uiState)
-        vm.toggleSpecies(Species.BLACK_BEAR)
-        vm.toggleSpecies(Species.WALLEYE)
+        chooseSpecies(Species.BLACK_BEAR, Species.WALLEYE)
         assertEquals(listOf("bear", "moose"), vm.ids)
-        vm.toggleSpecies(Species.BLACK_BEAR)
-        assertEquals("ticking again removes it", listOf("moose"), vm.ids)
-        vm.clearSpecies()
+        chooseSpecies(Species.WALLEYE)
+        assertEquals("the map follows the settings", listOf("moose"), vm.ids)
+        chooseSpecies()
         assertEquals(3, vm.ids.size)
     }
 
     @Test
-    fun `the filters survive process death`() = runTest {
+    fun `the species are a setting, kept for the next visit`() = runTest {
+        chooseSpecies(Species.BLACK_BEAR, Species.ATLANTIC_SALMON)
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertEquals(setOf(Species.BLACK_BEAR, Species.ATLANTIC_SALMON), vm.uiState.value.filter.species)
+        assertEquals(listOf("bear", "salmon"), vm.ids)
+    }
+
+    @Test
+    fun `the discipline survives process death`() = runTest {
         val saved = SavedStateHandle()
-        viewModel(saved).apply {
-            toggleSpecies(Species.BLACK_BEAR)
-            toggleSpecies(Species.ATLANTIC_SALMON)
-        }
+        viewModel(saved).chooseDiscipline(Discipline.FISHING)
         val restored = viewModel(saved)
         collecting(restored.uiState)
-        assertEquals(setOf(Species.BLACK_BEAR, Species.ATLANTIC_SALMON), restored.uiState.value.filter.species)
-        assertEquals(listOf("bear", "salmon"), restored.ids)
+        assertEquals(Discipline.FISHING, restored.uiState.value.filter.discipline)
+        assertEquals(listOf("salmon", "moose"), restored.ids)
     }
 
     @Test

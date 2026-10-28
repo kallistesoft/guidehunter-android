@@ -25,6 +25,13 @@ data object MyOffers : NavKey
 @Serializable
 data object Settings : NavKey
 
+/**
+ * The species the map shows, a setting: from the map, [discipline] is the one chosen there (a `Discipline` name) and
+ * only its species are listed; from Settings (null), all of them.
+ */
+@Serializable
+data class SpeciesFilter(val discipline: String? = null) : NavKey
+
 /** The guide's profile (business and contact). */
 @Serializable
 data object GuideProfile : NavKey

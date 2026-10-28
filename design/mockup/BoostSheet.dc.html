@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter boost an offer</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Barlow, system-ui, sans-serif">
+  <dc-import name="GuideHome" theme="{{theme}}" hint-size="390px,844px"></dc-import>
+  <a href="{{l.home}}" aria-label="Close" style="position: absolute; inset: 0; background: rgba(5,9,7,0.6)"></a>
+  <section aria-labelledby="boost-title" style="position: absolute; left: 0; right: 0; bottom: 0; background: {{c.sheet}}; color: {{c.text}}; border-radius: 28px 28px 0 0; padding: 10px 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+    <span style="align-self: center; width: 32px; height: 4px; border-radius: 999px; background: {{c.handle}}; margin-bottom: 4px"></span>
+    <span style="align-self: flex-start; width: 52px; height: 52px; border-radius: 16px; background: {{c.featuredTint}}; color: {{c.featured}}; display: flex; align-items: center; justify-content: center"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg></span>
+    <h2 id="boost-title" style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 26px; line-height: 1.1">Feature “Black bear over bait” for 3 days</h2>
+    <ul style="margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 6px; font-size: 15px; line-height: 1.4">
+      <li>Its pin stands out on the map, drawn on top, with a “Featured” badge.</li>
+      <li>Up to 3 featured offers show at a time; when more are in view, they take turns.</li>
+      <li>Watch a short ad to start. Come back to boost again when it ends.</li>
+    </ul>
+    <a href="{{l.ad}}" style="min-height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Watch an ad to boost</a>
+    <a href="{{l.home}}" style="height: 44px; margin-top: -4px; color: {{c.green}}; font: 600 16px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center">Not now</a>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const light = theme === 'light';
+    const c = light
+      ? {sheet:'#F5F2EA', text:'#17201A', green:'#2F6B3E', primary:'#E8691E', handle:'#C9C2B2', featured:'#B08200', featuredTint:'rgba(201,154,18,0.18)'}
+      : {sheet:'#17221A', text:'#EEF1EA', green:'#8FD19E', primary:'#F27B2B', handle:'#3A4B3F', featured:'#E9C25A', featuredTint:'rgba(233,194,90,0.22)'};
+    const sfx = light ? 'Light' : '';
+    return {theme, c, l: {home: 'GuideHome' + sfx + '.dc.html', ad: 'GuideHomeBoosted' + sfx + '.dc.html'}};
+  }
+}
+</script>
+</body>
+</html>
