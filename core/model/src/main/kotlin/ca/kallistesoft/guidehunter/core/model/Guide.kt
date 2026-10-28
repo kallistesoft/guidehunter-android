@@ -27,10 +27,10 @@ data class GuideContact(
     val website: String = "",
 )
 
-/** What the map shows: guides of a discipline (null for both) and offering a species (null for any). */
-data class GuideFilter(val discipline: Discipline? = null, val species: Species? = null) {
+/** What the map shows: guides of a discipline (null for both) offering any of [species] (empty for any species). */
+data class GuideFilter(val discipline: Discipline? = null, val species: Set<Species> = emptySet()) {
     fun matches(guide: Guide): Boolean =
-        (discipline == null || guide.activity.covers(discipline)) && (species == null || species in guide.species)
+        (discipline == null || guide.activity.covers(discipline)) && (species.isEmpty() || guide.species.any { it in species })
 
     /** The species the picker offers with this filter's discipline. */
     val speciesChoices: List<Species>

@@ -103,6 +103,20 @@ class OfferEditorScreenTest {
     private fun sent(): OfferDraft = account.offersByUser.value.getValue(uid).single().draft
 
     @Test
+    fun `offering both, hunting and fishing species open apart and count what's chosen`() {
+        launch()
+        compose.onNodeWithTag("activity-BOTH").performScrollTo().performClick()
+        compose.onNodeWithTag("species-ELK").assertDoesNotExist()
+        compose.onNodeWithTag("species-group-HUNTING").performScrollTo().performClick()
+        compose.onNodeWithTag("species-ELK").performScrollTo().performClick()
+        compose.onNodeWithText(app.resources.getQuantityString(R.plurals.species_chosen, 1, 1)).assertExists()
+        compose.onNodeWithTag("species-group-HUNTING").performScrollTo().performClick()
+        compose.onNodeWithTag("species-ELK").assertDoesNotExist()
+        compose.onNodeWithTag("species-group-FISHING").performScrollTo().performClick()
+        compose.onNodeWithTag("species-WALLEYE").assertExists()
+    }
+
+    @Test
     fun `a filled-in offer is sent for review, then the screen closes`() {
         launch()
         compose.onNodeWithText(str(R.string.offer_new_title)).assertExists()

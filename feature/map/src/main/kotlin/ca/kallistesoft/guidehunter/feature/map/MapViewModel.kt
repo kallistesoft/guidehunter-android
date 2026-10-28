@@ -92,7 +92,7 @@ class MapViewModel @Inject constructor(
     private val filter = MutableStateFlow(
         GuideFilter(
             discipline = savedState.get<String>(KEY_DISCIPLINE)?.let(Discipline::valueOf),
-            species = savedState.get<String>(KEY_SPECIES)?.let(Species::valueOf),
+            species = Species.fromNames(savedState.get<ArrayList<String>>(KEY_SPECIES).orEmpty()).toSet(),
         ),
     )
     private val selectedId = MutableStateFlow(savedState.get<String>(KEY_SELECTED))
@@ -149,12 +149,16 @@ class MapViewModel @Inject constructor(
     /** "Privacy options": the ad consent choices again (only offered where the user's region requires it). */
     fun showPrivacyOptions() = adConsent.showPrivacyOptions()
 
-    /** Shows the guides of [discipline] (null: both). A species of the other discipline is cleared. */
+    /** Shows the guides of [discipline] (null: both). The chosen species of the other discipline are dropped. */
     fun chooseDiscipline(discipline: Discipline?) = setFilter { current ->
-        GuideFilter(discipline, current.species?.takeIf { discipline == null || it.discipline == discipline })
+        GuideFilter(discipline, current.species.filter { discipline == null || it.discipline == discipline }.toSet())
     }
 
-    fun chooseSpecies(species: Species?) = setFilter { it.copy(species = species) }
+    /** Adds [species] to the chosen ones, or removes it: the map shows guides offering any of them. */
+    fun toggleSpecies(species: Species) = setFilter { it.copy(species = if (species in it.species) it.species - species else it.species + species) }
+
+    /** Any species again. */
+    fun clearSpecies() = setFilter { it.copy(species = emptySet()) }
 
     /** Opens a guide's offer, and gets a rewarded ad ready for its contact details. */
     fun select(guideId: String) {
@@ -224,7 +228,7 @@ class MapViewModel @Inject constructor(
     private fun setFilter(change: (GuideFilter) -> GuideFilter) {
         val next = filter.updateAndGet(change)
         savedState[KEY_DISCIPLINE] = next.discipline?.name
-        savedState[KEY_SPECIES] = next.species?.name
+        savedState[KEY_SPECIES] = ArrayList(next.species.map { it.name })
     }
 
     private companion object {

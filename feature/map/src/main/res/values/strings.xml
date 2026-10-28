@@ -38,4 +38,8 @@
     <string name="contact_website">Website %1$s</string>
     <string name="contact_email_subject">Trip found on GuideHunter</string>
     <string name="close">Close</string>
+    <plurals name="filter_species_count">
+        <item quantity="one">%d species</item>
+        <item quantity="other">%d species</item>
+    </plurals>
 </resources>

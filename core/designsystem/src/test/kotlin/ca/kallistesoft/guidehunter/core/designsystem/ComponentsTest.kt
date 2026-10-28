@@ -5,15 +5,21 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import ca.kallistesoft.guidehunter.core.designsystem.component.LinkButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.PreviewSurface
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
+import ca.kallistesoft.guidehunter.core.designsystem.component.SectionToggle
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -70,5 +76,18 @@ class ComponentsTest {
         compose.setContent { GuideHunterTheme(darkTheme = false) { primary = MaterialTheme.colorScheme.primary } }
         compose.waitForIdle()
         assertEquals(Color(0xFFE8691E), primary)
+    }
+
+    @Test
+    fun `a section toggle opens and closes, by tap or by TalkBack's actions`() {
+        var open by mutableStateOf(false)
+        compose.setContent { PreviewSurface { SectionToggle("Hunting", open, { open = !open }, detail = "15") } }
+        compose.onNodeWithText("15").assertExists()
+        compose.onNodeWithText("Hunting").performClick()
+        assertEquals(true, open)
+        compose.onNodeWithText("Hunting").performSemanticsAction(SemanticsActions.Collapse)
+        assertEquals(false, open)
+        compose.onNodeWithText("Hunting").performSemanticsAction(SemanticsActions.Expand)
+        assertEquals(true, open)
     }
 }

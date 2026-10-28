@@ -89,4 +89,8 @@
     <string name="offer_delete_title">Delete this offer?</string>
     <string name="offer_delete_body">It will be deleted. This can\'t be undone.</string>
     <string name="offer_delete_live_body">It comes off the map and is deleted. This can\'t be undone.</string>
+    <plurals name="species_chosen">
+        <item quantity="one">%d chosen</item>
+        <item quantity="other">%d chosen</item>
+    </plurals>
 </resources>

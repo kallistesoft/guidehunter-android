@@ -6,12 +6,11 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,9 +42,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -54,6 +56,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
+import ca.kallistesoft.guidehunter.core.designsystem.component.SectionToggle
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
@@ -61,8 +64,9 @@ import ca.kallistesoft.guidehunter.core.model.GuideActivity
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferField
 import ca.kallistesoft.guidehunter.core.model.Species
-import ca.kallistesoft.guidehunter.core.ui.label
 import ca.kallistesoft.guidehunter.core.ui.R as UiR
+import ca.kallistesoft.guidehunter.core.ui.label
+import ca.kallistesoft.guidehunter.core.ui.speciesByDiscipline
 
 /**
  * A guide's offer, new ([offerId] null) or sent before: the form that puts it on the map once we've reviewed it.
@@ -253,14 +257,37 @@ private fun Form(
         if (activity == null) {
             Text(stringResource(R.string.field_species_help), color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-                Species.forActivity(activity).forEach { species ->
-                    FilterChip(
-                        selected = species in form.species,
-                        onClick = { actions.species(species) },
-                        label = { Text(stringResource(species.label)) },
-                        modifier = Modifier.testTag("species-${species.name}"),
+            val context = LocalContext.current
+            val groups = remember(activity, LocalConfiguration.current) { context.speciesByDiscipline(Species.forActivity(activity)) }
+            // A guide offering both sees the hunting and the fishing species apart, each list opening under its
+            // heading; a list that holds a chosen species starts open.
+            var open by rememberSaveable { mutableStateOf(form.species.map { it.discipline.name }.toSet().joinToString(",")) }
+            groups.forEach { (discipline, species) ->
+                val shown = groups.size == 1 || discipline.name in open.split(",")
+                if (groups.size > 1) {
+                    val chosen = species.count { it in form.species }
+                    SectionToggle(
+                        title = stringResource(discipline.label),
+                        expanded = shown,
+                        onToggle = {
+                            val names = open.split(",").filter { it.isNotEmpty() }.toSet()
+                            open = (if (shown) names - discipline.name else names + discipline.name).joinToString(",")
+                        },
+                        detail = if (chosen > 0) pluralStringResource(R.plurals.species_chosen, chosen, chosen) else null,
+                        modifier = Modifier.testTag("species-group-${discipline.name}"),
                     )
+                }
+                if (shown) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
+                        species.forEach { choice ->
+                            FilterChip(
+                                selected = choice in form.species,
+                                onClick = { actions.species(choice) },
+                                label = { Text(stringResource(choice.label)) },
+                                modifier = Modifier.testTag("species-${choice.name}"),
+                            )
+                        }
+                    }
                 }
             }
         }
