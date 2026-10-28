@@ -38,4 +38,8 @@
     <string name="contact_website">Site Web %1$s</string>
     <string name="contact_email_subject">Séjour trouvé sur GuideHunter</string>
     <string name="close">Fermer</string>
+    <plurals name="filter_species_count">
+        <item quantity="one">%d espèce</item>
+        <item quantity="other">%d espèces</item>
+    </plurals>
 </resources>

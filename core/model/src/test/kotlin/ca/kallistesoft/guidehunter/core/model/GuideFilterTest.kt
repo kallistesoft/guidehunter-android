@@ -25,9 +25,11 @@ class GuideFilterTest {
     }
 
     @Test
-    fun `a species shows the guides that offer it`() {
-        assertTrue(GuideFilter(species = Species.WALLEYE).matches(camp))
-        assertFalse(GuideFilter(species = Species.WALLEYE).matches(salmon))
+    fun `species show the guides that offer any of them`() {
+        assertTrue(GuideFilter(species = setOf(Species.WALLEYE)).matches(camp))
+        assertFalse(GuideFilter(species = setOf(Species.WALLEYE)).matches(salmon))
+        val both = GuideFilter(species = setOf(Species.WALLEYE, Species.ATLANTIC_SALMON))
+        assertEquals(listOf(camp, salmon), listOf(bear, camp, salmon).filter(both::matches))
     }
 
     @Test

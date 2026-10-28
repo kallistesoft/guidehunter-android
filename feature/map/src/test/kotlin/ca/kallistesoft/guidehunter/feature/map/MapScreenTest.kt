@@ -118,7 +118,7 @@ class MapScreenTest {
         compose.onNodeWithTag("species-picker").performClick()
         compose.onNodeWithTag("species-WALLEYE").performClick()
         compose.onNodeWithText(count(1)).assertIsDisplayed()
-        compose.onNodeWithTag("species-picker").performClick()
+        // The menu stays open for more species; "Any species" clears them and closes it.
         compose.onNodeWithTag("species-any").performClick()
         compose.onNodeWithTag("discipline-all").performClick()
         compose.onNodeWithText(count(3)).assertIsDisplayed()
@@ -137,9 +137,11 @@ class MapScreenTest {
         compose.onNodeWithTag("species-group-FISHING").performClick()
         compose.onNodeWithTag("species-WALLEYE").performClick()
         compose.onNodeWithText(count(1)).assertIsDisplayed()
-        // The chosen species' list is open the next time.
-        compose.onNodeWithTag("species-picker").performClick()
-        compose.onNodeWithTag("species-WALLEYE").assertExists()
+        // Several species: the guides offering any of them.
+        compose.onNodeWithTag("species-group-HUNTING").performClick()
+        compose.onNodeWithTag("species-BLACK_BEAR").performClick()
+        compose.onNodeWithText(count(2)).assertIsDisplayed()
+        compose.onNodeWithText(app.resources.getQuantityString(R.plurals.filter_species_count, 2, 2)).assertExists()
     }
 
     @Test

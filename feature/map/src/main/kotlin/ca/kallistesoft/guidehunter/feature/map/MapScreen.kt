@@ -34,6 +34,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -120,7 +121,8 @@ fun MapScreen(
         },
         onPrivacyOptions = viewModel::showPrivacyOptions,
         onDiscipline = viewModel::chooseDiscipline,
-        onSpecies = viewModel::chooseSpecies,
+        onSpecies = viewModel::toggleSpecies,
+        onAnySpecies = viewModel::clearSpecies,
         onVisibleArea = viewModel::showArea,
         onSelect = viewModel::select,
         onDismiss = viewModel::dismiss,
@@ -167,7 +169,8 @@ internal fun MapContent(
     onLocate: () -> Unit,
     onPrivacyOptions: () -> Unit,
     onDiscipline: (Discipline?) -> Unit,
-    onSpecies: (Species?) -> Unit,
+    onSpecies: (Species) -> Unit,
+    onAnySpecies: () -> Unit,
     onVisibleArea: (GeoBounds) -> Unit,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -203,7 +206,7 @@ internal fun MapContent(
             val sidePane = maxWidth >= Sizes.sidePaneMinWindowWidth
             Row(Modifier.fillMaxSize()) {
                 Column(Modifier.weight(1f).fillMaxHeight()) {
-                    Filters(state.filter, onDiscipline, onSpecies)
+                    Filters(state.filter, onDiscipline, onSpecies, onAnySpecies)
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         map(MapContent(state.guides, state.userLocation, onVisibleArea, onSelect), Modifier.fillMaxSize())
                         when {
@@ -228,7 +231,7 @@ internal fun MapContent(
 }
 
 @Composable
-private fun Filters(filter: GuideFilter, onDiscipline: (Discipline?) -> Unit, onSpecies: (Species?) -> Unit) {
+private fun Filters(filter: GuideFilter, onDiscipline: (Discipline?) -> Unit, onSpecies: (Species) -> Unit, onAnySpecies: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = Spacing.screen),
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
@@ -248,18 +251,30 @@ private fun Filters(filter: GuideFilter, onDiscipline: (Discipline?) -> Unit, on
                 modifier = Modifier.testTag("discipline-${discipline.name}"),
             )
         }
-        SpeciesPicker(filter, onSpecies)
+        SpeciesPicker(filter, onSpecies, onAnySpecies)
     }
 }
 
+/**
+ * The species menu: several can be chosen (the map shows guides offering any of them), so it stays open while the user
+ * ticks them; "Any species" clears them and closes it.
+ */
 @Composable
-private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
+private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species) -> Unit, onAnySpecies: () -> Unit) {
     var expanded by rememberSaveable { mutableStateOf(false) }
     Box {
         FilterChip(
-            selected = filter.species != null,
+            selected = filter.species.isNotEmpty(),
             onClick = { expanded = true },
-            label = { Text(filter.species?.let { stringResource(it.label) } ?: stringResource(R.string.filter_species)) },
+            label = {
+                Text(
+                    when (filter.species.size) {
+                        0 -> stringResource(R.string.filter_species)
+                        1 -> stringResource(filter.species.single().label)
+                        else -> pluralStringResource(R.plurals.filter_species_count, filter.species.size, filter.species.size)
+                    },
+                )
+            },
             modifier = Modifier.testTag("species-picker"),
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
@@ -267,22 +282,24 @@ private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
                 text = { Text(stringResource(R.string.filter_species_any)) },
                 onClick = {
                     expanded = false
-                    onSpecies(null)
+                    onAnySpecies()
                 },
+                leadingIcon = { Checkbox(checked = filter.species.isEmpty(), onCheckedChange = null) },
                 modifier = Modifier.testTag("species-any"),
             )
             val context = LocalContext.current
             val groups = remember(filter.speciesChoices, LocalConfiguration.current) { context.speciesByDiscipline(filter.speciesChoices) }
-            // With both disciplines, each list opens under its heading; the chosen species' list starts open.
-            var open by remember(expanded) { mutableStateOf(setOfNotNull(filter.species?.discipline)) }
+            // With both disciplines, each list opens under its heading; the lists holding chosen species start open.
+            var open by remember(expanded) { mutableStateOf(filter.species.map { it.discipline }.toSet()) }
             groups.forEach { (discipline, species) ->
                 val shown = groups.size == 1 || discipline in open
                 if (groups.size > 1) {
+                    val chosen = species.count { it in filter.species }
                     SectionToggle(
                         title = stringResource(discipline.label),
                         expanded = shown,
                         onToggle = { open = if (shown) open - discipline else open + discipline },
-                        detail = species.size.toString(),
+                        detail = if (chosen > 0) "$chosen/${species.size}" else species.size.toString(),
                         modifier = Modifier.padding(horizontal = Spacing.m).testTag("species-group-${discipline.name}"),
                     )
                 }
@@ -290,10 +307,8 @@ private fun SpeciesPicker(filter: GuideFilter, onSpecies: (Species?) -> Unit) {
                     species.forEach { choice ->
                         DropdownMenuItem(
                             text = { Text(stringResource(choice.label)) },
-                            onClick = {
-                                expanded = false
-                                onSpecies(choice)
-                            },
+                            onClick = { onSpecies(choice) },
+                            leadingIcon = { Checkbox(checked = choice in filter.species, onCheckedChange = null) },
                             modifier = Modifier.testTag("species-${choice.name}"),
                         )
                     }
