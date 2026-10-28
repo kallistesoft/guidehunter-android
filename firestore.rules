@@ -96,7 +96,7 @@ service cloud.firestore {
     function validOffer(data) {
       return data.keys().hasOnly([
           'ownerUid', 'title', 'description', 'activity', 'species', 'region', 'lat', 'lng', 'priceFrom', 'status',
-          'live', 'updatedAt'])
+          'live', 'updatedAt', 'tripLength', 'departures', 'everyYear'])
         && shortText(data.title, 1, 100)
         && shortText(data.description, 30, 2000)
         && data.activity in ['HUNT', 'FISH', 'BOTH']
@@ -111,6 +111,12 @@ service cloud.firestore {
         && data.lat is number && data.lat >= -90 && data.lat <= 90
         && data.lng is number && data.lng >= -180 && data.lng <= 180
         && (data.priceFrom == null || (data.priceFrom is int && data.priceFrom > 0 && data.priceFrom <= 999999))
+        // The trip's length ('HALF_DAY' or days), its departures (ISO dates, '/AM' or '/PM' on a half day) and
+        // whether they come back every year: see core/model Schedule; the app checks each departure.
+        && (!('tripLength' in data) || data.tripLength == null || data.tripLength == 'HALF_DAY'
+          || (data.tripLength is int && data.tripLength >= 1 && data.tripLength <= 60))
+        && (!('departures' in data) || (data.departures is list && data.departures.size() <= 60))
+        && (!('everyYear' in data) || data.everyYear is bool)
         && data.status == 'PENDING'
         && data.live is bool
         && data.updatedAt == request.time;

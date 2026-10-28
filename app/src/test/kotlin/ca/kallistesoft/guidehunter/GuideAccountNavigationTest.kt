@@ -97,8 +97,8 @@ class GuideAccountNavigationTest {
 
         tag("add-offer").performScrollTo().performClick()
         waitFor("field-title")
-        tag("location-picker").assertExists()
-        tag("send").performScrollTo().performClick() // empty: errors, stays
+        tag("next").performClick() // empty: errors, stays on the first step
+        tag("field-title").assertExists()
         tag("back").performClick()
 
         waitFor("offer-o1")
@@ -111,8 +111,8 @@ class GuideAccountNavigationTest {
         (auth as FakeAuthRepository).user.value = TestGuides.user
         tag("become-guide").performClick()
         tag("offer-o1").performClick()
-        waitFor("field-title")
-        tag("send").performScrollTo().performClick()
+        waitFor("send") // an edit opens on its summary
+        tag("send").performClick()
         waitFor("needs-profile")
         tag("needs-profile").performScrollTo().performClick()
         waitFor("field-business-name")

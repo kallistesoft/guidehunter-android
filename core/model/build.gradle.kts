@@ -8,3 +8,8 @@ plugins {
 kotlin {
     compilerOptions { jvmTarget = JvmTarget.JVM_17 }
 }
+
+dependencies {
+    // Dates of offers (departures), KMP-ready like the rest of the module.
+    api(libs.kotlinx.datetime)
+}

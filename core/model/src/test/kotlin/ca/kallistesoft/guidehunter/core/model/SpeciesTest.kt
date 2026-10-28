@@ -38,4 +38,11 @@ class SpeciesTest {
         assertEquals(Species.entries.map { it.name }.toSet(), Regex("'(\\w+)'").findAll(listed).map { it.groupValues[1] }.toSet())
         assertTrue("data.species.size() <= ${Species.entries.size}" in rules)
     }
+
+    @Test
+    fun `firestore rules accept an offer's schedule fields`() {
+        val rules = File("../../firestore.rules").readText()
+        listOf("'tripLength'", "'departures'", "'everyYear'", "data.tripLength <= ${TripLength.MAX_DAYS}", "data.departures.size() <= ${OfferDraft.MAX_DEPARTURES}")
+            .forEach { assertTrue("rules have $it", it in rules) }
+    }
 }

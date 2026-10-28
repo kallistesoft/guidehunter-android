@@ -11,14 +11,19 @@ changes. Native Android first; iOS later (see FOLLOW-UP.md).
 
 - **No accounts for users.** Hunters and anglers never sign in; guides do, with their Google account.
 - **Map of guides** (Google Maps): a pin per guide (orange for hunting, green for fishing, yellow for both), filters
-  (hunting, fishing, species), and how far each guide is once the user shares their location.
-- **A guide's offer**: what, where, species, price, description. The guide's **name and contact are hidden until
-  the user watches a rewarded ad**. Then they get the phone, email and website, each one tap away.
+  (hunting, fishing, several species, the dates the user can go: guides with a trip that fits them), and how far each
+  guide is once the user shares their location. Offers whose dates are all over leave the map.
+- **A guide's offer**: what, where, species, price, description, how long a trip lasts and its departures (the next
+  one shown, the others under "Other dates"; the one the user picks goes into the email to the guide). The guide's
+  **name and contact are hidden until the user watches a rewarded ad**. Then they get the phone, email and website,
+  each one tap away.
 - **Become a guide**: a guide signs in with Google, fills in a **profile** (business name, email, phone, website,
-  shared by all their offers) and adds **offers**, as many as they like (title, description, hunting/fishing/both,
-  species, town or region, a pin on the map, price). Each new offer and each edit is **emailed to us** for review;
-  `scripts/approve-offer.py` puts it on the map. An edit leaves the reviewed version on the map until it's approved.
-  Guides can delete an offer (it leaves the map) or their whole account.
+  shared by all their offers) and adds **offers**, as many as they like, in five steps: the trip (title,
+  hunting/fishing/both, description), species, where (town or region, a pin on the map), when (half day to weeks,
+  departure dates, weekly in one go, these dates only or every year) and price and send (a summary with Change on each
+  step). Each new offer and each edit is **emailed to us** for review; `scripts/approve-offer.py` puts it on the map.
+  An edit leaves the reviewed version on the map until it's approved. Guides can delete an offer (it leaves the map)
+  or their whole account.
 
 ## Architecture
 
@@ -41,7 +46,7 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 
 | Collection | What | Who reads / writes |
 |---|---|---|
-| `guides/{id}` | The public offer: `title`, `description`, `activity` (`HUNT`, `FISH`, `BOTH`), `species` (names from `Species`), `region`, `lat`, `lng`, `priceFrom` (optional), `currency` (optional, `CAD`), `ownerUid` | Everyone reads; written by approval; its guide can delete it |
+| `guides/{id}` | The public offer: `title`, `description`, `activity` (`HUNT`, `FISH`, `BOTH`), `species` (names from `Species`), `region`, `lat`, `lng`, `priceFrom` (optional), `currency` (optional, `CAD`), `tripLength` (`HALF_DAY` or days), `departures` (ISO dates, `2027-05-20` or `2027-05-20/AM`, `/PM` on a half day; none: dates on request), `everyYear` (bool), `ownerUid` | Everyone reads; written by approval; its guide can delete it |
 | `guideContacts/{id}` | Same id: `name`, `phone`, `email`, `website`, `ownerUid` | Read one at a time after the ad; written by approval; its guide's profile updates it |
 | `guideProfiles/{uid}` | A guide's `businessName`, `email`, `phone`, `website`, by Firebase user id | Only that guide |
 | `guideOffers/{id}` | A guide's offers as written: the offer's fields, `ownerUid`, `status` (`PENDING`, `PUBLISHED`), `live` (a reviewed version is on the map), `updatedAt` | Only their guide; the app always writes `PENDING` and can't change `live` |
@@ -89,7 +94,7 @@ its config with `firebase apps:sdkconfig ANDROID <app id> --project <project> -o
    (again, after editing the file), `--delete` removes them. The script only ever writes to `guidehunter-dev`.
 4. A guide is a document in `guides` with `title` (string), `activity` (string: `HUNT`, `FISH` or `BOTH`), `species`
    (array of names from `core/model` `Species`, e.g. `BLACK_BEAR`), `region` (string), `lat` and `lng` (numbers),
-   `description` (string) and optionally `priceFrom` (number). Its contact goes in `guideContacts`, in a document with
+   `description` (string) and optionally `priceFrom` (number), `tripLength`, `departures` and `everyYear` (as in `guides`). Its contact goes in `guideContacts`, in a document with
    **the same id**: `name`, `phone`, `email`, `website` (strings). A guide missing a required field doesn't show
    (`core/data` `FirestoreDocuments.kt`).
 5. Upgrade to the **Blaze** plan (extensions need it; at this volume it costs about nothing), then install the

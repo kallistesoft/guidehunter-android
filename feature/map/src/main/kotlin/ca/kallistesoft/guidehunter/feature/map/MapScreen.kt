@@ -22,12 +22,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.AlertDialog
@@ -74,8 +76,12 @@ import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideFilter
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.ui.DateRangeDialog
+import ca.kallistesoft.guidehunter.core.ui.dateRange
 import ca.kallistesoft.guidehunter.core.ui.label
 import ca.kallistesoft.guidehunter.core.ui.speciesByDiscipline
+import kotlinx.datetime.LocalDate
 
 /**
  * What the map draws: the guides to pin and the user's location; what it reports: the area on screen once the camera
@@ -123,6 +129,9 @@ fun MapScreen(
         onDiscipline = viewModel::chooseDiscipline,
         onSpecies = viewModel::toggleSpecies,
         onAnySpecies = viewModel::clearSpecies,
+        onDates = viewModel::chooseDates,
+        onAnyDates = viewModel::clearDates,
+        onTrip = viewModel::chooseTrip,
         onVisibleArea = viewModel::showArea,
         onSelect = viewModel::select,
         onDismiss = viewModel::dismiss,
@@ -171,6 +180,9 @@ internal fun MapContent(
     onDiscipline: (Discipline?) -> Unit,
     onSpecies: (Species) -> Unit,
     onAnySpecies: () -> Unit,
+    onDates: (Trip) -> Unit,
+    onAnyDates: () -> Unit,
+    onTrip: (Trip) -> Unit,
     onVisibleArea: (GeoBounds) -> Unit,
     onSelect: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -206,7 +218,7 @@ internal fun MapContent(
             val sidePane = maxWidth >= Sizes.sidePaneMinWindowWidth
             Row(Modifier.fillMaxSize()) {
                 Column(Modifier.weight(1f).fillMaxHeight()) {
-                    Filters(state.filter, onDiscipline, onSpecies, onAnySpecies)
+                    Filters(state, onDiscipline, onSpecies, onAnySpecies, onDates, onAnyDates)
                     Box(Modifier.weight(1f).fillMaxWidth()) {
                         map(MapContent(state.guides, state.userLocation, onVisibleArea, onSelect), Modifier.fillMaxSize())
                         when {
@@ -217,13 +229,13 @@ internal fun MapContent(
                 }
                 if (sidePane) {
                     state.selected?.let { selected ->
-                        GuidePane(selected, onUnlock, onDismiss, Modifier.width(Sizes.sidePaneWidth).fillMaxHeight())
+                        GuidePane(selected, onUnlock, onTrip, onDismiss, Modifier.width(Sizes.sidePaneWidth).fillMaxHeight())
                     }
                 }
             }
             if (!sidePane) {
                 state.selected?.let { selected ->
-                    GuideSheet(selected = selected, onUnlock = onUnlock, onDismiss = onDismiss)
+                    GuideSheet(selected = selected, onUnlock = onUnlock, onTrip = onTrip, onDismiss = onDismiss)
                 }
             }
         }
@@ -231,7 +243,15 @@ internal fun MapContent(
 }
 
 @Composable
-private fun Filters(filter: GuideFilter, onDiscipline: (Discipline?) -> Unit, onSpecies: (Species) -> Unit, onAnySpecies: () -> Unit) {
+private fun Filters(
+    state: MapUiState,
+    onDiscipline: (Discipline?) -> Unit,
+    onSpecies: (Species) -> Unit,
+    onAnySpecies: () -> Unit,
+    onDates: (Trip) -> Unit,
+    onAnyDates: () -> Unit,
+) {
+    val filter = state.filter
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = Spacing.screen),
         horizontalArrangement = Arrangement.spacedBy(Spacing.s),
@@ -252,6 +272,36 @@ private fun Filters(filter: GuideFilter, onDiscipline: (Discipline?) -> Unit, on
             )
         }
         SpeciesPicker(filter, onSpecies, onAnySpecies)
+        DatesPicker(filter.dates, state.today, onDates, onAnyDates)
+    }
+}
+
+/** "When can you go?": the guides with a trip that fits those dates (and those with dates on request). */
+@Composable
+private fun DatesPicker(dates: Trip?, today: LocalDate, onDates: (Trip) -> Unit, onAnyDates: () -> Unit) {
+    var open by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    FilterChip(
+        selected = dates != null,
+        onClick = { open = true },
+        label = { Text(dates?.let { context.dateRange(it.start, it.end) } ?: stringResource(R.string.filter_dates)) },
+        leadingIcon = { Icon(Icons.Default.CalendarMonth, contentDescription = null, Modifier.size(Sizes.iconS)) },
+        modifier = Modifier.testTag("dates-picker"),
+    )
+    if (open) {
+        DateRangeDialog(
+            today = today,
+            initial = dates,
+            onPick = {
+                open = false
+                onDates(it)
+            },
+            onDismiss = { open = false },
+            onClear = {
+                open = false
+                onAnyDates()
+            },
+        )
     }
 }
 

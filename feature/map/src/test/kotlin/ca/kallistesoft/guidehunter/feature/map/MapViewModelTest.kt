@@ -2,10 +2,15 @@ package ca.kallistesoft.guidehunter.feature.map
 
 import androidx.lifecycle.SavedStateHandle
 import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
+import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.Discipline
 import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
+import ca.kallistesoft.guidehunter.core.model.Schedule
+import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.Trip
+import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.testing.FakeAdConsent
 import ca.kallistesoft.guidehunter.core.testing.FakeGuideRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
@@ -13,20 +18,21 @@ import ca.kallistesoft.guidehunter.core.testing.FakeRewardedAds
 import ca.kallistesoft.guidehunter.core.testing.MainDispatcherRule
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import ca.kallistesoft.guidehunter.core.testing.collecting
+import kotlin.math.roundToInt
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import kotlin.math.roundToInt
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
@@ -38,7 +44,7 @@ class MapViewModelTest {
     private val ads = FakeRewardedAds()
     private val consent = FakeAdConsent()
 
-    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = MapViewModel(guides, location, ads, consent, saved)
+    private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) = MapViewModel(guides, location, ads, consent, saved, { TestGuides.today })
 
     private val MapViewModel.ids get() = uiState.value.guides.map { it.guide.id }
     private val MapViewModel.contact get() = uiState.value.selected?.contact
@@ -322,5 +328,70 @@ class MapViewModelTest {
         vm.select("bear")
         guides.guides.value = listOf(TestGuides.salmon)
         assertNull(vm.uiState.value.selected)
+    }
+
+    private fun day(month: Int, day: Int) = LocalDate(2027, month, day)
+
+    @Test
+    fun `the dates show the guides with a trip that fits them, and those on request`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.chooseDates(Trip(day(5, 14), day(5, 31)))
+        assertEquals("bear's week of May 15 fits, salmon's June half day doesn't", listOf("bear", "moose"), vm.ids)
+        vm.chooseDates(Trip(day(5, 18), day(5, 31)))
+        assertEquals("a week leaving May 15 starts too early", listOf("moose"), vm.ids)
+        vm.chooseDates(Trip(day(7, 2)))
+        assertEquals("only moose, on request", listOf("moose"), vm.ids)
+        vm.chooseDiscipline(Discipline.HUNTING)
+        assertEquals("the discipline keeps the dates", Trip(day(7, 2)), vm.uiState.value.filter.dates)
+        vm.clearDates()
+        assertEquals(listOf("bear", "moose"), vm.ids)
+        assertEquals(TestGuides.today, vm.uiState.value.today)
+    }
+
+    @Test
+    fun `an offer whose dates are over leaves the map`() = runTest {
+        val past = TestGuides.bear.copy(schedule = Schedule(TripLength.Days(7), listOf(Departure(day(3, 1)))))
+        guides.guides.value = listOf(past, TestGuides.moose)
+        val vm = viewModel()
+        collecting(vm.uiState)
+        assertEquals(listOf("moose"), vm.ids)
+    }
+
+    @Test
+    fun `an open guide lists its trips, the user picks one, and the dates pick the first that fits`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState)
+        vm.select("bear")
+        val selected = vm.uiState.value.selected!!
+        assertEquals(listOf(day(5, 1), day(5, 15), day(6, 5)), selected.trips.map { it.start })
+        assertNull(selected.trip)
+        vm.chooseTrip(selected.trips[1])
+        assertEquals(Trip(day(5, 15), day(5, 21)), vm.uiState.value.selected!!.trip)
+        vm.chooseTrip(selected.trips[1])
+        assertNull("again: unchosen", vm.uiState.value.selected!!.trip)
+        vm.chooseDates(Trip(day(6, 1), day(6, 30)))
+        assertEquals(day(6, 5), vm.uiState.value.selected!!.trip!!.start)
+        vm.select("moose")
+        assertEquals(emptyList<Trip>(), vm.uiState.value.selected!!.trips)
+        assertNull(vm.uiState.value.selected!!.trip)
+    }
+
+    @Test
+    fun `the dates and the chosen trip survive process death`() = runTest {
+        val saved = SavedStateHandle()
+        viewModel(saved).apply {
+            chooseDates(Trip(day(6, 1), day(6, 30)))
+            select("salmon")
+            chooseTrip(Trip(day(6, 10), slot = Slot.AFTERNOON))
+        }
+        val restored = viewModel(saved)
+        collecting(restored.uiState)
+        assertEquals(Trip(day(6, 1), day(6, 30)), restored.uiState.value.filter.dates)
+        assertEquals(Trip(day(6, 10), slot = Slot.AFTERNOON), restored.uiState.value.selected!!.trip)
+        restored.select("salmon")
+        assertEquals("opening the same guide keeps the trip", Slot.AFTERNOON, restored.uiState.value.selected!!.trip!!.slot)
+        restored.dismiss()
+        assertNull(restored.uiState.value.selected)
     }
 }

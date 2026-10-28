@@ -93,4 +93,37 @@
         <item quantity="one">%d chosen</item>
         <item quantity="other">%d chosen</item>
     </plurals>
+    <string name="step_what">The trip</string>
+    <string name="step_species">Species</string>
+    <string name="step_where">Where</string>
+    <string name="step_when">When</string>
+    <string name="step_review">Price and send</string>
+    <string name="step_of">Step %1$d of %2$d</string>
+    <string name="step_next">Next</string>
+    <string name="step_back">Back</string>
+    <string name="change">Change</string>
+    <string name="field_duration">Trip duration</string>
+    <string name="duration_other">Other</string>
+    <string name="field_days">Number of days</string>
+    <string name="field_departures">Departures</string>
+    <string name="departures_help">Optional: without dates, your offer says \"Dates on request\".</string>
+    <string name="half_day_slots">Half days:</string>
+    <string name="slot_morning">Morning</string>
+    <string name="slot_afternoon">Afternoon</string>
+    <string name="add_date">Add a date</string>
+    <string name="add_weekly">Add weekly dates</string>
+    <string name="remove_date">Remove %1$s</string>
+    <string name="field_repeat">Repeat</string>
+    <string name="repeat_once">These dates only</string>
+    <string name="repeat_every_year">Every year</string>
+    <string name="repeat_once_help">The offer leaves the map after its last date.</string>
+    <string name="repeat_every_year_help">The same days come back every year: the offer stays on the map.</string>
+    <string name="dates_on_request">Dates on request</string>
+    <string name="error_duration">Choose how long a trip lasts (1 to %1$d days).</string>
+    <string name="error_dates">Check the dates: each once, at most %1$d.</string>
+    <string name="status_expired">Dates passed: not on the map. Edit it to add new dates.</string>
+    <plurals name="departures_count">
+        <item quantity="one">%1$d date, from %2$s</item>
+        <item quantity="other">%1$d dates, from %2$s</item>
+    </plurals>
 </resources>

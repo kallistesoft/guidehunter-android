@@ -1,5 +1,6 @@
 package ca.kallistesoft.guidehunter.core.data
 
+import ca.kallistesoft.guidehunter.core.model.Departure
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
@@ -8,10 +9,14 @@ import ca.kallistesoft.guidehunter.core.model.GuideOffer
 import ca.kallistesoft.guidehunter.core.model.GuideProfile
 import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.OfferStatus
+import ca.kallistesoft.guidehunter.core.model.Schedule
+import ca.kallistesoft.guidehunter.core.model.Slot
 import ca.kallistesoft.guidehunter.core.model.Species
+import ca.kallistesoft.guidehunter.core.model.TripLength
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FieldValue
+import kotlinx.datetime.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -124,6 +129,7 @@ class FirestoreDocumentsTest {
         val text = message["text"] as String
         listOf(
             "Offers: HUNT", "Species: BLACK_BEAR", "Location: 48.0, -79.0", "Price from: 2400", "boreal forest",
+            "Duration: 7 days", "Departures: 2027-05-01",
             "Phone: 819 555 0100", "approve-offer.py <project> o1 (guide u1)",
         ).forEach { assertTrue("has $it", it in text) }
 
@@ -132,7 +138,44 @@ class FirestoreDocumentsTest {
         assertTrue((editedMessage["subject"] as String).startsWith("Offer edited: "))
         assertTrue("on request" in editedMessage["text"] as String)
 
+        val salmon = OfferDraft(
+            schedule = Schedule(TripLength.HalfDay, listOf(Departure(LocalDate(2027, 6, 10), Slot.AFTERNOON)), everyYear = true),
+        )
+        val salmonText = (offerMail("o@e.com", "o1", "u1", salmon, TestGuides.profile, false)["message"] as Map<*, *>)["text"] as String
+        assertTrue("Duration: half day" in salmonText)
+        assertTrue("Departures: 2027-06-10/PM (every year)" in salmonText)
+        assertTrue("Duration: not given" in (offerMail("o@e.com", "o1", "u1", OfferDraft(), TestGuides.profile, false)["message"] as Map<*, *>)["text"] as String)
+
         val long = offerMail("o@e.com", "o1", "u1", TestGuides.offer.copy(title = "x".repeat(400)), TestGuides.profile, false)
         assertEquals(300, ((long["message"] as Map<*, *>)["subject"] as String).length)
+    }
+
+    @Test
+    fun `a schedule is stored readable and read back, unreadable departures dropped`() {
+        val half = Schedule(
+            TripLength.HalfDay,
+            listOf(Departure(LocalDate(2027, 6, 10), Slot.AFTERNOON), Departure(LocalDate(2027, 6, 10), Slot.MORNING)),
+            everyYear = true,
+        )
+        val fields = half.toFields()
+        assertEquals("HALF_DAY", fields["tripLength"])
+        assertEquals(listOf("2027-06-10/AM", "2027-06-10/PM"), fields["departures"])
+        assertEquals(true, fields["everyYear"])
+        assertEquals(half.copy(departures = half.departures.sorted()), scheduleFrom(fields))
+
+        val week = Schedule(TripLength.Days(7), listOf(Departure(LocalDate(2027, 5, 1))))
+        assertEquals(week, scheduleFrom(week.toFields() + ("tripLength" to 7L)))
+        assertEquals(
+            Schedule(departures = listOf(Departure(LocalDate(2027, 5, 1)))),
+            scheduleFrom(mapOf("tripLength" to "FOREVER", "departures" to listOf("2027-05-01", "May 8", "2027-05-15/NOON", 3))),
+        )
+        assertEquals(Schedule(), scheduleFrom(Schedule().toFields()))
+        assertNull(Schedule().toFields()["tripLength"])
+    }
+
+    @Test
+    fun `a guide document carries its schedule`() {
+        val data = mapOf("title" to "Salmon", "activity" to "FISH", "lat" to 1.0, "lng" to 2.0, "tripLength" to "HALF_DAY", "departures" to listOf("2027-06-10/AM"))
+        assertEquals(Schedule(TripLength.HalfDay, listOf(Departure(LocalDate(2027, 6, 10), Slot.MORNING))), guideFrom("g", data)!!.schedule)
     }
 }

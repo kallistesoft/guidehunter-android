@@ -196,7 +196,7 @@ private fun Account(state: MyOffersUiState, actions: MyOffersActions) = Page {
     if (state.offers.isEmpty()) {
         Text(stringResource(R.string.no_offers), color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("no-offers"))
     }
-    state.offers.forEach { OfferCard(it, actions.editOffer) }
+    state.offers.forEach { OfferCard(it, it.draft.schedule.expired(state.today), actions.editOffer) }
     PrimaryButton(
         stringResource(R.string.add_offer),
         actions.addOffer,
@@ -224,7 +224,7 @@ private fun ProfileCard(profile: GuideProfile?, onEdit: () -> Unit) {
 }
 
 @Composable
-private fun OfferCard(offer: GuideOffer, onEdit: (String) -> Unit) {
+private fun OfferCard(offer: GuideOffer, expired: Boolean, onEdit: (String) -> Unit) {
     OutlinedCard(onClick = { onEdit(offer.id) }, modifier = Modifier.fillMaxWidth().testTag("offer-${offer.id}")) {
         Column(Modifier.padding(Sizes.cardPadding), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(offer.draft.title, style = MaterialTheme.typography.titleMedium)
@@ -234,13 +234,19 @@ private fun OfferCard(offer: GuideOffer, onEdit: (String) -> Unit) {
                 Text(
                     stringResource(
                         when {
+                            // Its last date is over: off the map whatever its review.
+                            expired -> R.string.status_expired
                             published -> R.string.status_published
                             offer.live -> R.string.status_changes_pending
                             else -> R.string.status_pending
                         },
                     ),
                     style = MaterialTheme.typography.labelLarge,
-                    color = if (published) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.tertiary,
+                    color = when {
+                        expired -> MaterialTheme.colorScheme.error
+                        published -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.tertiary
+                    },
                     modifier = Modifier.testTag("status-${offer.id}"),
                 )
             }
