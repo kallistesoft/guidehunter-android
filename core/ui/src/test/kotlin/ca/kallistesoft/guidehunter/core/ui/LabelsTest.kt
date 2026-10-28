@@ -26,6 +26,7 @@ class LabelsTest {
         val species = Species.entries.map { app.getString(it.label) }
         assertEquals(species.size, species.distinct().size)
         assertEquals("Black bear", app.getString(Species.BLACK_BEAR.label))
+        assertEquals("Elk", app.getString(Species.ELK.label))
         assertEquals("Hunting and fishing", app.getString(GuideActivity.BOTH.label))
         assertEquals("Fishing", app.getString(Discipline.FISHING.label))
     }
@@ -35,6 +36,8 @@ class LabelsTest {
     fun `labels are translated`() {
         assertEquals("Ours noir", app.getString(Species.BLACK_BEAR.label))
         assertEquals("Doré", app.getString(Species.WALLEYE.label))
+        assertEquals("Wapiti", app.getString(Species.ELK.label))
+        assertEquals("Perchaude", app.getString(Species.YELLOW_PERCH.label))
         assertEquals("Chasse", app.getString(Discipline.HUNTING.label))
         assertEquals(Species.entries.size + 5, labels().size)
     }
