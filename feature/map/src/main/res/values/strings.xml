@@ -50,4 +50,5 @@
     <string name="error_sign_in">Sign-in failed. Check your connection and try again.</string>
     <string name="error_send">The request couldn’t be sent. Check your connection and try again.</string>
     <string name="error_not_configured">You can’t send requests from this version of the app yet.</string>
+    <string name="location_unavailable">Your location isn\'t available. Check that location is on.</string>
 </resources>

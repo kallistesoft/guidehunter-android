@@ -219,6 +219,25 @@ class MapViewModelTest {
     }
 
     @Test
+    fun `each tap on my location moves the map there, and a missing location says so`() = runTest {
+        val vm = viewModel()
+        collecting(vm.uiState, vm.locate, vm.locationMissing)
+        location.location = TestGuides.quebecCity
+        vm.locate()
+        assertEquals(LocateRequest(1, TestGuides.quebecCity), vm.locate.value)
+        assertEquals(TestGuides.quebecCity, vm.uiState.value.userLocation)
+        vm.locate() // the same place again: a new request, so the map moves back there
+        assertEquals(2, vm.locate.value?.id)
+
+        location.location = null // location off
+        vm.locate()
+        assertTrue(vm.locationMissing.value)
+        assertEquals("the map stays", 2, vm.locate.value?.id)
+        vm.locationMissingShown()
+        assertFalse(vm.locationMissing.value)
+    }
+
+    @Test
     fun `with the user's location, guides show their distance, nearest first`() = runTest {
         location.location = TestGuides.quebecCity
         val vm = viewModel()

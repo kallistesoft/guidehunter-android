@@ -1,5 +1,8 @@
 package ca.kallistesoft.guidehunter.feature.map
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
@@ -18,6 +21,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.VisibleRegion
 import ca.kallistesoft.guidehunter.core.model.GeoBounds
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
+import com.google.android.gms.maps.model.CameraPosition
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
@@ -118,5 +122,28 @@ class GuideMapTest {
         assertTrue("the sheet shows the offer, not an info window", clicks.captured.onMarkerClick(markers.getValue(TestGuides.salmon.title)))
         assertEquals(listOf("salmon"), selected)
         assertEquals("once the map is ready", listOf(GeoBounds(GeoPoint(45.0, -80.0), GeoPoint(50.0, -64.0))), areas)
+    }
+
+    @Test
+    fun `each tap on my location moves the map there`() {
+        ShadowMapView.ready = map
+        mockkStatic(CameraUpdateFactory::class, BitmapDescriptorFactory::class)
+        val targets = mutableListOf<GeoPoint>()
+        every { CameraUpdateFactory.newCameraPosition(any()) } answers {
+            firstArg<CameraPosition>().target.let { targets += GeoPoint(it.latitude, it.longitude) }
+            mockk()
+        }
+        every { BitmapDescriptorFactory.fromBitmap(any()) } returns mockk()
+        var locate by mutableStateOf<LocateRequest?>(null)
+        compose.setContent {
+            GuideHunterTheme { GuideMap(MapContent(emptyList(), null, locate = locate, onSelect = {})) }
+        }
+        compose.waitForIdle()
+        val montreal = GeoPoint(45.5, -73.6)
+        locate = LocateRequest(1, montreal)
+        compose.waitForIdle()
+        locate = LocateRequest(2, TestGuides.quebecCity)
+        compose.waitForIdle()
+        assertEquals(listOf(montreal, TestGuides.quebecCity), targets.filter { it != GeoPoint.DEFAULT_CENTER })
     }
 }
