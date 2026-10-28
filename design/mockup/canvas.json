@@ -45,7 +45,7 @@
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "3 Fishing, species picker",
+      "title": "3 Fishing, species menu (several)",
       "page": "find"
     },
     "LocationAsk.dc.html": {
@@ -125,7 +125,7 @@
       "y": 1264,
       "w": 390,
       "h": 844,
-      "title": "3 Fishing, species picker · light",
+      "title": "3 Fishing, species menu (several) · light",
       "page": "find"
     },
     "LocationAskLight.dc.html": {
@@ -184,116 +184,20 @@
       "title": "8c Offline · light",
       "page": "find"
     },
-    "Form.dc.html": {
-      "x": 0,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "1 Become a guide",
-      "page": "become"
-    },
-    "FormErrors.dc.html": {
-      "x": 470,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "2 Sent empty: errors",
-      "page": "become"
-    },
-    "FormFilled.dc.html": {
-      "x": 940,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "3 Species, description, pin (scrolled)",
-      "page": "become"
-    },
-    "FormContact.dc.html": {
-      "x": 1880,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "4 Location buttons, price, contact, send",
-      "page": "become"
-    },
-    "FormFailed.dc.html": {
-      "x": 2350,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "4b Couldn't send",
-      "page": "become"
-    },
     "Sent.dc.html": {
-      "x": 2820,
+      "x": 2350,
       "y": 0,
       "w": 390,
       "h": 844,
-      "title": "5 Application sent",
-      "page": "become"
-    },
-    "FormLight.dc.html": {
-      "x": 0,
-      "y": 1264,
-      "w": 390,
-      "h": 844,
-      "title": "1 Become a guide · light",
-      "page": "become"
-    },
-    "FormErrorsLight.dc.html": {
-      "x": 470,
-      "y": 1264,
-      "w": 390,
-      "h": 844,
-      "title": "2 Sent empty: errors · light",
-      "page": "become"
-    },
-    "FormFilledLight.dc.html": {
-      "x": 940,
-      "y": 1264,
-      "w": 390,
-      "h": 844,
-      "title": "3 Species, description, pin (scrolled) · light",
-      "page": "become"
-    },
-    "FormContactLight.dc.html": {
-      "x": 1880,
-      "y": 1264,
-      "w": 390,
-      "h": 844,
-      "title": "4 Location buttons, price, contact, send · light",
-      "page": "become"
-    },
-    "FormFailedLight.dc.html": {
-      "x": 2350,
-      "y": 1264,
-      "w": 390,
-      "h": 844,
-      "title": "4b Couldn't send · light",
+      "title": "6 Sent for review",
       "page": "become"
     },
     "SentLight.dc.html": {
-      "x": 2820,
+      "x": 2350,
       "y": 1264,
       "w": 390,
       "h": 844,
-      "title": "5 Application sent · light",
-      "page": "become"
-    },
-    "FormCoordinates.dc.html": {
-      "x": 1410,
-      "y": 0,
-      "w": 390,
-      "h": 844,
-      "title": "3b No map: coordinates",
-      "page": "become"
-    },
-    "FormCoordinatesLight.dc.html": {
-      "x": 1410,
-      "y": 1264,
-      "w": 390,
-      "h": 844,
-      "title": "3b No map: coordinates · light",
+      "title": "6 Sent for review · light",
       "page": "become"
     },
     "Tablet.dc.html": {
@@ -343,6 +247,118 @@
       "h": 760,
       "title": "Chosen: B, the pin · light",
       "page": "logo"
+    },
+    "DatesPicker.dc.html": {
+      "x": 6060,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "10 Dates: when can you go?",
+      "page": "find"
+    },
+    "DatesPickerLight.dc.html": {
+      "x": 6060,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "10 Dates: when can you go? · light",
+      "page": "find"
+    },
+    "SheetDates.dc.html": {
+      "x": 6530,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "11 Offer dates, a trip chosen",
+      "page": "find"
+    },
+    "SheetDatesLight.dc.html": {
+      "x": 6530,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "11 Offer dates, a trip chosen · light",
+      "page": "find"
+    },
+    "OfferStep.dc.html": {
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "1 The trip",
+      "page": "become"
+    },
+    "OfferStepLight.dc.html": {
+      "x": 0,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "1 The trip · light",
+      "page": "become"
+    },
+    "OfferSpecies.dc.html": {
+      "x": 470,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "2 Species",
+      "page": "become"
+    },
+    "OfferSpeciesLight.dc.html": {
+      "x": 470,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "2 Species · light",
+      "page": "become"
+    },
+    "OfferWhere.dc.html": {
+      "x": 940,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "3 Where",
+      "page": "become"
+    },
+    "OfferWhereLight.dc.html": {
+      "x": 940,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "3 Where · light",
+      "page": "become"
+    },
+    "OfferWhen.dc.html": {
+      "x": 1410,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "4 When: duration, departures, repeat",
+      "page": "become"
+    },
+    "OfferWhenLight.dc.html": {
+      "x": 1410,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "4 When: duration, departures, repeat · light",
+      "page": "become"
+    },
+    "OfferReview.dc.html": {
+      "x": 1880,
+      "y": 0,
+      "w": 390,
+      "h": 844,
+      "title": "5 Price and send",
+      "page": "become"
+    },
+    "OfferReviewLight.dc.html": {
+      "x": 1880,
+      "y": 1264,
+      "w": 390,
+      "h": 844,
+      "title": "5 Price and send · light",
+      "page": "become"
     }
   },
   "order": [
@@ -357,6 +373,8 @@
     "SheetNotEarned.dc.html",
     "SheetOffline.dc.html",
     "Tablet.dc.html",
+    "DatesPicker.dc.html",
+    "SheetDates.dc.html",
     "SplashLight.dc.html",
     "MapLight.dc.html",
     "SpeciesPickerLight.dc.html",
@@ -368,19 +386,19 @@
     "SheetNotEarnedLight.dc.html",
     "SheetOfflineLight.dc.html",
     "TabletLight.dc.html",
-    "Form.dc.html",
-    "FormErrors.dc.html",
-    "FormFilled.dc.html",
-    "FormCoordinates.dc.html",
-    "FormContact.dc.html",
-    "FormFailed.dc.html",
+    "DatesPickerLight.dc.html",
+    "SheetDatesLight.dc.html",
+    "OfferStep.dc.html",
+    "OfferSpecies.dc.html",
+    "OfferWhere.dc.html",
+    "OfferWhen.dc.html",
+    "OfferReview.dc.html",
     "Sent.dc.html",
-    "FormLight.dc.html",
-    "FormErrorsLight.dc.html",
-    "FormFilledLight.dc.html",
-    "FormCoordinatesLight.dc.html",
-    "FormContactLight.dc.html",
-    "FormFailedLight.dc.html",
+    "OfferStepLight.dc.html",
+    "OfferSpeciesLight.dc.html",
+    "OfferWhereLight.dc.html",
+    "OfferWhenLight.dc.html",
+    "OfferReviewLight.dc.html",
     "SentLight.dc.html",
     "Logos.dc.html",
     "LogosLight.dc.html",
@@ -393,7 +411,7 @@
       "y": -300,
       "text": "Find a guide · dark",
       "kind": "title1",
-      "maxW": 5980,
+      "maxW": 6920,
       "page": "find"
     },
     "findLight": {
@@ -401,7 +419,7 @@
       "y": 964,
       "text": "Find a guide · light",
       "kind": "title1",
-      "maxW": 5980,
+      "maxW": 6920,
       "page": "find"
     },
     "becomeDark": {
@@ -409,7 +427,7 @@
       "y": -300,
       "text": "Become a guide · dark",
       "kind": "title1",
-      "maxW": 3210,
+      "maxW": 2740,
       "page": "become"
     },
     "becomeLight": {
@@ -417,7 +435,7 @@
       "y": 964,
       "text": "Become a guide · light",
       "kind": "title1",
-      "maxW": 3210,
+      "maxW": 2740,
       "page": "become"
     },
     "logoDark": {

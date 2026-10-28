@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter guide offer, dates</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Barlow, system-ui, sans-serif">
+  <dc-import name="Main" theme="{{theme}}" mode="near" hint-size="390px,844px"></dc-import>
+  <a href="{{l.map}}" aria-label="Close" style="position: absolute; inset: 0; background: rgba(5,9,7,0.55)"></a>
+  <section aria-labelledby="dates-title" style="position: absolute; left: 0; right: 0; bottom: 0; top: 112px; background: {{c.sheet}}; color: {{c.text}}; border-radius: 28px 28px 0 0; padding: 10px 20px 24px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; overflow: hidden">
+    <span style="align-self: center; width: 32px; height: 4px; border-radius: 999px; background: {{c.handle}}; margin-bottom: 8px"></span>
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.label}}">Hunting</span>
+    <h1 id="dates-title" style="margin: -6px 0 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 28px; line-height: 1.1">Black bear over bait</h1>
+    <span style="font-size: 15px; font-weight: 600">From CA$2,400 per person</span>
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 6px">Dates</span>
+    <span style="font-size: 15px; margin-top: -4px">1 week</span>
+    <div role="radiogroup" aria-label="Trips" style="display: flex; flex-direction: column">
+      <span style="font-size: 15px; font-weight: 600">Next departure</span>
+      <sc-for list="{{next}}" as="t" hint-placeholder-count="1">
+        <button role="radio" aria-checked="{{t.on}}" style="min-height: 44px; border: 0; background: transparent; color: {{c.text}}; font: 400 16px Barlow, sans-serif; display: flex; align-items: center; gap: 12px; padding: 0">
+          <span aria-hidden="true" style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid {{t.ring}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{t.dot}}"></span></span>{{t.label}}
+        </button>
+      </sc-for>
+      <button aria-expanded="true" style="min-height: 48px; border: 0; background: transparent; color: {{c.text}}; font: 600 15px Barlow, sans-serif; display: flex; align-items: center; justify-content: space-between; padding: 0">Other dates<span style="display: flex; align-items: center; gap: 8px; color: {{c.muted}}; font-weight: 500">4<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></span></button>
+      <sc-for list="{{others}}" as="t" hint-placeholder-count="4">
+        <button role="radio" aria-checked="{{t.on}}" style="min-height: 44px; border: 0; background: transparent; color: {{c.text}}; font: 400 16px Barlow, sans-serif; display: flex; align-items: center; gap: 12px; padding: 0">
+          <span aria-hidden="true" style="width: 18px; height: 18px; border-radius: 999px; border: 2px solid {{t.ring}}; box-sizing: border-box; display: flex; align-items: center; justify-content: center"><span style="width: 8px; height: 8px; border-radius: 999px; background: {{t.dot}}"></span></span>{{t.label}}
+        </button>
+      </sc-for>
+    </div>
+    <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 4px">Guide and contact</span>
+    <div style="background: {{c.card}}; border: 1px solid {{c.border}}; border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px">
+      <span style="font-size: 16px; font-weight: 600">Your trip: May 15 – 21, 2027</span>
+      <a href="{{l.ad}}" style="height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M10 8.5l5.5 3.5-5.5 3.5z" fill="currentColor"/></svg>Watch an ad to see the contact</a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const light = theme === 'light';
+    const c = light
+      ? {sheet:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', label:'#B4500F', primary:'#E8691E', border:'#E6E1D5', handle:'#C9C2B2', ring:'#5B6659'}
+      : {sheet:'#17221A', card:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', label:'#F7A06A', primary:'#F27B2B', border:'#24352A', handle:'#3A4B3F', ring:'#A9B5AB'};
+    const trip = (label, on) => ({label, on, ring: on ? c.primary : c.ring, dot: on ? c.primary : 'transparent'});
+    return {
+      theme, c,
+      next: [trip('May 1 – 7, 2027', false)],
+      others: [trip('May 8 – 14, 2027', false), trip('May 15 – 21, 2027', true), trip('May 22 – 28, 2027', false), trip('May 29 – Jun 4, 2027', false)],
+      l: {map: light ? 'MapLight.dc.html' : 'Main.dc.html', ad: 'RewardedAd' + (light ? 'Light' : '') + '.dc.html'}
+    };
+  }
+}
+</script>
+</body>
+</html>

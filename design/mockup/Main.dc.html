@@ -91,7 +91,7 @@ class Component extends DCLogic {
     const c = P[light ? 'light' : 'dark'];
     const s = light ? 'Light' : '';
     const link = (n) => (n === 'map' ? (light ? 'MapLight' : 'Main') : n + s) + '.dc.html';
-    const l = {map: link('map'), near: link('MapNear'), species: link('SpeciesPicker'), location: link('LocationAsk'), sheet: link('GuideSheet'), form: link('Form')};
+    const l = {map: link('map'), near: link('MapNear'), species: link('SpeciesPicker'), location: link('LocationAsk'), sheet: link('GuideSheet'), form: link('OfferStep')};
     const guides = [
       {id:'bear', act:'HUNT', title:'Black bear over bait', region:'Abitibi-Témiscamingue', km:600, x:46, y:206},
       {id:'walleye', act:'FISH', title:'Walleye on Lac Saint-Jean', region:'Saguenay–Lac-Saint-Jean', km:205, x:192, y:268},
@@ -122,7 +122,8 @@ class Component extends DCLogic {
       chip('All', mode !== 'fish', link('map'), false),
       chip('Hunting', false, link('map'), false),
       chip('Fishing', mode === 'fish', link('SpeciesPicker'), false),
-      chip('Species', false, link('SpeciesPicker'), true)
+      chip('Species', false, link('SpeciesPicker'), true),
+      chip('Dates', false, link('DatesPicker'), false)
     ];
     return {
       c, l, chips, pins, cards,
