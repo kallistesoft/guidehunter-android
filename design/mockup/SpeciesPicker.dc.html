@@ -16,9 +16,11 @@ body{margin:0}
 </helmet>
 <div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: Barlow, system-ui, sans-serif">
   <dc-import name="Main" theme="{{theme}}" mode="fish" hint-size="390px,844px"></dc-import>
-  <div role="menu" aria-label="Species" style="position: absolute; left: 168px; top: 98px; width: 200px; background: {{c.menu}}; border-radius: 14px; padding: 6px 0; box-shadow: {{c.shadow}}; display: flex; flex-direction: column">
-    <sc-for list="{{items}}" as="it" hint-placeholder-count="9">
-      <a role="menuitem" href="{{mapHref}}" style="height: 44px; padding: 0 16px; display: flex; align-items: center; font-size: 15px; text-decoration: none; color: {{it.color}}; font-weight: {{it.weight}}">{{it.label}}</a>
+  <div role="menu" aria-label="Species" style="position: absolute; left: 150px; top: 98px; width: 224px; background: {{c.menu}}; border-radius: 14px; padding: 6px 0; box-shadow: {{c.shadow}}; display: flex; flex-direction: column">
+    <sc-for list="{{items}}" as="it" hint-placeholder-count="15">
+      <a role="menuitemcheckbox" aria-checked="{{it.on}}" href="{{mapHref}}" style="height: 40px; padding: 0 14px; display: flex; align-items: center; gap: 12px; font-size: 15px; text-decoration: none; color: {{c.text}}; font-weight: {{it.weight}}">
+        <span aria-hidden="true" style="width: 18px; height: 18px; border-radius: 4px; box-sizing: border-box; border: 2px solid {{it.box}}; background: {{it.fill}}; display: flex; align-items: center; justify-content: center; color: {{c.onPrimary}}"><sc-if value="{{it.on}}" hint-placeholder-val="{{ false }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if></span>{{it.label}}
+      </a>
     </sc-for>
   </div>
 </div>
@@ -29,10 +31,15 @@ class Component extends DCLogic {
     const theme = this.props.theme ?? 'dark';
     const light = theme === 'light';
     const c = light
-      ? {menu:'#FFFFFF', text:'#17201A', muted:'#5B6659', shadow:'0 10px 30px rgba(23,32,26,0.22)'}
-      : {menu:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', shadow:'0 10px 30px rgba(0,0,0,0.55)'};
-    const names = ['Any species', 'Walleye', 'Northern pike', 'Brook trout', 'Lake trout', 'Atlantic salmon', 'Smallmouth bass', 'Muskellunge', 'Ice fishing'];
-    const items = names.map((label, i) => ({label, color: i === 0 ? c.muted : c.text, weight: i === 0 ? 600 : 400}));
+      ? {menu:'#FFFFFF', text:'#17201A', muted:'#5B6659', primary:'#E8691E', onPrimary:'#1A0E05', shadow:'0 10px 30px rgba(23,32,26,0.22)'}
+      : {menu:'#1C2920', text:'#EEF1EA', muted:'#A9B5AB', primary:'#F27B2B', onPrimary:'#1A0E05', shadow:'0 10px 30px rgba(0,0,0,0.55)'};
+    // Several species can be ticked; the menu stays open. Fishing chosen: one alphabetical list, no headings.
+    const names = ['Any species', 'Arctic char', 'Atlantic salmon', 'Brook trout', 'Ice fishing', 'Lake trout', 'Largemouth bass', 'Muskellunge', 'Northern pike', 'Pacific salmon', 'Rainbow trout', 'Smallmouth bass', 'Sturgeon', 'Walleye', 'Yellow perch'];
+    const ticked = ['Brook trout', 'Walleye'];
+    const items = names.map((label, i) => {
+      const on = ticked.includes(label);
+      return {label, on, weight: i === 0 ? 600 : 400, box: on ? c.primary : c.muted, fill: on ? c.primary : 'transparent'};
+    });
     return {theme, c, items, mapHref: light ? 'MapLight.dc.html' : 'Main.dc.html'};
   }
 }

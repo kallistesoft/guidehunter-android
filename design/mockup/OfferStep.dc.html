@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GuideHunter offer form, step by step</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+input,textarea{font:inherit;color:inherit;background:transparent;border:0;outline:none;padding:0;margin:0;width:100%;resize:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; background: {{c.bg}}; color: {{c.text}}; font-family: Barlow, system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden">
+  <header style="flex-shrink: 0">
+    <div style="height: 68px; padding: 8px 8px 0; box-sizing: border-box; display: flex; align-items: center; gap: 4px">
+      <a href="{{l.back}}" aria-label="Back" style="width: 44px; height: 44px; border-radius: 999px; display: flex; align-items: center; justify-content: center; color: {{c.text}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></a>
+      <div style="display: flex; flex-direction: column">
+        <h1 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 22px; line-height: 1.1">{{s.title}}</h1>
+        <span style="font-size: 13px; font-weight: 600; color: {{c.muted}}">Step {{s.number}} of 5</span>
+      </div>
+    </div>
+    <div role="progressbar" aria-label="Step {{s.number}} of 5" aria-valuemin="1" aria-valuemax="5" aria-valuenow="{{s.number}}" style="height: 4px; background: {{c.track}}; margin-top: 4px">
+      <div style="height: 4px; width: {{s.progress}}%; background: {{c.primary}}"></div>
+    </div>
+  </header>
+
+  <div style="flex: 1; overflow: hidden; padding: 16px 20px; display: flex; flex-direction: column; gap: 14px">
+    <sc-if value="{{v.what}}" hint-placeholder-val="{{ true }}">
+      <p style="margin: 0; font-size: 16px; line-height: 1.4">Describe one trip or package. We review it before it goes on the map.</p>
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="position: relative; height: 56px; border: 1.5px solid {{c.outline}}; border-radius: 14px; box-sizing: border-box; display: flex; align-items: center; padding: 0 16px">
+          <label for="title" style="position: absolute; left: 12px; top: -9px; padding: 0 4px; background: {{c.bg}}; font-size: 12px; color: {{c.muted}}">Offer title</label>
+          <input id="title" defaultValue="Spring black bear in Abitibi" style="font-size: 16px">
+        </div>
+        <span style="font-size: 12px; padding: 0 16px; color: {{c.muted}}">What it is, for example "Black bear hunt in Abitibi".</span>
+      </div>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">You offer</span>
+      <div role="radiogroup" aria-label="You offer" style="display: flex; height: 44px; border: 1px solid {{c.outline}}; border-radius: 999px; overflow: hidden; margin-top: -8px">
+        <button role="radio" aria-checked="true" style="flex: 1; border: 0; background: {{c.greenTint}}; color: {{c.green}}; font: 600 15px Barlow, sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Hunting</button>
+        <button role="radio" aria-checked="false" style="flex: 1; border: 0; border-left: 1px solid {{c.outline}}; background: transparent; color: {{c.text}}; font: 600 15px Barlow, sans-serif">Fishing</button>
+      </div>
+      <span style="font-size: 12px; line-height: 1.4; color: {{c.muted}}; margin-top: -6px">One type per offer: if you offer both, add a hunting offer and a fishing offer.</span>
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <div style="position: relative; min-height: 128px; border: 1.5px solid {{c.outline}}; border-radius: 14px; box-sizing: border-box; padding: 18px 16px 12px">
+          <label for="description" style="position: absolute; left: 12px; top: -9px; padding: 0 4px; background: {{c.bg}}; font-size: 12px; color: {{c.muted}}">Describe the trip</label>
+          <textarea id="description" rows="4" defaultValue="Heated blinds over bait sites, log cabins and meals included. English and French spoken." style="font-size: 16px; line-height: 1.4"></textarea>
+        </div>
+        <span style="font-size: 12px; padding: 0 16px; color: {{c.muted}}">At least 30 characters: what's included, seasons, lodging, languages.</span>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{v.species}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <sc-for list="{{species}}" as="sp" hint-placeholder-count="15">
+          <button aria-pressed="{{sp.on}}" style="height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid {{sp.border}}; background: {{sp.bg}}; color: {{sp.color}}; font: 600 14px Barlow, sans-serif; display: flex; align-items: center; gap: 6px">
+            <sc-if value="{{sp.on}}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if>{{sp.label}}
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{v.where}}" hint-placeholder-val="{{ false }}">
+      <div style="position: relative; height: 56px; border: 1.5px solid {{c.outline}}; border-radius: 14px; box-sizing: border-box; display: flex; align-items: center; padding: 0 16px; flex-shrink: 0">
+        <label for="region" style="position: absolute; left: 12px; top: -9px; padding: 0 4px; background: {{c.bg}}; font-size: 12px; color: {{c.muted}}">Town or region</label>
+        <input id="region" defaultValue="Rouyn-Noranda, QC" style="font-size: 16px">
+      </div>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Where hunters and anglers meet you</span>
+      <div role="img" aria-label="Map with your pin near Rouyn-Noranda" style="position: relative; height: 220px; border-radius: 16px; overflow: hidden; background: {{c.land}}; margin-top: -8px; flex-shrink: 0">
+        <svg width="350" height="220" viewBox="0 0 350 220" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+          <ellipse cx="90" cy="70" rx="60" ry="36" fill="{{c.park}}"/>
+          <ellipse cx="250" cy="150" rx="22" ry="12" fill="{{c.water}}"/>
+          <ellipse cx="120" cy="170" rx="14" ry="8" fill="{{c.water}}"/>
+          <ellipse cx="300" cy="60" rx="10" ry="16" fill="{{c.water}}"/>
+          <path d="M0 190 C80 170 160 140 210 100 C250 70 300 50 350 40" stroke="{{c.road}}" stroke-width="3" fill="none"/>
+          <path d="M140 0 C150 60 170 130 180 220" stroke="{{c.road}}" stroke-width="2.5" fill="none"/>
+          <text x="190" y="92" font-family="Barlow, sans-serif" font-size="12" font-weight="600" fill="{{c.mapLabel}}">Rouyn-Noranda</text>
+        </svg>
+        <svg width="28" height="38" viewBox="0 0 28 38" aria-hidden="true" style="position: absolute; left: 146px; top: 76px"><path d="M14 1.5C7.1 1.5 1.5 7 1.5 13.9 1.5 23 14 36.5 14 36.5S26.5 23 26.5 13.9C26.5 7 20.9 1.5 14 1.5Z" fill="{{c.primary}}" stroke="{{c.pinStroke}}" stroke-width="1.5"/><circle cx="14" cy="14" r="4.5" fill="{{c.pinStroke}}"/></svg>
+      </div>
+      <span style="font-size: 12px; color: {{c.muted}}; margin-top: -8px">Pin placed. Tap elsewhere to move it.</span>
+      <div style="display: flex; gap: 8px; flex-shrink: 0">
+        <button style="flex: 1; min-height: 52px; border-radius: 14px; border: 1.5px solid {{c.outline}}; background: transparent; color: {{c.text}}; font: 600 15px Barlow, sans-serif">Use my location</button>
+        <button style="flex: 1; min-height: 52px; border-radius: 14px; border: 1.5px solid {{c.outline}}; background: transparent; color: {{c.text}}; font: 600 15px Barlow, sans-serif">Type coordinates</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{v.when}}" hint-placeholder-val="{{ false }}">
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}">Trip duration</span>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: -6px">
+        <sc-for list="{{lengths}}" as="ln" hint-placeholder-count="6">
+          <button aria-pressed="{{ln.on}}" style="height: 36px; padding: 0 14px; border-radius: 10px; border: 1px solid {{ln.border}}; background: {{ln.bg}}; color: {{ln.color}}; font: 600 14px Barlow, sans-serif">{{ln.label}}</button>
+        </sc-for>
+      </div>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 4px">Departures</span>
+      <span style="font-size: 12px; line-height: 1.4; color: {{c.muted}}; margin-top: -8px">Optional: without dates, your offer says "Dates on request".</span>
+      <ul style="list-style: none; margin: -4px 0 0; padding: 0; display: flex; flex-direction: column">
+        <sc-for list="{{departures}}" as="d" hint-placeholder-count="4">
+          <li style="height: 44px; display: flex; align-items: center; justify-content: space-between; font-size: 16px">{{d.label}}<button aria-label="Remove {{d.label}}" style="width: 44px; height: 44px; border: 0; background: transparent; color: {{c.text}}; display: flex; align-items: center; justify-content: center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></li>
+        </sc-for>
+      </ul>
+      <div style="display: flex; gap: 8px; flex-shrink: 0">
+        <button style="flex: 1; min-height: 48px; border-radius: 14px; border: 1.5px solid {{c.outline}}; background: transparent; color: {{c.text}}; font: 600 15px Barlow, sans-serif">Add a date</button>
+        <button style="flex: 1; min-height: 48px; border-radius: 14px; border: 1.5px solid {{c.outline}}; background: transparent; color: {{c.text}}; font: 600 15px Barlow, sans-serif">Add weekly dates</button>
+      </div>
+      <span style="font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: {{c.muted}}; margin-top: 4px">Repeat</span>
+      <div role="radiogroup" aria-label="Repeat" style="display: flex; height: 44px; border: 1px solid {{c.outline}}; border-radius: 999px; overflow: hidden; margin-top: -6px; flex-shrink: 0">
+        <button role="radio" aria-checked="false" style="flex: 1; border: 0; background: transparent; color: {{c.text}}; font: 600 15px Barlow, sans-serif">These dates only</button>
+        <button role="radio" aria-checked="true" style="flex: 1; border: 0; border-left: 1px solid {{c.outline}}; background: {{c.greenTint}}; color: {{c.green}}; font: 600 15px Barlow, sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Every year</button>
+      </div>
+      <span style="font-size: 12px; line-height: 1.4; color: {{c.muted}}; margin-top: -6px">The same days come back every year: the offer stays on the map.</span>
+    </sc-if>
+
+    <sc-if value="{{v.review}}" hint-placeholder-val="{{ false }}">
+      <div style="position: relative; height: 56px; border: 1.5px solid {{c.outline}}; border-radius: 14px; box-sizing: border-box; display: flex; align-items: center; padding: 0 16px; gap: 8px; flex-shrink: 0">
+        <label for="price" style="position: absolute; left: 12px; top: -9px; padding: 0 4px; background: {{c.bg}}; font-size: 12px; color: {{c.muted}}">Price per person, from (optional)</label>
+        <input id="price" defaultValue="2400" inputmode="numeric" style="font-size: 16px">
+        <span style="font-size: 16px; color: {{c.muted}}">CAD</span>
+      </div>
+      <sc-for list="{{summary}}" as="sm" hint-placeholder-count="4">
+        <section style="background: {{c.card}}; border-radius: 16px; padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 2px; flex-shrink: 0">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <h2 style="margin: 0; font-size: 16px; font-weight: 600">{{sm.title}}</h2>
+            <a href="{{sm.href}}" style="min-height: 36px; padding: 0 4px; display: flex; align-items: center; color: {{c.primary}}; font-weight: 600; font-size: 15px; text-decoration: none">Change</a>
+          </div>
+          <sc-for list="{{sm.lines}}" as="line" hint-placeholder-count="2">
+            <span style="font-size: 15px; line-height: 1.35">{{line}}</span>
+          </sc-for>
+        </section>
+      </sc-for>
+    </sc-if>
+  </div>
+
+  <footer style="flex-shrink: 0; padding: 12px 20px 24px; display: flex; gap: 8px">
+    <sc-if value="{{s.showBack}}" hint-placeholder-val="{{ true }}">
+      <a href="{{l.back}}" style="flex: 1; min-height: 52px; border-radius: 14px; border: 1.5px solid {{c.outline}}; box-sizing: border-box; color: {{c.text}}; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center">Back</a>
+    </sc-if>
+    <a href="{{l.next}}" style="flex: 1; min-height: 52px; border-radius: 14px; background: {{c.primary}}; color: #1A0E05; font: 600 17px Barlow, sans-serif; text-decoration: none; display: flex; align-items: center; justify-content: center; text-align: center">{{s.nextLabel}}</a>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"step":{"editor":"enum","options":["what","species","where","when","review"],"default":"what"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const theme = this.props.theme ?? 'dark';
+    const step = this.props.step ?? 'what';
+    const light = theme === 'light';
+    const c = light
+      ? {bg:'#F5F2EA', card:'#FFFFFF', text:'#17201A', muted:'#5B6659', green:'#2F6B3E', greenTint:'#E3EFE4', primary:'#E8691E', outline:'#C9C2B2', track:'#E2DCCD', land:'#EDEAE1', water:'#B7D5E3', park:'#D5E6CC', road:'#FFFFFF', mapLabel:'#5F665C', pinStroke:'#FFFFFF'}
+      : {bg:'#0E1611', card:'#17221A', text:'#EEF1EA', muted:'#A9B5AB', green:'#8FD19E', greenTint:'#22382A', primary:'#F27B2B', outline:'#3A4B3F', track:'#24352A', land:'#18231C', water:'#0F2A33', park:'#1C3022', road:'#2B3B31', mapLabel:'#8C998E', pinStroke:'#0E1611'};
+    const sfx = light ? 'Light' : '';
+    const files = {what: 'OfferStep', species: 'OfferSpecies', where: 'OfferWhere', when: 'OfferWhen', review: 'OfferReview'};
+    const steps = ['what', 'species', 'where', 'when', 'review'];
+    const titles = {what: 'The trip', species: 'Species', where: 'Where', when: 'When', review: 'Price and send'};
+    const at = steps.indexOf(step);
+    const file = (s) => files[s] + sfx + '.dc.html';
+    const map = light ? 'MapLight.dc.html' : 'Main.dc.html';
+    const chip = (label, on) => ({label, on, bg: on ? c.greenTint : 'transparent', color: on ? c.green : c.text, border: on ? c.greenTint : c.outline});
+    const hunting = ['Bighorn sheep', 'Black bear', 'Caribou', 'Ducks and geese', 'Elk', 'Grouse and upland birds', 'Moose', 'Mountain goat', 'Mule deer', 'Pheasant', 'Pronghorn', 'Sharp-tailed grouse', 'White-tailed deer', 'Wild turkey', 'Wolf and coyote'];
+    return {
+      c,
+      l: {back: at === 0 ? map : file(steps[at - 1]), next: at === 4 ? 'Sent' + sfx + '.dc.html' : file(steps[at + 1])},
+      s: {title: titles[step], number: at + 1, progress: (at + 1) * 20, showBack: at > 0, nextLabel: at === 4 ? 'Send for review' : 'Next'},
+      v: {what: step === 'what', species: step === 'species', where: step === 'where', when: step === 'when', review: step === 'review'},
+      species: hunting.map(label => chip(label, label === 'Black bear' || label === 'Wild turkey')),
+      lengths: ['Half day', '1 day', '2 days', '3 days', '1 week', 'Other'].map(label => chip(label, label === '1 week')),
+      departures: [{label: 'May 1, 2027'}, {label: 'May 8, 2027'}, {label: 'May 15, 2027'}, {label: 'May 22, 2027'}],
+      summary: [
+        {title: 'The trip', href: file('what'), lines: ['Spring black bear in Abitibi', 'Hunting']},
+        {title: 'Species', href: file('species'), lines: ['Black bear, Wild turkey']},
+        {title: 'Where', href: file('where'), lines: ['Rouyn-Noranda, QC', '48.2400, -79.0200']},
+        {title: 'When', href: file('when'), lines: ['1 week', '4 dates, from May 1, 2027 · Every year']}
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
