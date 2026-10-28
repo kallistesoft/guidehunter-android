@@ -9,13 +9,16 @@ changes. Native Android first; iOS later (see FOLLOW-UP.md).
 
 ## The MVP
 
-- **No accounts.** Nobody signs in.
+- **No accounts for users.** Hunters and anglers never sign in; guides do, with their Google account.
 - **Map of guides** (Google Maps): a pin per guide (orange for hunting, green for fishing, yellow for both), filters
   (hunting, fishing, species), and how far each guide is once the user shares their location.
 - **A guide's offer**: what, where, species, price, description. The guide's **name and contact are hidden until
   the user watches a rewarded ad**. Then they get the phone, email and website, each one tap away.
-- **Become a guide**: a form (name, description, hunting/fishing/both, species, town or region, a pin on the map,
-  price, contact). It is **emailed to us** for review. Approved guides are put on the map from the Firebase console.
+- **Become a guide**: a guide signs in with Google, fills in a **profile** (business name, email, phone, website,
+  shared by all their offers) and adds **offers**, as many as they like (title, description, hunting/fishing/both,
+  species, town or region, a pin on the map, price). Each new offer and each edit is **emailed to us** for review;
+  `scripts/approve-offer.py` puts it on the map. An edit leaves the reviewed version on the map until it's approved.
+  Guides can delete an offer (it leaves the map) or their whole account.
 
 ## Architecture
 
@@ -25,31 +28,34 @@ convention plugins (`build-logic/`) and a version catalog (`gradle/libs.versions
 | Module | What's in it |
 |---|---|
 | `:app` | `MainActivity`, navigation (`GuideHunterApp`, `navigation/NavKeys.kt`), build-type settings (AdMob, Maps key, application email) |
-| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideApplication` (and its validation), `GeoPoint.distanceKm` |
-| `:core:data` | `GuideRepository` and `GuideApplicationRepository` on Cloud Firestore, `LocationRepository` (Play services), sample guides when Firebase isn't set up |
+| `:core:model` | Pure Kotlin, ready for Kotlin Multiplatform: `Guide`, `GuideContact`, `Species`, `GuideActivity`, `GuideFilter`, `GuideProfile` and `OfferDraft` (and their validation), `GuideOffer`, `GeoPoint.distanceKm` |
+| `:core:data` | `GuideRepository` and `GuideAccountRepository` on Cloud Firestore, `AuthRepository` on Firebase Auth, `LocationRepository` (Play services), sample guides when Firebase isn't set up |
 | `:core:ads` | The rewarded ad and the consent form (AdMob, UMP), from BetterHunter |
 | `:core:designsystem` | Theme (BetterHunter's palette and Barlow fonts for now), spacing, sizes, buttons |
 | `:core:ui` | Species and activity labels (EN/FR), links (dialer, mail, website) |
 | `:core:testing` | Fakes and test rules |
 | `:feature:map` | The map, filters, guide cards, the guide's sheet and the unlock |
-| `:feature:becomeguide` | The "Become a guide" form |
+| `:feature:becomeguide` | The guide's space: Google sign-in (Credential Manager), their offers, profile and offer form |
 
 ### Firestore
 
 | Collection | What | Who reads / writes |
 |---|---|---|
-| `guides/{id}` | The public offer: `title`, `description`, `activity` (`HUNT`, `FISH`, `BOTH`), `species` (names from `Species`), `region`, `lat`, `lng`, `priceFrom` (optional), `currency` (optional, `CAD`) | Everyone reads; you write it in the console |
-| `guideContacts/{id}` | Same id: `name`, `phone`, `email`, `website` | Read one at a time after the ad; you write it |
-| `guideApplications/{id}` | The forms as sent | The app only creates them |
-| `mail/{id}` | The email of each form, sent by the Trigger Email extension | The app only creates them, to your address only |
+| `guides/{id}` | The public offer: `title`, `description`, `activity` (`HUNT`, `FISH`, `BOTH`), `species` (names from `Species`), `region`, `lat`, `lng`, `priceFrom` (optional), `currency` (optional, `CAD`), `ownerUid` | Everyone reads; written by approval; its guide can delete it |
+| `guideContacts/{id}` | Same id: `name`, `phone`, `email`, `website`, `ownerUid` | Read one at a time after the ad; written by approval; its guide's profile updates it |
+| `guideProfiles/{uid}` | A guide's `businessName`, `email`, `phone`, `website`, by Firebase user id | Only that guide |
+| `guideOffers/{id}` | A guide's offers as written: the offer's fields, `ownerUid`, `status` (`PENDING`, `PUBLISHED`), `live` (a reviewed version is on the map), `updatedAt` | Only their guide; the app always writes `PENDING` and can't change `live` |
+| `mail/{id}` | The email of each new or edited offer, sent by the Trigger Email extension | Signed-in guides only create them, to your address only |
 
-The rules are in `firestore.rules`. **To publish a guide**: copy the application's fields into a new `guides`
-document and its contact into a `guideContacts` document with the same id. It shows on the map at once.
+The rules are in `firestore.rules`. **To publish an offer** (new or edited), run the command its email gives:
+`scripts/approve-offer.py <project> <offerId>` copies it into `guides` and the guide's profile into `guideContacts`
+(same id), and marks it published; it shows on the map at once. `scripts/approve-offer.py <project> --list` lists the
+offers waiting. To refuse one, reply to its email (it goes to the guide).
 
 ## Setup
 
 None of this is needed to build and run the app: without it, the app shows three sample guides, the maps are grey
-and the form can't be sent. Settings that aren't committed go in `local.properties` (or environment variables in
+and guides can't sign in. Settings that aren't committed go in `local.properties` (or environment variables in
 CI).
 
 ### Signing certificates (SHA-1)
@@ -73,21 +79,24 @@ its config with `firebase apps:sdkconfig ANDROID <app id> --project <project> -o
 (`firebase apps:list --project <project>` gives the app id). The debug app needs each machine's debug SHA-1
 (`firebase apps:android:sha:create <app id> <sha1> --project guidehunter-dev`), the release app the release key's.
 
-1. Each project has a Firestore database in production mode in Montréal (`northamerica-northeast1`). Deploy
+1. Each project has **Authentication** with the **Google** provider on (Authentication → Sign-in method), which
+   created the OAuth web client that `google-services.json` carries (`default_web_client_id`). Sign-in needs the
+   app's SHA-1 in its Firebase app (the release key's for Play, and Play App Signing's key once uploaded).
+2. Each project has a Firestore database in production mode in Montréal (`northamerica-northeast1`). Deploy
    `firestore.rules` to both after a change: `firebase deploy --only firestore:rules` (production, the default in
    `.firebaserc`) and `firebase deploy --only firestore:rules --project guidehunter-dev`.
-2. **Mock guides** for the dev project are in `scripts/dev-guides.json`: `scripts/seed-dev-guides.py` writes them
+3. **Mock guides** for the dev project are in `scripts/dev-guides.json`: `scripts/seed-dev-guides.py` writes them
    (again, after editing the file), `--delete` removes them. The script only ever writes to `guidehunter-dev`.
-3. A guide is a document in `guides` with `title` (string), `activity` (string: `HUNT`, `FISH` or `BOTH`), `species`
+4. A guide is a document in `guides` with `title` (string), `activity` (string: `HUNT`, `FISH` or `BOTH`), `species`
    (array of names from `core/model` `Species`, e.g. `BLACK_BEAR`), `region` (string), `lat` and `lng` (numbers),
    `description` (string) and optionally `priceFrom` (number). Its contact goes in `guideContacts`, in a document with
    **the same id**: `name`, `phone`, `email`, `website` (strings). A guide missing a required field doesn't show
    (`core/data` `FirestoreDocuments.kt`).
-4. Upgrade to the **Blaze** plan (extensions need it; at this volume it costs about nothing), then install the
+5. Upgrade to the **Blaze** plan (extensions need it; at this volume it costs about nothing), then install the
    **Trigger Email from Firestore** extension, in each project: collection `mail`, and the SMTP connection URI of a
-   dedicated mailbox or SendGrid rather than a personal one (anyone can fill it, see FOLLOW-UP.md). For Gmail with an app password:
+   dedicated mailbox or SendGrid rather than a personal one (any signed-in guide can fill it, see FOLLOW-UP.md). For Gmail with an app password:
    `smtps://you%40gmail.com:APP-PASSWORD@smtp.gmail.com:465`.
-5. The emails go to `contact@kallistesoft.ca`. To change it, set `APPLICATIONS_EMAIL` in `local.properties` (CI:
+6. The emails go to `contact@kallistesoft.ca`. To change it, set `APPLICATIONS_EMAIL` in `local.properties` (CI:
    the `APPLICATIONS_EMAIL` variable) **and** change the address in `firestore.rules`.
 
 ### Google Maps

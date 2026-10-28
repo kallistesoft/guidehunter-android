@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -16,20 +17,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -38,50 +37,57 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
-import ca.kallistesoft.guidehunter.core.designsystem.theme.GhTextStyles
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Spacing
-import ca.kallistesoft.guidehunter.core.model.ApplicationField
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
-import ca.kallistesoft.guidehunter.core.model.GuideApplication
+import ca.kallistesoft.guidehunter.core.model.OfferDraft
+import ca.kallistesoft.guidehunter.core.model.OfferField
 import ca.kallistesoft.guidehunter.core.model.Species
 import ca.kallistesoft.guidehunter.core.ui.label
 import ca.kallistesoft.guidehunter.core.ui.R as UiR
 
 /**
- * "Become a guide": the form a guide fills in to be put on the map. [picker] draws the "pick on map" map (Google Maps);
- * tests pass a stand-in, as Google Maps can't draw on the JVM.
+ * A guide's offer, new ([offerId] null) or sent before: the form that puts it on the map once we've reviewed it.
+ * [onDone] once sent or deleted; [onEditProfile] when sending needs the guide's profile first. [picker] draws the
+ * "pick on map" map (Google Maps); tests pass a stand-in, as Google Maps can't draw on the JVM.
  */
 @Composable
-fun BecomeGuideScreen(
+fun OfferEditorScreen(
+    offerId: String?,
     onBack: () -> Unit,
+    onDone: () -> Unit,
+    onEditProfile: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: BecomeGuideViewModel = hiltViewModel(),
+    viewModel: OfferEditorViewModel = hiltViewModel<OfferEditorViewModel, OfferEditorViewModel.Factory>(
+        creationCallback = { it.create(offerId) },
+    ),
     picker: @Composable (GeoPoint?, (GeoPoint) -> Unit, Modifier) -> Unit = { location, onPick, pickerModifier ->
         LocationPicker(location, onPick, pickerModifier)
     },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    // Sent for review, or deleted: back to the guide's offers, where its status shows.
+    val done = state.send == SendState.SENT || state.deleted
+    LaunchedEffect(done) { if (done) onDone() }
     // "Use my location" needs the (approximate) location permission; refused, the pin is placed another way.
     var locationDenied by rememberSaveable { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -90,24 +96,23 @@ fun BecomeGuideScreen(
     // Made once: a new instance per keystroke would stop every field from skipping recomposition.
     val actions = remember(viewModel) {
         FormActions(
-            businessName = viewModel::setBusinessName,
+            title = viewModel::setTitle,
             description = viewModel::setDescription,
             activity = viewModel::setActivity,
             species = viewModel::toggleSpecies,
             region = viewModel::setRegion,
             location = viewModel::setLocation,
             price = viewModel::setPrice,
-            email = viewModel::setEmail,
-            phone = viewModel::setPhone,
-            website = viewModel::setWebsite,
             submit = viewModel::submit,
+            delete = viewModel::delete,
+            editProfile = onEditProfile,
             useMyLocation = {
                 val granted = ContextCompat.checkSelfPermission(context, LOCATION_PERMISSION) == PackageManager.PERMISSION_GRANTED
                 if (granted) viewModel.useMyLocation() else permission.launch(LOCATION_PERMISSION)
             },
         )
     }
-    BecomeGuideContent(
+    OfferEditorContent(
         state = state,
         actions = actions,
         locationDenied = locationDenied,
@@ -117,40 +122,47 @@ fun BecomeGuideScreen(
     )
 }
 
-/** What the form's fields and button do. */
+/** What the form's fields and buttons do. */
 internal class FormActions(
-    val businessName: (String) -> Unit,
+    val title: (String) -> Unit,
     val description: (String) -> Unit,
     val activity: (GuideActivity) -> Unit,
     val species: (Species) -> Unit,
     val region: (String) -> Unit,
     val location: (GeoPoint) -> Unit,
     val price: (String) -> Unit,
-    val email: (String) -> Unit,
-    val phone: (String) -> Unit,
-    val website: (String) -> Unit,
     val submit: () -> Unit,
+    val delete: () -> Unit,
+    val editProfile: () -> Unit,
     val useMyLocation: () -> Unit,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun BecomeGuideContent(
-    state: BecomeGuideUiState,
+internal fun OfferEditorContent(
+    state: OfferEditorUiState,
     actions: FormActions,
     locationDenied: Boolean,
     onBack: () -> Unit,
     picker: @Composable (GeoPoint?, (GeoPoint) -> Unit, Modifier) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.become_guide_title)) },
+                title = { Text(stringResource(if (state.editing) R.string.offer_edit_title else R.string.offer_new_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack, modifier = Modifier.testTag("back")) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(UiR.string.back))
+                    }
+                },
+                actions = {
+                    if (state.editing && !state.loading) {
+                        IconButton(onClick = { confirmDelete = true }, modifier = Modifier.testTag("delete-offer")) {
+                            Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.offer_delete))
+                        }
                     }
                 },
             )
@@ -158,19 +170,36 @@ internal fun BecomeGuideContent(
     ) { padding ->
         // The insets are consumed, so the form's imePadding adds the keyboard's height only, not the bars' again.
         Box(Modifier.padding(padding).consumeWindowInsets(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            if (state.send == SendState.SENT) {
-                Sent(onBack)
-            } else {
-                Form(state, actions, locationDenied, picker)
-            }
+            if (!state.loading) Form(state, actions, locationDenied, picker)
         }
+    }
+    if (confirmDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmDelete = false },
+            title = { Text(stringResource(R.string.offer_delete_title)) },
+            text = { Text(stringResource(if (state.live) R.string.offer_delete_live_body else R.string.offer_delete_body)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        confirmDelete = false
+                        actions.delete()
+                    },
+                    modifier = Modifier.testTag("delete-confirm"),
+                ) { Text(stringResource(R.string.offer_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = false }, modifier = Modifier.testTag("delete-cancel")) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun Form(
-    state: BecomeGuideUiState,
+    state: OfferEditorUiState,
     actions: FormActions,
     locationDenied: Boolean,
     picker: @Composable (GeoPoint?, (GeoPoint) -> Unit, Modifier) -> Unit,
@@ -187,9 +216,20 @@ private fun Form(
             .padding(horizontal = Spacing.screen, vertical = Spacing.l),
         verticalArrangement = Arrangement.spacedBy(Spacing.l),
     ) {
-        Text(stringResource(R.string.become_guide_intro), style = MaterialTheme.typography.bodyLarge)
+        Text(
+            stringResource(if (state.live) R.string.offer_live_intro else R.string.offer_intro),
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.testTag("offer-intro"),
+        )
 
-        Field(form.businessName, actions.businessName, R.string.field_business_name, "field-business-name", errors.message(ApplicationField.BUSINESS_NAME))
+        Field(
+            form.title,
+            actions.title,
+            R.string.field_title,
+            "field-title",
+            errors.message(OfferField.TITLE),
+            help = stringResource(R.string.field_title_help),
+        )
 
         Label(R.string.field_activity)
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -199,10 +239,14 @@ private fun Form(
                     onClick = { actions.activity(activity) },
                     shape = SegmentedButtonDefaults.itemShape(index, GuideActivity.entries.size),
                     modifier = Modifier.testTag("activity-${activity.name}"),
-                ) { Text(stringResource(activity.label)) }
+                ) {
+                    // "Hunting and fishing" doesn't fit a third of a phone's width: the button says "Both".
+                    val label = if (activity == GuideActivity.BOTH) R.string.activity_both_short else activity.label
+                    Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
         }
-        errors.message(ApplicationField.ACTIVITY)?.let { Error(it) }
+        errors.message(OfferField.ACTIVITY)?.let { Error(it) }
 
         Label(R.string.field_species)
         val activity = form.activity
@@ -220,26 +264,22 @@ private fun Form(
                 }
             }
         }
-        errors.message(ApplicationField.SPECIES)?.let { Error(it) }
+        errors.message(OfferField.SPECIES)?.let { Error(it) }
 
         Field(
             form.description,
             actions.description,
             R.string.field_description,
             "field-description",
-            errors.message(ApplicationField.DESCRIPTION),
-            help = stringResource(R.string.field_description_help, GuideApplication.MIN_DESCRIPTION),
+            errors.message(OfferField.DESCRIPTION),
+            help = stringResource(R.string.field_description_help, OfferDraft.MIN_DESCRIPTION),
             singleLine = false,
         )
-        Field(form.region, actions.region, R.string.field_region, "field-region", errors.message(ApplicationField.REGION))
+        Field(form.region, actions.region, R.string.field_region, "field-region", errors.message(OfferField.REGION))
 
         Label(R.string.field_location)
         picker(form.location, actions.location, Modifier.fillMaxWidth().height(Sizes.pickerMapHeight).testTag("location-picker"))
-        Text(
-            stringResource(if (form.location == null) R.string.field_location_help else R.string.field_location_set),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Note(stringResource(if (form.location == null) R.string.field_location_help else R.string.field_location_set))
         // Two ways that need no map (TalkBack, a switch, or just a guide who knows the coordinates).
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
             SecondaryButton(stringResource(R.string.use_my_location), actions.useMyLocation, Modifier.weight(1f).testTag("use-my-location"))
@@ -247,7 +287,7 @@ private fun Form(
         }
         if (state.locationFailed) Error(stringResource(R.string.location_failed))
         if (locationDenied) Error(stringResource(R.string.location_denied))
-        errors.message(ApplicationField.LOCATION)?.let { Error(it) }
+        errors.message(OfferField.LOCATION)?.let { Error(it) }
         if (coordinates) {
             CoordinatesEntry(
                 initial = form.location,
@@ -264,149 +304,41 @@ private fun Form(
             actions.price,
             R.string.field_price,
             "field-price",
-            errors.message(ApplicationField.PRICE),
+            errors.message(OfferField.PRICE),
             keyboard = KeyboardType.Number,
             suffix = stringResource(R.string.field_price_suffix),
+            last = true,
         )
-        Text(stringResource(R.string.contact_private), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Field(form.email, actions.email, R.string.field_email, "field-email", errors.message(ApplicationField.EMAIL), keyboard = KeyboardType.Email)
-        Field(form.phone, actions.phone, R.string.field_phone, "field-phone", errors.message(ApplicationField.PHONE), keyboard = KeyboardType.Phone)
-        Field(form.website, actions.website, R.string.field_website, "field-website", null, keyboard = KeyboardType.Uri, last = true)
 
-        when (state.send) {
-            SendState.FAILED -> Error(stringResource(R.string.send_failed))
-            SendState.NOT_CONFIGURED -> Error(stringResource(R.string.send_not_configured))
-            else -> if (errors.isNotEmpty()) Error(stringResource(R.string.form_has_errors))
+        if (state.needsProfile) {
+            Error(stringResource(R.string.offer_needs_profile))
+            SecondaryButton(stringResource(R.string.profile_fill_in), actions.editProfile, Modifier.fillMaxWidth().testTag("needs-profile"))
         }
+        SendError(state.send, errors.isNotEmpty())
         val sending = state.send == SendState.SENDING
         PrimaryButton(
-            stringResource(if (sending) R.string.sending else R.string.send),
+            stringResource(if (sending) R.string.sending else R.string.send_for_review),
             actions.submit,
             Modifier.fillMaxWidth().testTag("send"),
             enabled = !sending,
         )
-    }
-}
-
-/** Latitude and longitude typed in, for a guide who knows them (or can't use the map): inline, under the map. */
-@Composable
-private fun CoordinatesEntry(initial: GeoPoint?, onPick: (GeoPoint) -> Unit, onCancel: () -> Unit) {
-    var latitude by rememberSaveable { mutableStateOf(initial?.latitude?.toString().orEmpty()) }
-    var longitude by rememberSaveable { mutableStateOf(initial?.longitude?.toString().orEmpty()) }
-    val point = parseCoordinates(latitude, longitude)
-    Column(verticalArrangement = Arrangement.spacedBy(Spacing.m), modifier = Modifier.testTag("coordinates")) {
-        Text(stringResource(R.string.coordinates_help), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            OutlinedTextField(
-                value = latitude,
-                onValueChange = { latitude = it },
-                label = { Text(stringResource(R.string.latitude)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Next),
-                modifier = Modifier.weight(1f).testTag("latitude"),
-            )
-            OutlinedTextField(
-                value = longitude,
-                onValueChange = { longitude = it },
-                label = { Text(stringResource(R.string.longitude)) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal, imeAction = ImeAction.Done),
-                modifier = Modifier.weight(1f).testTag("longitude"),
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
-            TextButton(onClick = onCancel, modifier = Modifier.testTag("coordinates-cancel")) { Text(stringResource(R.string.coordinates_cancel)) }
-            SecondaryButton(
-                stringResource(R.string.coordinates_place),
-                { point?.let(onPick) },
-                Modifier.weight(1f).testTag("coordinates-ok"),
-                enabled = point != null,
-            )
-        }
-    }
-}
-
-/** "48.24" and "-79,02" (a comma as typed in French) within the world, else null. */
-internal fun parseCoordinates(latitude: String, longitude: String): GeoPoint? {
-    val lat = latitude.trim().replace(',', '.').toDoubleOrNull() ?: return null
-    val lng = longitude.trim().replace(',', '.').toDoubleOrNull() ?: return null
-    if (lat !in -90.0..90.0 || lng !in -180.0..180.0) return null
-    return GeoPoint(lat, lng)
-}
-
-@Composable
-private fun Field(
-    value: String,
-    onChange: (String) -> Unit,
-    label: Int,
-    tag: String,
-    error: String?,
-    help: String? = null,
-    singleLine: Boolean = true,
-    keyboard: KeyboardType = KeyboardType.Text,
-    suffix: String? = null,
-    last: Boolean = false,
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onChange,
-        label = { Text(stringResource(label)) },
-        isError = error != null,
-        supportingText = (error ?: help)?.let { { Text(it) } },
-        singleLine = singleLine,
-        minLines = if (singleLine) 1 else DESCRIPTION_LINES,
-        // Next moves the keyboard to the next field; the last field's Done closes it.
-        keyboardOptions = KeyboardOptions(keyboardType = keyboard, imeAction = if (last) ImeAction.Done else ImeAction.Next),
-        suffix = suffix?.let { { Text(it) } },
-        modifier = Modifier.fillMaxWidth().testTag(tag),
-    )
-}
-
-@Composable
-private fun Label(text: Int) {
-    Text(stringResource(text).uppercase(), style = GhTextStyles.overline, color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-@Composable
-private fun Error(text: String) {
-    Text(text, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("error"))
-}
-
-@Composable
-private fun Sent(onBack: () -> Unit) {
-    Column(
-        Modifier
-            .widthIn(max = Sizes.contentMaxWidth)
-            .verticalScroll(rememberScrollState()) // a phone in landscape doesn't fit it all
-            .padding(Spacing.screen)
-            .testTag("sent"),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Spacing.l),
-    ) {
-        Icon(Icons.Default.CheckCircle, contentDescription = null, Modifier.size(Sizes.iconHero), tint = MaterialTheme.colorScheme.secondary)
-        Text(stringResource(R.string.sent_title), style = MaterialTheme.typography.headlineMedium)
-        Text(stringResource(R.string.sent_body), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center)
-        PrimaryButton(stringResource(R.string.back_to_map), onBack, Modifier.fillMaxWidth().testTag("back-to-map"))
+        Note(stringResource(R.string.review_note))
     }
 }
 
 @Composable
-private fun Set<ApplicationField>.message(field: ApplicationField): String? {
+private fun Set<OfferField>.message(field: OfferField): String? {
     if (field !in this) return null
     return when (field) {
-        ApplicationField.BUSINESS_NAME -> stringResource(R.string.error_business_name)
-        ApplicationField.DESCRIPTION -> stringResource(R.string.error_description, GuideApplication.MIN_DESCRIPTION)
-        ApplicationField.ACTIVITY -> stringResource(R.string.error_activity)
-        ApplicationField.SPECIES -> stringResource(R.string.error_species)
-        ApplicationField.REGION -> stringResource(R.string.error_region)
-        ApplicationField.LOCATION -> stringResource(R.string.error_location)
-        ApplicationField.PRICE -> stringResource(R.string.error_price)
-        ApplicationField.EMAIL -> stringResource(R.string.error_email)
-        ApplicationField.PHONE -> stringResource(R.string.error_phone)
+        OfferField.TITLE -> stringResource(R.string.error_title)
+        OfferField.DESCRIPTION -> stringResource(R.string.error_description, OfferDraft.MIN_DESCRIPTION)
+        OfferField.ACTIVITY -> stringResource(R.string.error_activity)
+        OfferField.SPECIES -> stringResource(R.string.error_species)
+        OfferField.REGION -> stringResource(R.string.error_region)
+        OfferField.LOCATION -> stringResource(R.string.error_location)
+        OfferField.PRICE -> stringResource(R.string.error_price)
     }
 }
-
-private const val DESCRIPTION_LINES = 4
 
 /** Approximate is enough to place the pin near the lodge. */
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_COARSE_LOCATION

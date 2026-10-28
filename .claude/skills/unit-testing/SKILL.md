@@ -57,7 +57,7 @@ Open the HTML report on that class to see the exact lines.
 | AdMob / UMP | through the class's seam | fake `AdsSdk` and `ConsentGateway` (`AdsManagerTest`), MockK for the SDKs (`GoogleAdsTest`) |
 | App navigation, Activity | Robolectric in `app/src/test` | `createAndroidComposeRule<MainActivity>()`: the real Hilt graph with the sample guides |
 
-Shared doubles live in `:core:testing`: `FakeGuideRepository`, `FakeGuideApplicationRepository`,
+Shared doubles live in `:core:testing`: `FakeGuideRepository`, `FakeAuthRepository`, `FakeGuideAccountRepository`,
 `FakeLocationRepository`, `FakeRewardedAds`, `FakeAdConsent`, `TestGuides`, `MainDispatcherRule`, `collecting()`.
 Add to them rather than writing a second fake in a module.
 

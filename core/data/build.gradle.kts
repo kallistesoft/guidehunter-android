@@ -7,10 +7,11 @@ android {
     namespace = "ca.kallistesoft.guidehunter.core.data"
 }
 
-// Guides and guide applications in Cloud Firestore; the user's location from Google Play services.
+// Guides, and guides' profiles and offers, in Cloud Firestore; guides sign in with Firebase Auth; the user's location from Google Play services.
 dependencies {
     api(project(":core:model"))
     implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)

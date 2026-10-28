@@ -5,35 +5,64 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Published offers: anyone reads them, only the Firebase console (you) writes them.
+    // Published offers: anyone reads them. Written by approval (scripts/approve-offer.py); the guide who owns one
+    // can only take it off the map.
     match /guides/{guideId} {
       allow read: if true;
-      allow write: if false;
+      allow delete: if owns(resource.data);
+      allow create, update: if false;
     }
 
     // A guide's name and contact, read one at a time after a rewarded ad. No listing, so the whole collection can't
-    // be downloaded in one query. The ad itself is only checked in the app for now (FOLLOW-UP.md).
+    // be downloaded in one query. The ad itself is only checked in the app for now (FOLLOW-UP.md). The owner's
+    // profile changes reach it (contact fields only), and the owner can delete it with the offer.
     match /guideContacts/{guideId} {
       allow get: if true;
-      allow list, write: if false;
+      allow list, create: if false;
+      allow update: if owns(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'email', 'phone', 'website'])
+        && validContact(request.resource.data);
+      allow delete: if owns(resource.data);
     }
 
-    // "Become a guide" forms: the app can only add a well-formed one, never read or change any.
-    match /guideApplications/{applicationId} {
-      allow create: if validApplication(request.resource.data);
-      allow read, update, delete: if false;
+    // A guide's profile, by Firebase user id: only they read and write it.
+    match /guideProfiles/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid && validProfile(request.resource.data);
     }
 
-    // Emails sent by the "Trigger Email from Firestore" extension. The app can only send the application email,
+    // A guide's offers as they wrote them. Only they read and change them; every write goes back to waiting for
+    // review, and only approval (scripts/approve-offer.py) publishes one or marks it live.
+    match /guideOffers/{offerId} {
+      // Reading one that doesn't exist (deleted on another phone) is allowed: the app sees it's gone.
+      allow get: if resource == null || owns(resource.data);
+      allow list, delete: if owns(resource.data);
+      allow create: if owns(request.resource.data) && validOffer(request.resource.data)
+        && request.resource.data.live == false;
+      allow update: if owns(resource.data) && owns(request.resource.data) && validOffer(request.resource.data)
+        && request.resource.data.live == resource.data.live;
+    }
+
+    // Emails sent by the "Trigger Email from Firestore" extension. Signed-in guides can only send the offer email,
     // and only to you: anything else would let anyone use your mail account to send spam.
     match /mail/{mailId} {
-      allow create: if request.resource.data.keys().hasOnly(['to', 'replyTo', 'message'])
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['to', 'replyTo', 'message'])
         && request.resource.data.to == 'contact@kallistesoft.ca' // keep in sync with APPLICATIONS_EMAIL
         && email(request.resource.data.replyTo)
         && request.resource.data.message.keys().hasOnly(['subject', 'text'])
         && request.resource.data.message.subject is string && request.resource.data.message.subject.size() <= 300
         && request.resource.data.message.text is string && request.resource.data.message.text.size() <= 5000;
       allow read, update, delete: if false;
+    }
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // A document of the signed-in guide's.
+    function owns(data) {
+      return signedIn() && data.ownerUid == request.auth.uid;
     }
 
     function shortText(value, min, max) {
@@ -44,11 +73,31 @@ service cloud.firestore {
       return shortText(value, 3, 200) && value.matches('[^@\\s]+@[^@\\s]+\\.[^@\\s]+');
     }
 
-    function validApplication(data) {
-      return data.keys().hasOnly([
-          'businessName', 'description', 'activity', 'species', 'region', 'lat', 'lng', 'priceFrom', 'email',
-          'phone', 'website'])
+    function phone(value) {
+      return shortText(value, 0, 50) && value.matches('[0-9 +()\\-.]*');
+    }
+
+    function website(value) {
+      return shortText(value, 0, 300) && value.matches('[^\\s]*');
+    }
+
+    function validProfile(data) {
+      return data.keys().hasOnly(['businessName', 'email', 'phone', 'website'])
         && shortText(data.businessName, 1, 200)
+        && email(data.email)
+        && phone(data.phone)
+        && website(data.website);
+    }
+
+    function validContact(data) {
+      return shortText(data.name, 1, 200) && email(data.email) && phone(data.phone) && website(data.website);
+    }
+
+    function validOffer(data) {
+      return data.keys().hasOnly([
+          'ownerUid', 'title', 'description', 'activity', 'species', 'region', 'lat', 'lng', 'priceFrom', 'status',
+          'live', 'updatedAt'])
+        && shortText(data.title, 1, 100)
         && shortText(data.description, 30, 2000)
         && data.activity in ['HUNT', 'FISH', 'BOTH']
         && data.species is list && data.species.size() >= 1 && data.species.size() <= 29
@@ -62,9 +111,9 @@ service cloud.firestore {
         && data.lat is number && data.lat >= -90 && data.lat <= 90
         && data.lng is number && data.lng >= -180 && data.lng <= 180
         && (data.priceFrom == null || (data.priceFrom is int && data.priceFrom > 0 && data.priceFrom <= 999999))
-        && email(data.email)
-        && shortText(data.phone, 0, 50) && data.phone.matches('[0-9 +()\\-.]*')
-        && shortText(data.website, 0, 300) && data.website.matches('[^\\s]*');
+        && data.status == 'PENDING'
+        && data.live is bool
+        && data.updatedAt == request.time;
     }
   }
 }

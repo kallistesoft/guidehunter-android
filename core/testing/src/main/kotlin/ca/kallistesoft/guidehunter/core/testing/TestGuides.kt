@@ -3,7 +3,9 @@ package ca.kallistesoft.guidehunter.core.testing
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
 import ca.kallistesoft.guidehunter.core.model.Guide
 import ca.kallistesoft.guidehunter.core.model.GuideActivity
-import ca.kallistesoft.guidehunter.core.model.GuideApplication
+import ca.kallistesoft.guidehunter.core.model.GuideProfile
+import ca.kallistesoft.guidehunter.core.model.GuideUser
+import ca.kallistesoft.guidehunter.core.model.OfferDraft
 import ca.kallistesoft.guidehunter.core.model.GuideContact
 import ca.kallistesoft.guidehunter.core.model.Species
 
@@ -47,15 +49,20 @@ object TestGuides {
     val quebecCity = GeoPoint(46.81, -71.21)
 
     /** A form that can be sent. */
-    val application = GuideApplication(
-        businessName = "Pourvoirie Test",
+    /** A guide signed in with Google. */
+    val user = GuideUser(uid = "guide-1", email = "guide@example.com", name = "Jo Guide")
+
+    /** A complete profile. */
+    val profile = GuideProfile(businessName = "Pourvoirie Test", email = "guide@example.com", phone = "819 555 0100")
+
+    /** A complete offer. */
+    val offer = OfferDraft(
+        title = "Black bear hunt in Abitibi",
         description = "Guided bear hunts in the boreal forest, lodging included.",
         activity = GuideActivity.HUNT,
         species = setOf(Species.BLACK_BEAR),
         region = "Abitibi",
         location = GeoPoint(48.0, -79.0),
         priceFrom = "2400",
-        email = "guide@example.com",
-        phone = "819 555 0100",
     )
 }

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="become_guide_title">Become a guide</string>
-    <string name="become_guide_intro">Tell us about your hunting or fishing trips. We review every guide before their offer goes on the map, and we\'ll reply by email.</string>
+    <string name="become_guide_intro">Put your hunting or fishing trips on the map. We review every offer first, and reply by email.</string>
     <string name="field_business_name">Your name or business name</string>
     <string name="field_activity">You offer</string>
+    <string name="activity_both_short">Both</string>
     <string name="field_species">Species</string>
     <string name="field_species_help">Pick what you offer first.</string>
-    <string name="field_description">Describe your trips</string>
+    <string name="field_description">Describe the trip</string>
     <string name="field_description_help">At least %1$d characters: what\'s included, seasons, lodging, languages.</string>
     <string name="field_region">Town or region</string>
     <string name="field_location">Where hunters and anglers meet you</string>
@@ -39,11 +40,53 @@
     <string name="error_phone">Enter a valid phone number, or leave it empty.</string>
     <string name="form_has_errors">Some fields need your attention.</string>
 
-    <string name="send">Send my application</string>
+    <string name="send_for_review">Send for review</string>
     <string name="sending">Sending…</string>
-    <string name="send_failed">Your application couldn\'t be sent. Check your connection and try again.</string>
-    <string name="send_not_configured">Applications can\'t be sent from this version of the app yet.</string>
-    <string name="sent_title">Application sent</string>
-    <string name="sent_body">Thank you! We\'ll review your offer and reply by email before it goes on the map.</string>
-    <string name="back_to_map">Back to the map</string>
+    <string name="send_failed">It couldn\'t be sent. Check your connection and try again.</string>
+    <string name="send_not_configured">This version of the app can\'t send it yet.</string>
+
+    <string name="sign_in_why">Sign in with your Google account to send offers and edit them later. We use it only to know which offers are yours.</string>
+    <string name="sign_in_google">Continue with Google</string>
+    <string name="signing_in">Signing in…</string>
+    <string name="sign_in_failed">Sign-in failed. Check your connection and try again.</string>
+    <string name="sign_in_not_configured">Guides can\'t sign in from this version of the app yet.</string>
+    <string name="signed_in_as">Signed in as %1$s</string>
+    <string name="dismiss">OK</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="my_offers_title">My offers</string>
+    <string name="my_offers_heading">Your offers</string>
+    <string name="no_offers">No offer yet. Add your first one: a hunt, a fishing trip, a package.</string>
+    <string name="add_offer">Add an offer</string>
+    <string name="review_note">We review every new offer and every change before it goes on the map, and reply by email.</string>
+    <string name="status_pending">Waiting for review</string>
+    <string name="status_published">On the map</string>
+    <string name="status_changes_pending">On the map · changes waiting for review</string>
+    <string name="account_menu">Account</string>
+    <string name="sign_out">Sign out</string>
+    <string name="delete_account">Delete my account</string>
+    <string name="delete_account_title">Delete your account?</string>
+    <string name="delete_account_body">Your offers come off the map, and your offers, profile and account are deleted. Google asks you to confirm your account first. This can\'t be undone.</string>
+    <string name="delete_account_failed">Your account couldn\'t be deleted. Check your connection and try again.</string>
+
+    <string name="profile_title">My profile</string>
+    <string name="profile_intro">Your business and how hunters and anglers reach you. They go with every one of your offers.</string>
+    <string name="profile_missing">Fill in your profile first: your business name and how hunters and anglers reach you.</string>
+    <string name="profile_fill_in">Fill in my profile</string>
+    <string name="profile_edit">Edit my profile</string>
+    <string name="save">Save</string>
+    <string name="saving">Saving…</string>
+
+    <string name="offer_new_title">New offer</string>
+    <string name="offer_edit_title">Edit offer</string>
+    <string name="offer_intro">Describe one trip or package. We review it before it goes on the map.</string>
+    <string name="offer_live_intro">This offer is on the map. We review your changes first: until then, the map shows it as it was.</string>
+    <string name="field_title">Offer title</string>
+    <string name="field_title_help">What it is, for example \"Black bear hunt in Abitibi\".</string>
+    <string name="error_title">Give your offer a title.</string>
+    <string name="offer_needs_profile">Fill in your profile before sending: hunters and anglers need a way to reach you.</string>
+    <string name="offer_delete">Delete offer</string>
+    <string name="offer_delete_title">Delete this offer?</string>
+    <string name="offer_delete_body">It will be deleted. This can\'t be undone.</string>
+    <string name="offer_delete_live_body">It comes off the map and is deleted. This can\'t be undone.</string>
 </resources>

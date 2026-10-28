@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.createComposeRule
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
+import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -18,6 +19,7 @@ import io.mockk.mockk
 import io.mockk.mockkStatic
 import io.mockk.slot
 import io.mockk.unmockkAll
+import io.mockk.verify
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -74,5 +76,28 @@ class LocationPickerTest {
         compose.waitForIdle()
         assertEquals(GeoPoint(48.0, -79.0), location)
         assertEquals(listOf(LatLng(48.0, -79.0)), added)
+        verify(exactly = 0) { map.animateCamera(any(), any<GoogleMap.CancelableCallback>()) }
+    }
+
+    @Test
+    fun `a pin placed another way brings the map to it`() {
+        ShadowMapView.ready = map
+        mockkStatic(CameraUpdateFactory::class)
+        every { CameraUpdateFactory.newCameraPosition(any()) } returns mockk()
+        val toPin = mockk<CameraUpdate>()
+        every { CameraUpdateFactory.newLatLngZoom(LatLng(46.8, -71.2), 11f) } returns toPin
+        every { map.animateCamera(any(), any<GoogleMap.CancelableCallback>()) } answers { secondArg<GoogleMap.CancelableCallback?>()?.onFinish() }
+        val loaded = slot<GoogleMap.OnMapLoadedCallback>()
+        every { map.setOnMapLoadedCallback(capture(loaded)) } returns Unit
+        var location by mutableStateOf<GeoPoint?>(null)
+
+        compose.setContent { GuideHunterTheme { LocationPicker(location, { location = it }) } }
+        compose.waitForIdle()
+        location = GeoPoint(46.8, -71.2) // "Use my location", before the map is up: it waits
+        compose.waitForIdle()
+        verify(exactly = 0) { map.animateCamera(any(), any<GoogleMap.CancelableCallback>()) }
+        loaded.captured.onMapLoaded()
+        compose.waitForIdle()
+        verify { map.animateCamera(toPin, any<GoogleMap.CancelableCallback>()) }
     }
 }

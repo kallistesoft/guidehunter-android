@@ -8,6 +8,7 @@ import androidx.activity.result.ActivityResultRegistryOwner
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.performTextClearance
 import org.robolectric.Shadows.shadowOf
 import androidx.compose.foundation.clickable
@@ -22,10 +23,11 @@ import androidx.lifecycle.SavedStateHandle
 import ca.kallistesoft.guidehunter.core.data.BackendNotConfiguredException
 import ca.kallistesoft.guidehunter.core.designsystem.theme.GuideHunterTheme
 import ca.kallistesoft.guidehunter.core.model.GeoPoint
-import ca.kallistesoft.guidehunter.core.model.GuideActivity
-import ca.kallistesoft.guidehunter.core.model.GuideApplication
-import ca.kallistesoft.guidehunter.core.model.Species
-import ca.kallistesoft.guidehunter.core.testing.FakeGuideApplicationRepository
+import ca.kallistesoft.guidehunter.core.model.GuideOffer
+import ca.kallistesoft.guidehunter.core.model.OfferDraft
+import ca.kallistesoft.guidehunter.core.model.OfferStatus
+import ca.kallistesoft.guidehunter.core.testing.FakeAuthRepository
+import ca.kallistesoft.guidehunter.core.testing.FakeGuideAccountRepository
 import ca.kallistesoft.guidehunter.core.testing.FakeLocationRepository
 import ca.kallistesoft.guidehunter.core.testing.TestGuides
 import kotlinx.coroutines.CompletableDeferred
@@ -37,17 +39,21 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
-/** The form with a stand-in map picker (a tap places the pin at [PICKED]); Google Maps can't draw on the JVM. */
+/** The offer form with a stand-in map picker (a tap places the pin at [PICKED]); Google Maps can't draw on the JVM. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35], qualifiers = "en-w411dp-h891dp")
-class BecomeGuideScreenTest {
+class OfferEditorScreenTest {
     @get:Rule
     val compose = createComposeRule()
 
     private val app: Application = RuntimeEnvironment.getApplication()
-    private val repository = FakeGuideApplicationRepository()
+    private val uid = TestGuides.user.uid
+    private val auth = FakeAuthRepository(TestGuides.user)
+    private val account = FakeGuideAccountRepository().apply { profiles.value = mapOf(uid to TestGuides.profile) }
     private val location = FakeLocationRepository()
     private var backs = 0
+    private var dones = 0
+    private var profileOpened = 0
 
     /** What the system answers to the location permission request. */
     private var permissionAnswer = false
@@ -61,17 +67,22 @@ class BecomeGuideScreenTest {
         }
     }
 
-    private fun launch() {
-        val viewModel = BecomeGuideViewModel(repository, location, SavedStateHandle())
+    private fun launch(offerId: String? = null) {
+        val viewModel = OfferEditorViewModel(offerId, auth, account, location, SavedStateHandle())
         compose.setContent {
             val owner = object : ActivityResultRegistryOwner {
                 override val activityResultRegistry = registry
             }
             CompositionLocalProvider(LocalActivityResultRegistryOwner provides owner) {
                 GuideHunterTheme {
-                    BecomeGuideScreen(onBack = { backs++ }, viewModel = viewModel, picker = { _, onPick, modifier ->
-                        Box(modifier.clickable { onPick(PICKED) })
-                    })
+                    OfferEditorScreen(
+                        offerId = offerId,
+                        onBack = { backs++ },
+                        onDone = { dones++ },
+                        onEditProfile = { profileOpened++ },
+                        viewModel = viewModel,
+                        picker = { _, onPick, modifier -> Box(modifier.clickable { onPick(PICKED) }) },
+                    )
                 }
             }
         }
@@ -80,32 +91,71 @@ class BecomeGuideScreenTest {
     private fun type(tag: String, text: String) = compose.onNodeWithTag(tag).performScrollTo().performTextInput(text)
 
     private fun fillIn() {
-        type("field-business-name", "Pourvoirie Test")
+        type("field-title", TestGuides.offer.title)
         compose.onNodeWithTag("activity-HUNT").performScrollTo().performClick()
         compose.onNodeWithTag("species-BLACK_BEAR").performScrollTo().performClick()
-        type("field-description", TestGuides.application.description)
+        type("field-description", TestGuides.offer.description)
         type("field-region", "Abitibi")
         compose.onNodeWithTag("location-picker").performScrollTo().performClick()
         type("field-price", "2400")
-        type("field-email", "guide@example.com")
-        type("field-phone", "819 555 0100")
-        type("field-website", "example.com")
     }
 
+    private fun sent(): OfferDraft = account.offersByUser.value.getValue(uid).single().draft
+
     @Test
-    fun `a filled-in form is sent, then thanks the guide`() {
+    fun `a filled-in offer is sent for review, then the screen closes`() {
         launch()
+        compose.onNodeWithText(str(R.string.offer_new_title)).assertExists()
+        compose.onNodeWithText(str(R.string.offer_intro)).assertExists()
+        compose.onNodeWithTag("delete-offer").assertDoesNotExist()
         compose.onNodeWithText(str(R.string.field_species_help)).performScrollTo()
         fillIn()
         compose.onNodeWithText(str(R.string.field_location_set)).performScrollTo()
         compose.onNodeWithTag("send").performScrollTo().performClick()
-        compose.onNodeWithTag("sent").assertExists()
-        assertEquals(
-            TestGuides.application.copy(location = PICKED, website = "example.com", species = setOf(Species.BLACK_BEAR), activity = GuideActivity.HUNT),
-            repository.submitted.single(),
-        )
-        compose.onNodeWithTag("back-to-map").performClick()
-        assertEquals(1, backs)
+        compose.waitForIdle()
+        assertEquals(TestGuides.offer.copy(location = PICKED), sent())
+        assertEquals(1, dones)
+    }
+
+    @Test
+    fun `an offer on the map opens with its text, says it stays there, and can be deleted`() {
+        account.give(uid, GuideOffer("live", TestGuides.offer, OfferStatus.PUBLISHED, live = true))
+        launch("live")
+        compose.onNodeWithText(str(R.string.offer_edit_title)).assertExists()
+        compose.onNodeWithText(str(R.string.offer_live_intro)).assertExists()
+        compose.onNodeWithText(TestGuides.offer.title).assertExists()
+
+        compose.onNodeWithTag("delete-offer").performClick()
+        compose.onNodeWithText(str(R.string.offer_delete_live_body)).assertExists()
+        compose.onNodeWithTag("delete-cancel").performClick()
+        compose.onNodeWithTag("delete-confirm").assertDoesNotExist()
+        assertEquals(0, dones)
+
+        compose.onNodeWithContentDescription(str(R.string.offer_delete)).performClick()
+        compose.onNodeWithTag("delete-confirm").performClick()
+        compose.waitForIdle()
+        assertEquals(emptyList<GuideOffer>(), account.offersByUser.value[uid])
+        assertEquals(1, dones)
+    }
+
+    @Test
+    fun `an offer waiting for review says deleting it is final`() {
+        account.give(uid, GuideOffer("pending", TestGuides.offer))
+        launch("pending")
+        compose.onNodeWithText(str(R.string.offer_intro)).assertExists()
+        compose.onNodeWithTag("delete-offer").performClick()
+        compose.onNodeWithText(str(R.string.offer_delete_body)).assertExists()
+    }
+
+    @Test
+    fun `without a profile, sending leads to it`() {
+        account.profiles.value = emptyMap()
+        launch()
+        fillIn()
+        compose.onNodeWithTag("send").performScrollTo().performClick()
+        compose.onNodeWithText(str(R.string.offer_needs_profile)).performScrollTo()
+        compose.onNodeWithTag("needs-profile").performScrollTo().performClick()
+        assertEquals(1, profileOpened)
     }
 
     @Test
@@ -113,30 +163,27 @@ class BecomeGuideScreenTest {
         launch()
         compose.onNodeWithTag("send").performScrollTo().performClick()
         listOf(
-            str(R.string.error_business_name),
+            str(R.string.error_title),
             str(R.string.error_activity),
             str(R.string.error_species),
-            str(R.string.error_description, GuideApplication.MIN_DESCRIPTION),
+            str(R.string.error_description, OfferDraft.MIN_DESCRIPTION),
             str(R.string.error_region),
             str(R.string.error_location),
-            str(R.string.error_email),
             str(R.string.form_has_errors),
         ).forEach { compose.onNodeWithText(it).performScrollTo() }
     }
 
     @Test
-    fun `a wrong price and phone are flagged`() {
+    fun `a wrong price is flagged`() {
         launch()
         type("field-price", "0")
-        type("field-phone", "555")
         compose.onNodeWithTag("send").performScrollTo().performClick()
         compose.onNodeWithText(str(R.string.error_price)).performScrollTo()
-        compose.onNodeWithText(str(R.string.error_phone)).performScrollTo()
     }
 
     @Test
     fun `a failed send says so`() {
-        repository.failure = IllegalStateException()
+        account.failure = IllegalStateException()
         launch()
         fillIn()
         compose.onNodeWithTag("send").performScrollTo().performClick()
@@ -145,7 +192,7 @@ class BecomeGuideScreenTest {
 
     @Test
     fun `a build without a backend says so`() {
-        repository.failure = BackendNotConfiguredException()
+        account.failure = BackendNotConfiguredException()
         launch()
         fillIn()
         compose.onNodeWithTag("send").performScrollTo().performClick()
@@ -154,7 +201,7 @@ class BecomeGuideScreenTest {
 
     @Test
     fun `the button says it's sending`() {
-        repository.onSubmit = CompletableDeferred()
+        account.onWrite = CompletableDeferred()
         launch()
         fillIn()
         compose.onNodeWithTag("send").performScrollTo().performClick()
@@ -201,7 +248,8 @@ class BecomeGuideScreenTest {
         compose.onNodeWithTag("coordinates-cancel").performScrollTo().performClick()
         compose.onNodeWithTag("latitude").assertDoesNotExist()
         compose.onNodeWithTag("send").performScrollTo().performClick()
-        assertEquals(GeoPoint(48.24, -79.02), repository.submitted.single().location)
+        compose.waitForIdle()
+        assertEquals(GeoPoint(48.24, -79.02), sent().location)
     }
 
     @Test

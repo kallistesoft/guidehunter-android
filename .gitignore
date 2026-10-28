@@ -21,3 +21,6 @@ keystore.properties
 # Firebase config: kept out of this public repo, CI writes it from the GOOGLE_SERVICES_JSON secret
 app/google-services.json
 app/src/*/google-services.json
+
+# Firebase CLI logs
+*-debug.log

@@ -18,9 +18,9 @@ it, like the screen does.
 
 ```
 Is the state a function of repository flows (guides) + the user's in-screen choices (filters, a form)?
-├─ yes → Pattern A: combine (or map) + stateIn                    MapViewModel, BecomeGuideViewModel
+├─ yes → Pattern A: combine (or map) + stateIn                    MapViewModel, MyOffersViewModel
 └─ no, a one-time setup has to happen (draw something random, restore a run) and actions change the state
-   imperatively afterwards → Pattern B: _uiState.asStateFlow().onStart { } + stateIn       (none yet)
+   imperatively afterwards → Pattern B: _uiState.asStateFlow().onStart { } + stateIn       OfferEditorViewModel, GuideProfileViewModel
 ```
 
 Prefer A. Use B only for state that isn't a pure function of other flows.
