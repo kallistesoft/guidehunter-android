@@ -31,23 +31,27 @@ fun signingValue(key: String, env: String): String? =
     (keystoreProperties.getProperty(key) ?: System.getenv(env))?.takeIf { it.isNotBlank() }
 
 // AdMob IDs. Public identifiers, not secrets. Debug always uses Google's sample IDs (test ads only); release uses
-// ADMOB_APP_ID and ADMOB_REWARDED_ID once the AdMob app exists (FOLLOW-UP.md), Google's sample IDs until then.
+// ADMOB_APP_ID, ADMOB_REWARDED_ID and ADMOB_NATIVE_ID once the AdMob app and units exist (FOLLOW-UP.md), each one
+// falling back to Google's sample ID until then.
 val admobTest = mapOf(
     "appId" to "ca-app-pub-3940256099942544~3347511713",
     "rewarded" to "ca-app-pub-3940256099942544/5224354917",
+    "native" to "ca-app-pub-3940256099942544/2247696110",
 )
 val admobRelease = mapOf(
     "appId" to (setting("ADMOB_APP_ID") ?: admobTest.getValue("appId")),
     "rewarded" to (setting("ADMOB_REWARDED_ID") ?: admobTest.getValue("rewarded")),
+    "native" to (setting("ADMOB_NATIVE_ID") ?: admobTest.getValue("native")),
 )
-if (admobRelease == admobTest && gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
-    logger.warn("WARNING: ADMOB_APP_ID / ADMOB_REWARDED_ID not set: this release build serves Google's test ads only.")
+if (admobRelease.any { (key, id) -> id == admobTest.getValue(key) } && gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+    logger.warn("WARNING: ADMOB_APP_ID / ADMOB_REWARDED_ID / ADMOB_NATIVE_ID not all set: this release build serves Google's test ads.")
 }
 
-/** The AdMob App ID goes in the manifest (`${admobAppId}`), the ad unit in BuildConfig. */
+/** The AdMob App ID goes in the manifest (`${admobAppId}`), the ad units in BuildConfig. */
 fun com.android.build.api.dsl.ApplicationBuildType.admob(ids: Map<String, String>) {
     manifestPlaceholders["admobAppId"] = ids.getValue("appId")
     buildConfigField("String", "ADMOB_REWARDED_ID", "\"${ids.getValue("rewarded")}\"")
+    buildConfigField("String", "ADMOB_NATIVE_ID", "\"${ids.getValue("native")}\"")
 }
 
 android {

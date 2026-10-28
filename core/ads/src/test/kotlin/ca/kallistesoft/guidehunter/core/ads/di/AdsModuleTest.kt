@@ -8,6 +8,7 @@ import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,9 +26,11 @@ class AdsModuleTest {
     private val context: Context = RuntimeEnvironment.getApplication()
 
     @Test
-    fun `one manager serves the rewarded ads and the consent`() = runTest {
-        val manager = AdsModule.adsManager(context, AdsConfig("rewarded-1", enabled = false))
+    fun `one manager serves the rewarded ads, the native ads and the consent`() = runTest {
+        val manager = AdsModule.adsManager(context, AdsConfig("rewarded-1", "native-1", enabled = false))
         assertSame(manager, AdsModule.rewardedAds(manager))
+        assertSame(manager, AdsModule.nativeAds(manager))
+        assertNull("ads off: no native ad", manager.load())
         assertSame(manager, AdsModule.adConsent(manager))
         assertEquals("ads off: given at once", RewardOutcome.NO_ADS, manager.showForReward())
     }

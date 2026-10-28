@@ -30,6 +30,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import ca.kallistesoft.guidehunter.core.ads.NativeAdCard
+import ca.kallistesoft.guidehunter.core.ads.NativeAds
 import ca.kallistesoft.guidehunter.core.designsystem.component.PrimaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.component.SecondaryButton
 import ca.kallistesoft.guidehunter.core.designsystem.theme.Sizes
@@ -53,6 +55,7 @@ fun MyOffersScreen(
     MyOffersContent(
         state = state,
         actions = MyOffersActions(settings = onSettings, editProfile = onEditProfile, addOffer = onAddOffer, editOffer = onEditOffer),
+        nativeAds = viewModel.nativeAds,
         modifier = modifier,
     )
 }
@@ -66,7 +69,12 @@ internal class MyOffersActions(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun MyOffersContent(state: MyOffersUiState, actions: MyOffersActions, modifier: Modifier = Modifier) {
+internal fun MyOffersContent(
+    state: MyOffersUiState,
+    actions: MyOffersActions,
+    nativeAds: NativeAds,
+    modifier: Modifier = Modifier,
+) {
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -81,7 +89,7 @@ internal fun MyOffersContent(state: MyOffersUiState, actions: MyOffersActions, m
         },
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-            if (state.loading) CircularProgressIndicator(Modifier.padding(Spacing.xxxl)) else Account(state, actions)
+            if (state.loading) CircularProgressIndicator(Modifier.padding(Spacing.xxxl)) else Account(state, actions, nativeAds)
         }
     }
 }
@@ -99,7 +107,7 @@ private fun Page(content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun Account(state: MyOffersUiState, actions: MyOffersActions) = Page {
+private fun Account(state: MyOffersUiState, actions: MyOffersActions, nativeAds: NativeAds) = Page {
     ProfileCard(state.profile, actions.editProfile)
 
     Label(R.string.my_offers_heading)
@@ -113,6 +121,8 @@ private fun Account(state: MyOffersUiState, actions: MyOffersActions) = Page {
         Modifier.fillMaxWidth().testTag("add-offer"),
         icon = Icons.Default.Add,
     )
+    // One ad below the offers, none while there are none; it takes no room until one loads.
+    if (state.offers.isNotEmpty()) NativeAdCard(nativeAds)
     Note(stringResource(R.string.review_note))
 }
 

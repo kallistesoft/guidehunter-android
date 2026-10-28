@@ -21,6 +21,10 @@ data class PinColors(val hunt: Color, val fish: Color, val both: Color, val outl
 val LightPinColors = PinColors(hunt = Color(0xFFE8691E), fish = Color(0xFF1F7A6A), both = Color(0xFFC99A12), outline = Color(0xFFFFFFFF))
 val DarkPinColors = PinColors(hunt = Color(0xFFF27B2B), fish = Color(0xFF4FB3A0), both = Color(0xFFE9C25A), outline = Color(0xFF0E1611))
 
+/** The "Ad" label on a native ad card (design/mockup): gold with dark text, in both themes. */
+val AdLabelColor = Color(0xFFE9C25A)
+val OnAdLabelColor = Color(0xFF1A0E05)
+
 internal val LightColors = lightColorScheme(
     primary = Color(0xFFE8691E),
     onPrimary = Color(0xFF1A0E05),

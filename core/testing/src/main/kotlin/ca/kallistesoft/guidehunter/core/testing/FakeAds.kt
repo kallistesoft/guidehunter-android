@@ -1,7 +1,10 @@
 package ca.kallistesoft.guidehunter.core.testing
 
 import android.app.Activity
+import androidx.compose.ui.graphics.ImageBitmap
 import ca.kallistesoft.guidehunter.core.ads.AdConsent
+import ca.kallistesoft.guidehunter.core.ads.NativeAdHandle
+import ca.kallistesoft.guidehunter.core.ads.NativeAds
 import ca.kallistesoft.guidehunter.core.ads.RewardOutcome
 import ca.kallistesoft.guidehunter.core.ads.RewardedAds
 import kotlinx.coroutines.CompletableDeferred
@@ -43,5 +46,31 @@ class FakeRewardedAds(var outcome: RewardOutcome = RewardOutcome.EARNED) : Rewar
         shown++
         onShow?.await()
         return outcome
+    }
+}
+
+/** A native ad with plain assets; counts how often it was destroyed. */
+class FakeNativeAd(
+    override val headline: String = "Bushnell rangefinders",
+    override val body: String? = "See farther in the bush.",
+    override val callToAction: String? = "Shop now",
+    override val icon: ImageBitmap? = null,
+) : NativeAdHandle {
+    var destroyed = 0
+        private set
+
+    override fun destroy() {
+        destroyed++
+    }
+}
+
+/** Native ads that serve [ad] (null: no ad, as with ads off or no fill); counts the loads. */
+class FakeNativeAds(var ad: NativeAdHandle? = FakeNativeAd()) : NativeAds {
+    var loads = 0
+        private set
+
+    override suspend fun load(): NativeAdHandle? {
+        loads++
+        return ad
     }
 }

@@ -1,6 +1,7 @@
 package ca.kallistesoft.guidehunter.core.ads
 
 import android.app.Activity
+import ca.kallistesoft.guidehunter.core.testing.FakeNativeAd
 import io.mockk.mockk
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,6 +12,8 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -24,7 +27,7 @@ class AdsManagerTest {
     private var onScreen: Activity? = activity
     private var online = true
 
-    private fun TestScope.manager(config: AdsConfig = AdsConfig("rewarded-1")) =
+    private fun TestScope.manager(config: AdsConfig = AdsConfig("rewarded-1", nativeUnitId = "native-1")) =
         AdsManager(consent, sdk, { onScreen }, config, backgroundScope, { now }, { online })
 
     @Test
@@ -36,6 +39,28 @@ class AdsManagerTest {
         manager(AdsConfig("rewarded-1", enabled = false)).gatherConsent(activity)
         runCurrent()
         assertEquals("no consent request with ads off", 1, consent.updates)
+    }
+
+    @Test
+    fun `a native ad loads from the native unit once consent allows ads`() = runTest {
+        consent.canRequest = false
+        val ads = manager()
+        assertNull("no consent, no request", ads.load())
+        assertEquals(0 to 0, sdk.initialized to sdk.nativeLoads.size)
+
+        consent.canRequest = true
+        assertSame(sdk.nativeAd, ads.load())
+        sdk.nativeAd = null
+        assertNull("no fill: no card", ads.load())
+        assertEquals(listOf("native-1", "native-1"), sdk.nativeLoads)
+        assertEquals("initialised once", 1, sdk.initialized)
+    }
+
+    @Test
+    fun `no native ad when ads are off or there's no native unit`() = runTest {
+        assertNull(manager(AdsConfig("rewarded-1", nativeUnitId = "native-1", enabled = false)).load())
+        assertNull(manager(AdsConfig("rewarded-1")).load())
+        assertTrue(sdk.nativeLoads.isEmpty())
     }
 
     @Test
@@ -203,9 +228,16 @@ class AdsManagerTest {
         val rewardedShownOn = mutableListOf<Activity>()
         var earn = true
         var onRewardedLoad: () -> Unit = {}
+        val nativeLoads = mutableListOf<String>()
+        var nativeAd: NativeAdHandle? = FakeNativeAd()
 
         override suspend fun initialize() {
             initialized++
+        }
+
+        override suspend fun loadNative(unitId: String): NativeAdHandle? {
+            nativeLoads += unitId
+            return nativeAd
         }
 
         override suspend fun loadRewarded(unitId: String): Rewarded? {

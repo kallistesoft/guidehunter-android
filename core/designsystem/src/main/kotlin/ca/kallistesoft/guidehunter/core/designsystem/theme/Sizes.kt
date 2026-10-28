@@ -30,6 +30,9 @@ object Sizes {
     val placeholderLine = 14.dp
     val placeholderLineSmall = 10.dp
 
+    /** The advertiser's icon on a native ad card. */
+    val adIcon = 52.dp
+
     /** The "pick on map" map of the "Become a guide" form. */
     val pickerMapHeight = 220.dp
 

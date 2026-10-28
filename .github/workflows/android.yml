@@ -73,6 +73,7 @@ jobs:
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
           ADMOB_APP_ID: ${{ vars.ADMOB_APP_ID }}
           ADMOB_REWARDED_ID: ${{ vars.ADMOB_REWARDED_ID }}
+          ADMOB_NATIVE_ID: ${{ vars.ADMOB_NATIVE_ID }}
           APPLICATIONS_EMAIL: ${{ vars.APPLICATIONS_EMAIL }}
         run: ./gradlew :app:assembleDebug :app:assembleRelease :app:bundleRelease -PversionCode=${{ github.run_number }}
 
