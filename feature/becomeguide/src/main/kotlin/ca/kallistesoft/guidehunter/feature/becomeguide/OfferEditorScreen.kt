@@ -431,26 +431,33 @@ private fun WhenStep(state: OfferEditorUiState, actions: FormActions) {
     val schedule = state.form.schedule
     val context = LocalContext.current
     val length = schedule.length
-    val other = length is TripLength.Days && length !in LENGTHS
+    // Chosen, not worked out from the length: typing 1 in "Other" isn't the 1-day chip, and the field must stay.
+    var other by rememberSaveable { mutableStateOf(length is TripLength.Days && length !in LENGTHS) }
     Label(R.string.field_duration)
     FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.s)) {
         LENGTHS.forEach { choice ->
             FilterChip(
-                selected = length == choice,
-                onClick = { actions.length(choice) },
+                selected = !other && length == choice,
+                onClick = {
+                    other = false
+                    actions.length(choice)
+                },
                 label = { Text(context.tripLength(choice)) },
                 modifier = Modifier.testTag(if (choice is TripLength.Days) "length-${choice.count}" else "length-half"),
             )
         }
         FilterChip(
             selected = other,
-            onClick = { if (!other) actions.days("") },
+            onClick = {
+                if (!other) actions.days("")
+                other = true
+            },
             label = { Text(stringResource(R.string.duration_other)) },
             modifier = Modifier.testTag("length-other"),
         )
     }
-    if (other) {
-        val days = (length as TripLength.Days).count
+    if (other && length is TripLength.Days) {
+        val days = length.count
         Field(days.takeIf { it > 0 }?.toString().orEmpty(), actions.days, R.string.field_days, "field-days", null, keyboard = KeyboardType.Number, last = true)
     }
     state.errors.message(OfferField.DURATION)?.let { Error(it) }
