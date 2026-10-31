@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -185,6 +186,18 @@ class OfferEditorScreenTest {
         compose.onNodeWithTag("activity-HUNT").performScrollTo().performClick()
         next()
         step(R.string.step_review)
+    }
+
+    @Test
+    fun `other days stay in their field when the number matches a chip`() {
+        launch()
+        fillIn()
+        compose.onNodeWithTag("change-WHEN").performScrollTo().performClick()
+        step(R.string.step_when)
+        compose.onNodeWithTag("length-other").performScrollTo().performClick()
+        type("field-days", "1")
+        type("field-days", "2")
+        compose.onNodeWithTag("field-days").performScrollTo().assertTextContains("12")
     }
 
     @Test
