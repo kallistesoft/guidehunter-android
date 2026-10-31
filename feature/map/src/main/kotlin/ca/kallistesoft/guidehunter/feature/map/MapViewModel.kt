@@ -97,7 +97,7 @@ data class SelectedGuide(
     val contact: ContactState,
     val trips: List<Trip> = emptyList(),
     val trip: Trip? = null,
-    /** Boosted by its guide: the sheet says it's featured. */
+    /** One of the guides featured on the map ([MapUiState.featured]): the sheet says so. */
     val featured: Boolean = false,
     val busy: Boolean = false,
     val error: RequestError? = null,
@@ -254,7 +254,7 @@ class MapViewModel @Inject constructor(
                 trips = trips,
                 // Searching dates: the first trip that fits them, until the user picks another.
                 trip = selection.trip?.takeIf { it in trips } ?: listing.filter.dates?.let { free -> trips.find { it.within(free) } },
-                featured = item.guide.isBoosted(time),
+                featured = item.guide.id in featured,
                 busy = work.busy,
                 error = work.error,
             )

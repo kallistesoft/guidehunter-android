@@ -109,6 +109,18 @@ class MapViewModelTest {
     }
 
     @Test
+    fun `the sheet's badge follows the map, not the boost`() = runTest {
+        guides.guides.value = boosted(8)
+        val vm = viewModel()
+        collecting(vm.uiState)
+        val notPicked = vm.uiState.value.inView.map { it.guide.id }.first { it.startsWith("boosted") && it !in vm.featured }
+        vm.select(notPicked)
+        assertFalse("boosted, but not one of the 3 on the map", vm.uiState.value.selected!!.featured)
+        vm.select(vm.featured.first())
+        assertTrue(vm.uiState.value.selected!!.featured)
+    }
+
+    @Test
     fun `an ended boost isn't featured`() = runTest {
         guides.guides.value = boosted(2, until = TestGuides.now - 1.hours) + TestGuides.moose.copy(id = "now", boostedUntil = TestGuides.now)
         val vm = viewModel()
